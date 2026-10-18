@@ -101,6 +101,8 @@ export const InstallationScript: React.FC = () => {
 # Autorise les passerelles Mobile Money sans consommation de data
 # --------------------------------------------------------
 /ip hotspot walled-garden
+add comment="Joowifi Cloud Vercel" dst-host="joowifi-cloud.vercel.app" action=allow
+add comment="Joowifi Supabase API" dst-host="qvpgehfttufecuapntnm.supabase.co" action=allow
 add comment="Joowifi Cloud Portal" dst-host="*.joowifi.app" action=allow
 add comment="Joowifi API & Assets" dst-host="*.joowifi.pro" action=allow
 add comment="Wave Mobile Money" dst-host="*.wave.com" action=allow
@@ -137,7 +139,7 @@ add name="joowifi-heartbeat" dont-require-permissions=yes source={
 
   :do {
     /tool fetch mode=https \
-      url=("https://api.joowifi.app/api/v1/mikrotik/heartbeat?token=" . $token . "&cpu=" . $cpu . "&ram=" . $ramPct . "&uptime=" . $uptime . "&active=" . $activeCount) \
+      url=("https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat?token=" . $token . "&cpu=" . $cpu . "&ram=" . $ramPct . "&uptime=" . $uptime . "&active=" . $activeCount) \
       dst-path=$syncFile keep-result=yes check-certificate=no
     :delay 1s
     :if ([:len [/file find name=$syncFile]] > 0) do={

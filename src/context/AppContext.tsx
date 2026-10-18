@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { isSupabaseConfigured, supabaseInsert, supabaseSelect } from '../lib/supabase';
 import {
   Currency,
   RouterItem,
@@ -429,6 +430,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     };
     setHeartbeatQueue((prev) => [cmd, ...prev.slice(0, 29)]);
+    if (isSupabaseConfigured()) {
+      void supabaseInsert('heartbeat_commands', {
+        operator_id: '11111111-1111-1111-1111-111111111111',
+        router_id: '33333333-3333-3333-3333-333333333331',
+        command_type: commandType,
+        routeros_script: routerOsCommand,
+        status: 'pending',
+      });
+    }
   };
 
   const forceHeartbeatSync = () => {
@@ -557,6 +567,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ip: '41.207.33.19',
     };
     setAuditLogs((prev) => [newLog, ...prev]);
+    if (isSupabaseConfigured()) {
+      void supabaseInsert('audit_logs', {
+        operator_id: '11111111-1111-1111-1111-111111111111',
+        user_email: newLog.user,
+        action,
+        target,
+        details,
+        ip_address: newLog.ip,
+      });
+    }
   };
 
   const generateTicketsBatch = (
