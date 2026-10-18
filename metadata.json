@@ -1,0 +1,6 @@
+{
+  "name": "Joowifi - Cloud MikroTik Hotspot & POS",
+  "description": "Plateforme SaaS et PWA de gestion cloud de hotspots WiFi MikroTik, émission de tickets, caisse POS mobile et comptabilité pour opérateurs en Afrique de l'Ouest.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

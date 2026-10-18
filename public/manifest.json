@@ -1,0 +1,37 @@
+{
+  "id": "/",
+  "name": "Joowifi - Cloud MikroTik Hotspot & POS",
+  "short_name": "Joowifi",
+  "description": "Plateforme SaaS et PWA de gestion cloud de hotspots WiFi MikroTik, émission de tickets, caisse POS mobile et comptabilité pour opérateurs en Afrique de l'Ouest.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#F59E0B",
+  "background_color": "#0B0F19",
+  "categories": ["business", "finance", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Caisse POS Vendeur",
+      "short_name": "Caisse POS",
+      "description": "Ouvrir directement la caisse mobile d'émission de tickets WiFi en 1 clic",
+      "url": "/?space=pos",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Console Cloud Admin",
+      "short_name": "Console Cloud",
+      "description": "Piloter les routeurs MikroTik, zones et finances",
+      "url": "/?space=admin",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192", "type": "image/svg+xml" }]
+    }
+  ]
+}

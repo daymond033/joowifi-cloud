@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#0F172A"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" stroke="#2563EB" stroke-width="8" stroke-opacity="0.3"/>
+  <circle cx="256" cy="380" r="32" fill="#2563EB"/>
+  <path d="M160 300C188 272 220 256 256 256C292 256 324 272 352 300" stroke="#3B82F6" stroke-width="32" stroke-linecap="round"/>
+  <path d="M96 220C140 176 196 152 256 152C316 152 372 176 416 220" stroke="#60A5FA" stroke-width="32" stroke-linecap="round"/>
+  <path d="M48 140C104 84 176 52 256 52C336 52 408 84 464 140" stroke="#93C5FD" stroke-width="32" stroke-linecap="round"/>
+  <!-- Central pulse accent -->
+  <circle cx="256" cy="380" r="16" fill="#F59E0B"/>
+</svg>
