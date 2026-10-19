@@ -41,6 +41,7 @@ export const POSCashier: React.FC = () => {
     formatMoney,
     setCurrentSpace,
     tickets,
+    forceHeartbeatSync,
   } = useApp();
 
   // Active vendor (defaulting to mamadou fonate / first staff member)
@@ -172,6 +173,7 @@ export const POSCashier: React.FC = () => {
   // Refresh simulation
   const handleRefresh = () => {
     setIsRefreshing(true);
+    forceHeartbeatSync();
     setTimeout(() => {
       setIsRefreshing(false);
       showToast('Données caisse actualisées');

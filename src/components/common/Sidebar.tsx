@@ -155,18 +155,26 @@ export const Sidebar: React.FC = () => {
         </button>
       </div>
 
-      {/* Heartbeat Status pill in sidebar */}
-      <div className="px-4 py-3 bg-slate-900/60 border-b border-slate-800/60 flex items-center justify-between text-xs font-mono">
-        <div className="flex items-center gap-2 text-emerald-400">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      {/* Heartbeat & Supabase Sync Status pill in sidebar */}
+      <div className="px-4 py-2.5 bg-slate-900/60 border-b border-slate-800/60 space-y-2">
+        <div className="flex items-center justify-between text-xs font-mono">
+          <div className="flex items-center gap-2 text-emerald-400">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[11px] font-sans font-medium text-slate-300">Pull Heartbeat</span>
+          </div>
+          <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[11px]">
+            {heartbeatSecondsRemaining}s
           </span>
-          <span className="text-[11px] font-sans font-medium text-slate-300">Pull Heartbeat</span>
         </div>
-        <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[11px]">
-          {heartbeatSecondsRemaining}s
-        </span>
+        <button
+          onClick={forceHeartbeatSync}
+          className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+        >
+          <span>🔄 Synchroniser Base Supabase (12 tables)</span>
+        </button>
       </div>
 
       {/* Navigation Sections */}

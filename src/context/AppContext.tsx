@@ -416,17 +416,113 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
   ]);
 
+  const OP_ID = '11111111-1111-1111-1111-111111111111';
+
+  const syncOperatorToSupabase = () => {
+    if (!isSupabaseConfigured()) return;
+    void supabaseInsert(
+      'operators',
+      [
+        {
+          id: OP_ID,
+          name: operatorProfile.name || 'Kouamé Konan',
+          company: operatorProfile.company || 'Ivoire Hotspot Réseaux',
+          email: operatorProfile.email || 'admin@joowifi.ci',
+          password_hash: '$2b$12$JoowifiDemoHash2026Abidjan',
+          phone: operatorProfile.phone || '+225 07 08 09 10 11',
+          city: operatorProfile.city || 'Abidjan',
+          country: operatorProfile.country || "Côte d'Ivoire",
+          currency: currency || 'XOF',
+          plan_id: currentPlanId || 'pro',
+          wallet_balance_xof: Math.max(0, Math.round(Number(walletBalance || 0))),
+          gains_balance_xof: Math.max(0, Math.round(Number(gainsBalance || 0))),
+          default_isp_monthly_cost: Math.round(Number(operatorProfile.defaultIspCost || 50000)),
+          two_factor_enabled: Boolean(operatorProfile.twoFactorEnabled),
+          telegram_bot_token: telegramConfig.botToken || null,
+          telegram_chat_id: telegramConfig.chatId || null,
+          telegram_enabled: Boolean(telegramConfig.enabled),
+          telegram_triggers: telegramConfig.triggers || {},
+        },
+      ],
+      'email'
+    );
+  };
+
+  const syncZonesToSupabase = (items: ZoneItem[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((z) => ({
+      operator_id: OP_ID,
+      name: z.name,
+      city: z.city || 'Abidjan',
+      country: z.country || "Côte d'Ivoire",
+      site_type: z.siteType || 'commerce',
+      status: z.status || 'active',
+      description: z.description || '',
+      isp_monthly_cost: Math.round(Number(z.ispMonthlyCost || 25000)),
+      subscription_price_monthly: Math.round(Number(z.subscriptionPriceMonthly || 5000)),
+      monthly_revenue_xof: Math.round(Number(z.monthlyRevenue || 0)),
+      today_sales_xof: Math.round(Number(z.todaySales || 0)),
+    }));
+    void supabaseInsert('zones', rows, 'operator_id,name');
+  };
+
+  const syncRoutersToSupabase = (items: RouterItem[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((r) => ({
+      operator_id: OP_ID,
+      zone_id: r.zoneName || r.zoneId || 'Zone Principale',
+      name: r.name,
+      model: r.model || 'MikroTik RB5009',
+      install_token: r.installToken,
+      ip_address: r.ipAddress || '10.5.50.1',
+      mac_address: r.macAddress || null,
+      cloud_dns: r.cloudDns || null,
+      routeros_version: r.routerOsVersion || 'v7.15.2',
+      hotspot_interface: r.hotspotInterface || 'bridge-hotspot',
+      status: r.status || 'online',
+      last_heartbeat_at: new Date().toISOString(),
+      uptime: r.uptime || '01j 00h 00m',
+      cpu_usage: Math.round(Number(r.cpuUsage || 15)),
+      ram_usage: Math.round(Number(r.ramUsage || 32)),
+      traffic_down_mbps: Number(r.trafficDownMbps || 0),
+      traffic_up_mbps: Number(r.trafficUpMbps || 0),
+      total_subscribers: Math.round(Number(r.totalSubscribers || 0)),
+      synced_profiles_count: Math.round(Number(r.syncedProfilesCount || 0)),
+    }));
+    void supabaseInsert('routers', rows, 'install_token');
+  };
+
+  const syncForfaitsToSupabase = (items: ForfaitItem[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((f) => ({
+      operator_id: OP_ID,
+      name: f.name,
+      duration_hours: Math.max(1, Math.round(Number(f.durationHours || 1))),
+      validity_value: Math.max(1, Math.round(Number(f.validityValue || 1))),
+      validity_unit: f.validityUnit || 'days',
+      price_xof: Math.max(0, Math.round(Number(f.price || 0))),
+      download_speed_mbps: Number(f.downloadSpeedMbps || 5),
+      upload_speed_mbps: Number(f.uploadSpeedMbps || 2),
+      data_limit_mb: Math.round(Number(f.dataLimitMb || 0)),
+      simultaneous_devices: Math.max(1, Math.round(Number(f.simultaneousDevices || 1))),
+      mac_lock: Boolean(f.macLock ?? true),
+      popular: Boolean(f.popular),
+      color: f.color || 'amber',
+    }));
+    void supabaseInsert('forfaits', rows, 'operator_id,name');
+  };
+
   const syncTicketsToSupabase = (items: TicketItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((t) => ({
-      operator_id: '11111111-1111-1111-1111-111111111111',
+      operator_id: OP_ID,
       zone_id: t.zoneName || 'Zone Principale',
       forfait_id: t.forfaitName || t.forfaitId,
       seller_id: t.sellerName || t.sellerId || null,
       code: t.code,
       pin: t.pin || t.code,
       password: t.password || t.pin || t.code,
-      price_xof: Number(t.price || 0),
+      price_xof: Math.round(Number(t.price || 0)),
       duration_label: t.duration || '24h',
       status: t.sellerName ? 'vendeur' : t.status || 'stock',
       batch_id: t.batchId || (t.sellerName ? 'POS-CAISSE' : null),
@@ -434,12 +530,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       mac_address: t.macAddress || null,
     }));
     void supabaseInsert('tickets', rows, 'operator_id,code');
+
+    const queuedRows: Record<string, unknown>[] = [];
+    items.forEach((t) => {
+      if (t.queuedForfaits && t.queuedForfaits.length > 0) {
+        t.queuedForfaits.forEach((qf, idx) => {
+          queuedRows.push({
+            ticket_id: t.code,
+            forfait_id: qf.forfaitId || qf.forfaitName,
+            forfait_name: qf.forfaitName,
+            price_xof: Math.round(Number(qf.price || 0)),
+            position: idx + 1,
+            status: qf.status || 'queued',
+          });
+        });
+      }
+    });
+    if (queuedRows.length > 0) {
+      void supabaseInsert('ticket_queued_forfaits', queuedRows, 'ticket_id,position');
+    }
   };
 
   const syncStaffToSupabase = (items: StaffItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((s) => ({
-      operator_id: '11111111-1111-1111-1111-111111111111',
+      operator_id: OP_ID,
       zone_id: s.zoneName || s.zoneId || 'Kiosque Principal Joowifi',
       name: s.name,
       phone: s.phone,
@@ -449,9 +564,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       daily_goal_xof: Math.round(Number(s.dailyGoal || 10000)),
       today_sales_xof: Math.round(Number(s.todaySales || 0)),
       total_sales_xof: Math.round(Number(s.totalSales || 0)),
+      paid_commissions_xof: Math.round(Number(s.paidCommissions || 0)),
       active: Boolean(s.active),
     }));
     void supabaseInsert('staff_vendors', rows, 'operator_id,name');
+  };
+
+  const syncMacBypassesToSupabase = (items: MacBypassItem[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((m) => ({
+      operator_id: OP_ID,
+      router_id: m.routerName || m.routerId || 'all',
+      mac_address: m.macAddress,
+      label: m.label,
+      category: m.category || 'VIP',
+      binding_type: m.bindingType || 'bypassed',
+      auto_cookie: Boolean(m.autoCookie ?? true),
+      forfait_id: m.forfaitName || m.forfaitId || 'Bypass Total',
+      expiry_type: m.expiryType || 'permanent',
+      status: m.status || 'active',
+      device_vendor: m.deviceVendor || '',
+      comment: m.comment || '',
+    }));
+    void supabaseInsert('mac_bypasses', rows, 'operator_id,mac_address');
+  };
+
+  const syncTransactionsToSupabase = (items: WalletTransaction[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((tx) => ({
+      operator_id: OP_ID,
+      type: tx.type || 'credit',
+      amount_xof: Math.max(1, Math.round(Number(tx.amount || 100))),
+      category: tx.category || 'Recharge Mobile Money',
+      reference: tx.reference || `TX-${tx.id}`,
+      payment_method: tx.paymentMethod || 'Wave',
+      status: tx.status || 'completed',
+    }));
+    void supabaseInsert('wallet_transactions', rows, 'reference');
+  };
+
+  const syncSessionsToSupabase = (items: ConnectedSession[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((s) => ({
+      operator_id: OP_ID,
+      router_id: s.routerName || s.routerId || 'MK-ADJAME-CORE-01',
+      username: s.username,
+      ip_address: s.ipAddress || '10.5.50.10',
+      mac_address: s.macAddress || '00:00:00:00:00:00',
+      forfait_name: s.forfaitName || 'Pass Standard',
+      uptime_minutes: Math.round(Number(s.uptimeMinutes || 1)),
+      time_remaining_minutes: Math.round(Number(s.timeRemainingMinutes || 60)),
+      bytes_in_mb: Number(s.bytesInMb || 0),
+      bytes_out_mb: Number(s.bytesOutMb || 0),
+      signal_dbm: Math.round(Number(s.signalDbm || -60)),
+      device_type: s.deviceType || 'smartphone',
+    }));
+    void supabaseInsert('active_sessions', rows, 'operator_id,username');
+  };
+
+  const syncAll12TablesToSupabase = () => {
+    syncOperatorToSupabase();
+    syncZonesToSupabase(zones);
+    syncRoutersToSupabase(routers);
+    syncForfaitsToSupabase(forfaits);
+    syncStaffToSupabase(staff);
+    syncTicketsToSupabase(tickets);
+    syncMacBypassesToSupabase(macBypasses);
+    syncTransactionsToSupabase(transactions);
+    syncSessionsToSupabase(sessions);
   };
 
   const enqueueRouterCommand = (
@@ -494,9 +674,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : r
       )
     );
-    syncTicketsToSupabase(tickets);
+    syncAll12TablesToSupabase();
     setHeartbeatSecondsRemaining(45);
-    notify('Synchronisation Heartbeat Cloud Pull & Supabase exécutée avec succès !', 'success');
+    notify(`Synchronisation Supabase (12 tables : ${tickets.length} tickets, ${staff.length} vendeurs, ${forfaits.length} forfaits) réussie !`, 'success');
   };
 
   // SOS Recharge alerts from field vendors
@@ -557,33 +737,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => clearInterval(timer);
   }, []);
 
-  // Save changes to localStorage safely
-  useEffect(() => safeSetStorage('joowifi_routers', routers), [routers]);
-  useEffect(() => safeSetStorage('joowifi_zones', zones), [zones]);
-  useEffect(() => safeSetStorage('joowifi_forfaits', forfaits), [forfaits]);
+  // Save changes to localStorage AND synchronize all 12 tables with Supabase
   useEffect(() => {
-    safeSetStorage('joowifi_tickets', tickets);
-  }, [tickets]);
+    safeSetStorage('joowifi_routers', routers);
+    syncRoutersToSupabase(routers);
+  }, [routers]);
 
   useEffect(() => {
-    if (isSupabaseConfigured() && tickets.length > 0) {
-      syncTicketsToSupabase(tickets.slice(0, 50));
-    }
-  }, []);
+    safeSetStorage('joowifi_zones', zones);
+    syncZonesToSupabase(zones);
+  }, [zones]);
+
+  useEffect(() => {
+    safeSetStorage('joowifi_forfaits', forfaits);
+    syncForfaitsToSupabase(forfaits);
+  }, [forfaits]);
+
+  useEffect(() => {
+    safeSetStorage('joowifi_tickets', tickets);
+    syncTicketsToSupabase(tickets);
+  }, [tickets]);
+
   useEffect(() => {
     safeSetStorage('joowifi_staff', staff);
     syncStaffToSupabase(staff);
   }, [staff]);
-  useEffect(() => safeSetStorage('joowifi_mac_bypass', macBypasses), [macBypasses]);
-  useEffect(() => safeSetStorage('joowifi_transactions', transactions), [transactions]);
-  useEffect(() => safeSetStorage('joowifi_wallet', walletBalance), [walletBalance]);
-  useEffect(() => safeSetStorage('joowifi_gains', gainsBalance), [gainsBalance]);
-  useEffect(() => safeSetStorage('joowifi_plan', currentPlanId), [currentPlanId]);
+
+  useEffect(() => {
+    safeSetStorage('joowifi_mac_bypass', macBypasses);
+    syncMacBypassesToSupabase(macBypasses);
+  }, [macBypasses]);
+
+  useEffect(() => {
+    safeSetStorage('joowifi_transactions', transactions);
+    syncTransactionsToSupabase(transactions);
+  }, [transactions]);
+
+  useEffect(() => {
+    syncSessionsToSupabase(sessions);
+  }, [sessions]);
+
+  useEffect(() => {
+    safeSetStorage('joowifi_wallet', walletBalance);
+    safeSetStorage('joowifi_gains', gainsBalance);
+    safeSetStorage('joowifi_plan', currentPlanId);
+    safeSetStorage('joowifi_telegram', telegramConfig);
+    safeSetStorage('joowifi_profile', operatorProfile);
+    safeSetStorage('joowifi_currency', currency);
+    syncOperatorToSupabase();
+  }, [walletBalance, gainsBalance, currentPlanId, telegramConfig, operatorProfile, currency]);
+
   useEffect(() => safeSetStorage('joowifi_captive_config', captiveConfig), [captiveConfig]);
   useEffect(() => safeSetStorage('joowifi_saved_templates', savedTemplates), [savedTemplates]);
-  useEffect(() => safeSetStorage('joowifi_telegram', telegramConfig), [telegramConfig]);
-  useEffect(() => safeSetStorage('joowifi_profile', operatorProfile), [operatorProfile]);
-  useEffect(() => safeSetStorage('joowifi_currency', currency), [currency]);
+
+  // Initial bidirectional sync on mount
+  useEffect(() => {
+    syncAll12TablesToSupabase();
+  }, []);
 
   const formatMoney = (amountInXof: number): string => {
     switch (currency) {
@@ -1099,6 +1309,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const target = zones.find((z) => z.id === id);
     setZones((prev) => prev.filter((z) => z.id !== id));
     if (target) {
+      void supabaseDelete('zones', `name=eq.${encodeURIComponent(target.name)}`);
       addAuditLog('Suppression Zone', target.name, 'Zone retirée ou archivée');
     }
   };
@@ -1147,6 +1358,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const item = forfaits.find((f) => f.id === id);
     setForfaits((prev) => prev.filter((f) => f.id !== id));
     if (item) {
+      void supabaseDelete('forfaits', `name=eq.${encodeURIComponent(item.name)}`);
       addAuditLog('Suppression Forfait', item.name, 'Forfait retiré du catalogue');
       notify(`Forfait "${item.name}" supprimé.`, 'info');
     }
@@ -1193,6 +1405,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const member = staff.find((s) => s.id === staffId);
     setStaff((prev) => prev.filter((s) => s.id !== staffId));
     if (member) {
+      void supabaseDelete('staff_vendors', `name=eq.${encodeURIComponent(member.name)}`);
       addAuditLog('Suppression Vendeur', member.name, `Retiré de la zone ${member.zoneName}`);
       notify(`Vendeur "${member.name}" supprimé.`, 'info');
     }
@@ -1332,7 +1545,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteMacBypass = (id: string) => {
     const item = macBypasses.find((m) => m.id === id);
     setMacBypasses((prev) => prev.filter((m) => m.id !== id));
-    if (item) addAuditLog('Suppression MAC Bypass', item.macAddress, item.label);
+    if (item) {
+      void supabaseDelete('mac_bypasses', `mac_address=eq.${encodeURIComponent(item.macAddress)}`);
+      addAuditLog('Suppression MAC Bypass', item.macAddress, item.label);
+    }
   };
 
   const rechargeWallet = (amount: number, method: WalletTransaction['paymentMethod'] = 'Wave') => {

@@ -5,6 +5,10 @@
       "destination": "/api/heartbeat"
     },
     {
+      "source": "/api/supabase",
+      "destination": "/api/supabase"
+    },
+    {
       "source": "/pos",
       "destination": "/index.html"
     },
