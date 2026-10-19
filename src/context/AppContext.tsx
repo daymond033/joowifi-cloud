@@ -422,18 +422,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       operator_id: '11111111-1111-1111-1111-111111111111',
       zone_id: t.zoneName || 'Zone Principale',
       forfait_id: t.forfaitName || t.forfaitId,
-      seller_id: t.sellerId || null,
+      seller_id: t.sellerName || t.sellerId || null,
       code: t.code,
       pin: t.pin || t.code,
       password: t.password || t.pin || t.code,
       price_xof: Number(t.price || 0),
       duration_label: t.duration || '24h',
-      status: t.status || 'stock',
-      batch_id: t.batchId || null,
+      status: t.sellerName ? 'vendeur' : t.status || 'stock',
+      batch_id: t.batchId || (t.sellerName ? 'POS-CAISSE' : null),
       customer_phone: t.customerPhone || null,
       mac_address: t.macAddress || null,
     }));
     void supabaseInsert('tickets', rows, 'operator_id,code');
+  };
+
+  const syncStaffToSupabase = (items: StaffItem[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((s) => ({
+      operator_id: '11111111-1111-1111-1111-111111111111',
+      zone_id: s.zoneName || s.zoneId || 'Kiosque Principal Joowifi',
+      name: s.name,
+      phone: s.phone,
+      pin_hash: '1234',
+      commission_rate: Number(s.commissionRate || 10),
+      balance_credit_xof: Math.max(0, Math.round(Number(s.balanceCredit || 0))),
+      daily_goal_xof: Math.round(Number(s.dailyGoal || 10000)),
+      today_sales_xof: Math.round(Number(s.todaySales || 0)),
+      total_sales_xof: Math.round(Number(s.totalSales || 0)),
+      active: Boolean(s.active),
+    }));
+    void supabaseInsert('staff_vendors', rows, 'operator_id,name');
   };
 
   const enqueueRouterCommand = (
@@ -552,7 +570,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       syncTicketsToSupabase(tickets.slice(0, 50));
     }
   }, []);
-  useEffect(() => safeSetStorage('joowifi_staff', staff), [staff]);
+  useEffect(() => {
+    safeSetStorage('joowifi_staff', staff);
+    syncStaffToSupabase(staff);
+  }, [staff]);
   useEffect(() => safeSetStorage('joowifi_mac_bypass', macBypasses), [macBypasses]);
   useEffect(() => safeSetStorage('joowifi_transactions', transactions), [transactions]);
   useEffect(() => safeSetStorage('joowifi_wallet', walletBalance), [walletBalance]);

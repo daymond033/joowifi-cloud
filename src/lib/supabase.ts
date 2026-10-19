@@ -1,14 +1,12 @@
 // ============================================================================
-// JOOWIFI CLOUD — CONNECTEUR SUPABASE REST & RPC (COMPATIBLE CLÉS 2026 sb_publishable_ & eyJ)
+// JOOWIFI CLOUD — CONNECTEUR SUPABASE REST & RPC (VITE PRODUCTION NATIF)
+// Utilise import.meta.env.VITE_SUPABASE_URL et import.meta.env.VITE_SUPABASE_ANON_KEY
 // ============================================================================
 
-const SUPABASE_URL =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SUPABASE_URL ||
-  'https://qvpgehfttufecuapntnm.supabase.co';
+const SUPABASE_URL: string =
+  import.meta.env.VITE_SUPABASE_URL || 'https://qvpgehfttufecuapntnm.supabase.co';
 
-const SUPABASE_ANON_KEY =
-  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_SUPABASE_ANON_KEY ||
-  '';
+const SUPABASE_ANON_KEY: string = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const isSupabaseConfigured = (): boolean => {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
@@ -19,7 +17,6 @@ const getHeaders = (preferHeader?: string): HeadersInit => {
     'Content-Type': 'application/json',
     apikey: SUPABASE_ANON_KEY,
   };
-  // Les anciennes clés anon commencent par eyJ (JWT) ; les nouvelles clés sb_publishable_ vont uniquement dans apikey
   if (SUPABASE_ANON_KEY.startsWith('eyJ')) {
     headers.Authorization = `Bearer ${SUPABASE_ANON_KEY}`;
   }
