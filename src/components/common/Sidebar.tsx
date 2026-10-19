@@ -50,6 +50,7 @@ export const Sidebar: React.FC = () => {
     pendingSosAlerts,
     sessions,
     macBypasses,
+    forceHeartbeatSync,
   } = useApp();
 
   const categories: SidebarCategory[] = [
