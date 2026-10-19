@@ -1,6 +1,5 @@
 // ============================================================================
-// JOOWIFI CLOUD — CONNECTEUR SUPABASE REST & RPC (SANS DÉPENDANCE EXTERNE)
-// Se connecte automatiquement à VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY
+// JOOWIFI CLOUD — CONNECTEUR SUPABASE REST & RPC (COMPATIBLE CLÉS 2026 sb_publishable_ & eyJ)
 // ============================================================================
 
 const SUPABASE_URL =
@@ -15,16 +14,17 @@ export const isSupabaseConfigured = (): boolean => {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 };
 
-const getHeaders = (preferReturn = false): HeadersInit => {
+const getHeaders = (preferHeader?: string): HeadersInit => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     apikey: SUPABASE_ANON_KEY,
   };
+  // Les anciennes clés anon commencent par eyJ (JWT) ; les nouvelles clés sb_publishable_ vont uniquement dans apikey
   if (SUPABASE_ANON_KEY.startsWith('eyJ')) {
     headers.Authorization = `Bearer ${SUPABASE_ANON_KEY}`;
   }
-  if (preferReturn) {
-    headers.Prefer = 'return=representation';
+  if (preferHeader) {
+    headers.Prefer = preferHeader;
   }
   return headers;
 };
@@ -43,12 +43,22 @@ export async function supabaseSelect<T>(table: string, query = 'select=*'): Prom
   }
 }
 
-export async function supabaseInsert<T>(table: string, payload: unknown): Promise<T[] | null> {
+export async function supabaseInsert<T>(
+  table: string,
+  payload: unknown,
+  upsertConflictCols?: string
+): Promise<T[] | null> {
   if (!isSupabaseConfigured()) return null;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    const url = upsertConflictCols
+      ? `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${upsertConflictCols}`
+      : `${SUPABASE_URL}/rest/v1/${table}`;
+    const prefer = upsertConflictCols
+      ? 'return=representation,resolution=merge-duplicates'
+      : 'return=representation';
+    const res = await fetch(url, {
       method: 'POST',
-      headers: getHeaders(true),
+      headers: getHeaders(prefer),
       body: JSON.stringify(payload),
     });
     if (!res.ok) return null;
@@ -69,6 +79,19 @@ export async function supabaseUpdate(
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function supabaseDelete(table: string, filterQuery: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filterQuery}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
     });
     return res.ok;
   } catch {

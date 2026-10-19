@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { isSupabaseConfigured, supabaseInsert, supabaseSelect } from '../lib/supabase';
+import { isSupabaseConfigured, supabaseInsert, supabaseSelect, supabaseUpdate, supabaseDelete } from '../lib/supabase';
 import {
   Currency,
   RouterItem,
@@ -416,6 +416,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
   ]);
 
+  const syncTicketsToSupabase = (items: TicketItem[]) => {
+    if (!isSupabaseConfigured() || items.length === 0) return;
+    const rows = items.map((t) => ({
+      operator_id: '11111111-1111-1111-1111-111111111111',
+      zone_id: t.zoneName || 'Zone Principale',
+      forfait_id: t.forfaitName || t.forfaitId,
+      seller_id: t.sellerId || null,
+      code: t.code,
+      pin: t.pin || t.code,
+      password: t.password || t.pin || t.code,
+      price_xof: Number(t.price || 0),
+      duration_label: t.duration || '24h',
+      status: t.status || 'stock',
+      batch_id: t.batchId || null,
+      customer_phone: t.customerPhone || null,
+      mac_address: t.macAddress || null,
+    }));
+    void supabaseInsert('tickets', rows, 'operator_id,code');
+  };
+
   const enqueueRouterCommand = (
     commandType: HeartbeatCommandItem['commandType'],
     routerOsCommand: string,
@@ -456,8 +476,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           : r
       )
     );
+    syncTicketsToSupabase(tickets);
     setHeartbeatSecondsRemaining(45);
-    notify('Synchronisation Heartbeat Cloud Pull exécutée sur tous les routeurs en ligne !', 'success');
+    notify('Synchronisation Heartbeat Cloud Pull & Supabase exécutée avec succès !', 'success');
   };
 
   // SOS Recharge alerts from field vendors
@@ -522,7 +543,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => safeSetStorage('joowifi_routers', routers), [routers]);
   useEffect(() => safeSetStorage('joowifi_zones', zones), [zones]);
   useEffect(() => safeSetStorage('joowifi_forfaits', forfaits), [forfaits]);
-  useEffect(() => safeSetStorage('joowifi_tickets', tickets), [tickets]);
+  useEffect(() => {
+    safeSetStorage('joowifi_tickets', tickets);
+  }, [tickets]);
+
+  useEffect(() => {
+    if (isSupabaseConfigured() && tickets.length > 0) {
+      syncTicketsToSupabase(tickets.slice(0, 50));
+    }
+  }, []);
   useEffect(() => safeSetStorage('joowifi_staff', staff), [staff]);
   useEffect(() => safeSetStorage('joowifi_mac_bypass', macBypasses), [macBypasses]);
   useEffect(() => safeSetStorage('joowifi_transactions', transactions), [transactions]);
@@ -615,6 +644,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setTickets((prev) => [...newTickets, ...prev]);
+    syncTicketsToSupabase(newTickets);
     if (newTickets.length > 0) {
       enqueueRouterCommand(
         'ADD_TICKET',
@@ -666,6 +696,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setTickets((prev) => [newTicket, ...prev]);
+    syncTicketsToSupabase([newTicket]);
 
     setStaff((prev) =>
       prev.map((s) =>
@@ -733,6 +764,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setTickets((prev) => [newTicket, ...prev]);
+    syncTicketsToSupabase([newTicket]);
     setGainsBalance((prev) => prev + forfait.price);
 
     const tx: WalletTransaction = {
@@ -759,6 +791,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateTicket = (ticket: TicketItem) => {
     setTickets((prev) => prev.map((t) => (t.id === ticket.id ? ticket : t)));
+    syncTicketsToSupabase([ticket]);
     addAuditLog('Modification Ticket', `Ticket ${ticket.code}`, `Statut: ${ticket.status} - Forfait: ${ticket.forfaitName}`);
   };
 
@@ -766,13 +799,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const target = tickets.find((t) => t.id === id);
     setTickets((prev) => prev.filter((t) => t.id !== id));
     if (target) {
+      if (isSupabaseConfigured()) {
+        void supabaseDelete('tickets', `code=eq.${encodeURIComponent(target.code)}`);
+      }
+      enqueueRouterCommand(
+        'REMOVE_TICKET',
+        `/ip hotspot user remove [find name="${target.code}"]`
+      );
       addAuditLog('Suppression Ticket', `Ticket ${target.code}`, 'Supprimé par opérateur');
     }
   };
 
   const addCustomTicket = (ticket: TicketItem) => {
     setTickets((prev) => [ticket, ...prev]);
-    addAuditLog('Création Compte Client', `Compte ${ticket.code}`, `Forfait: ${ticket.forfaitName} (${ticket.price} FCFA)`);
+    syncTicketsToSupabase([ticket]);
+    enqueueRouterCommand(
+      'ADD_TICKET',
+      `/ip hotspot user add name="${ticket.code}" password="${ticket.password || ticket.pin || ticket.code}" profile="jw-prof-${ticket.forfaitId}" limit-uptime="${ticket.duration}" comment="${ticket.forfaitName} (${ticket.price} FCFA)"`
+    );
+    addAuditLog('Création Ticket / Compte', `Ticket ${ticket.code}`, `Forfait: ${ticket.forfaitName} (${ticket.price} FCFA)`);
   };
 
   const disconnectSession = (sessionId: string) => {
