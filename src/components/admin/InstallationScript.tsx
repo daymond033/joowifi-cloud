@@ -8,55 +8,46 @@ import {
   Check,
   CheckCircle2,
   Key,
-  Shield,
   RefreshCw,
   FolderDown,
-  Cpu,
   ArrowLeft,
   Router as RouterIcon,
   Globe,
   Zap,
-  Radio,
-  FileCode,
-  Sliders,
-  ExternalLink,
-  ChevronRight,
   Eye,
   EyeOff,
-  Flame,
   HelpCircle,
   Smartphone,
   ShieldCheck,
-  CheckCircle,
+  AlertTriangle,
+  Play,
+  FileCode,
 } from 'lucide-react';
 
 export const InstallationScript: React.FC = () => {
-  const { zones, routers, addRouter, setAdminTab } = useApp();
+  const { zones, routers, tickets, macBypasses, addRouter, setAdminTab, forceHeartbeatSync } = useApp();
+
+  // Mode toggle between Method 1 (Auto 1-line command) and Method 2 (Full Bootstrap Script)
+  const [installMethodTab, setInstallMethodTab] = useState<'auto' | 'full'>('auto');
 
   // Mode: configure new router vs select existing router
-  const [pairingMode, setPairingMode] = useState<'new' | 'existing'>('new');
+  const [pairingMode, setPairingMode] = useState<'new' | 'existing'>('existing');
   const [selectedExistingRouterId, setSelectedExistingRouterId] = useState<string>(routers[0]?.id || '');
 
-  // New Router configuration form
-  const [routerName, setRouterName] = useState('MikroTik Hotspot - Nouveau Site');
-  const [routerModel, setRouterModel] = useState('MikroTik hEX S (RB760iGS)');
+  // Router configuration state
+  const [routerName, setRouterName] = useState(routers[0]?.name || 'MK-ADJAME-CORE-01');
+  const [routerModel, setRouterModel] = useState(routers[0]?.model || 'MikroTik CHR / hEX S');
   const [selectedZoneId, setSelectedZoneId] = useState(zones[0]?.id || 'zone-1');
-  const [routerOsVersion, setRouterOsVersion] = useState<'v7' | 'v6.49' | 'v6.44'>('v7');
-  const [hotspotInterface, setHotspotInterface] = useState('bridge-hotspot');
-
-  // Security token state
-  const [token, setToken] = useState('JWT-AF6L-JG37-7K23');
+  const [token, setToken] = useState(routers[0]?.installToken || 'JWT-AF6L-JG37-7K23');
   const [showToken, setShowToken] = useState(true);
 
   // Copy feedback states
-  const [copiedTerminal, setCopiedTerminal] = useState(false);
+  const [copiedAutoCmd, setCopiedAutoCmd] = useState(false);
   const [copiedFullScript, setCopiedFullScript] = useState(false);
+  const [copiedImportCmd, setCopiedImportCmd] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
   const [installedNotice, setInstalledNotice] = useState(false);
 
-  // Script viewer tabs
-  const [scriptSubTab, setScriptSubTab] = useState<'full' | 'walled' | 'heartbeat' | 'hotspot' | 'watchdog'>('full');
-
-  // Handle select existing router to load its token & configuration
   const handleSelectExisting = (routerId: string) => {
     setSelectedExistingRouterId(routerId);
     const existing = routers.find((r) => r.id === routerId);
@@ -64,438 +55,547 @@ export const InstallationScript: React.FC = () => {
       setRouterName(existing.name);
       setRouterModel(existing.model || 'MikroTik RouterBOARD');
       setSelectedZoneId(existing.zoneId);
-      setToken(existing.installToken);
+      setToken(existing.installToken || 'JWT-AF6L-JG37-7K23');
     }
   };
 
-  // Regenerate security token
   const regenerateToken = () => {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const randPart = (len: number) =>
       Array.from({ length: len }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
-    const newToken = `JWT-${randPart(4)}-${randPart(4)}-${randPart(4)}`;
-    setToken(newToken);
+    setToken(`JWT-${randPart(4)}-${randPart(4)}-${randPart(4)}`);
   };
 
-  // Terminal 1-Click Command
-  const terminalOneLiner = `/tool fetch url="https://api.joowifi.app/install?token=${token}" dst-path=joowifi.rsc; /import file=joowifi.rsc`;
+  // Méthode 1 : Commande Automatique 1-Clic (avec nettoyage préalable du fichier .rsc)
+  const autoOneLineCommand = `:do { /file remove joowifi_install.rsc } on-error={}; /tool fetch url="https://joowifi-cloud.vercel.app/api/v1/mikrotik/install?token=${token}" mode=https check-certificate=no keep-result=yes dst-path=joowifi_install.rsc; :delay 2s; /import file-name=joowifi_install.rsc`;
 
-  // Dynamic modular script pieces
-  const scriptHeader = `# ========================================================
-# JOOWIFI CLOUD AGENT - MIKROTIK ROUTEROS SETUP SCRIPT
-# Equipement : ${routerName} (${routerModel})
-# Version RouterOS cible : ${routerOsVersion === 'v7' ? 'RouterOS v7.10+ (Recommandé)' : 'RouterOS v6.49+ LTS'}
-# Jeton Unique : ${token}
-# Interface Hotspot : ${hotspotInterface}
-# Date de génération : ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}
-# Architecture : Zero-Trust / Modèle Cloud Pull HTTPS 45s
-# Edité pour Joowifi (Abidjan, Côte d'Ivoire)
-# ========================================================
+  // Commande d'import local WinBox (Étape 3)
+  const localWinboxImportCmd = `/import file-name=joowifi_install.rsc`;
 
-/system identity set name="Joowifi-${routerName.replace(/[^a-zA-Z0-9_-]/g, '_')}"
-`;
+  // Génération dynamique des lignes de tickets actuels pour les pré-injecter dans le script complet
+  const embeddedTicketsRsc = useMemo(() => {
+    const valid = tickets.filter((t) => t.status !== 'expire' && t.status !== 'bloque');
+    return valid
+      .map((t) => {
+        const code = String(t.code).replace(/"/g, '');
+        const dur = String(t.duration || '24h').replace(/"/g, '').replace('j', 'd');
+        const prof = String(t.forfaitName || '').toLowerCase().includes('vip')
+          ? 'joowifi-vip'
+          : 'joowifi-standard';
+        const cmt = `JW:${String(t.forfaitName || 'Pass WiFi').replace(/"/g, '')} (${t.price || 0}F)`;
+        return `:do { /ip hotspot user add name="${code}" password="${code}" profile="${prof}" limit-uptime="${dur}" comment="${cmt}" } on-error={}`;
+      })
+      .join('\n');
+  }, [tickets]);
 
-  const scriptWalledGarden = `
-# --------------------------------------------------------
-# 1. WALLED GARDEN (ACCÈS PORTAIL CAPTIF & PAIEMENTS MOBILES)
-# Autorise les passerelles Mobile Money sans consommation de data
-# --------------------------------------------------------
-/ip hotspot walled-garden
-add comment="Joowifi Cloud Vercel" dst-host="joowifi-cloud.vercel.app" action=allow
-add comment="Joowifi Supabase API" dst-host="qvpgehfttufecuapntnm.supabase.co" action=allow
-add comment="Joowifi Cloud Portal" dst-host="*.joowifi.app" action=allow
-add comment="Joowifi API & Assets" dst-host="*.joowifi.pro" action=allow
-add comment="Wave Mobile Money" dst-host="*.wave.com" action=allow
-add comment="Wave CI Gateway" dst-host="api.wave.com" action=allow
-add comment="Orange Money CI" dst-host="*.orange.ci" action=allow
-add comment="Orange Money Web" dst-host="*.orangemoney.ci" action=allow
-add comment="MTN Mobile Money CI" dst-host="*.mtn.ci" action=allow
-add comment="Moov Africa Money" dst-host="*.moov-africa.ci" action=allow
-add comment="Google Fonts & CDN" dst-host="fonts.googleapis.com" action=allow
-add comment="Google Static" dst-host="fonts.gstatic.com" action=allow
-`;
+  const embeddedMacBypassesRsc = useMemo(() => {
+    return macBypasses
+      .filter((m) => m.status === 'active')
+      .map((m) => {
+        const mac = String(m.macAddress).replace(/"/g, '');
+        const btype = m.bindingType === 'blocked' ? 'blocked' : 'bypassed';
+        const lbl = String(m.label || 'Equipement').replace(/"/g, '');
+        return `:do { /ip hotspot ip-binding add mac-address="${mac}" type=${btype} comment="JW:${lbl}" } on-error={}`;
+      })
+      .join('\n');
+  }, [macBypasses]);
 
-  const scriptHeartbeat = `
-# --------------------------------------------------------
-# 2. HEARTBEAT CLOUD PULL BIDIRECTIONNEL (POLLING HTTPS 45 SECONDES)
-# Le routeur initie une connexion sortante HTTPS 443 (Zero-Trust / CGNAT),
-# transmet sa télémétrie (CPU, RAM, Uptime, Sessions) et exécute les
-# instructions en attente (nouveaux tickets, déconnexions, MAC bypass)
-# --------------------------------------------------------
-/ip dns set allow-remote-requests=yes servers=1.1.1.1,8.8.8.8 cache-size=4096KiB
+  // Méthode 2 : Script Complet Bootstrap Joowifi Engine v5.0 (Compatible RouterOS 6.x & 7.x)
+  const fullBootstrapScript = useMemo(() => {
+    return `# ============================================================================
+# JOOWIFI CLOUD ENGINE v5.0 — SCRIPT BOOTSTRAP ROUTEROS (v6.49+ & v7.x)
+# Jeton Equipement : ${token}
+# Routeur Cible    : ${routerName} (${routerModel})
+# Architecture     : Cloud Pull Strict HTTPS (Zero-Port Entrant / Compatible CGNAT)
+# ============================================================================
+# IMPORTANT RouterOS 7 : Si les schedulers echouent avec "not allowed by device-mode",
+# executez d'abord : /system/device-mode/update mode=enterprise
+# puis redemarrez le routeur et relancez ce script.
+
+# 1. Nettoyage defensif des anciennes configurations Joowifi (evite les conflits)
+:do { /system scheduler remove [find where name="joowifi-heartbeat-timer"] } on-error={}
+:do { /system scheduler remove [find where name="jw_heartbeat_sch"] } on-error={}
+:do { /system scheduler remove [find where name="jw_fastpoll_sch"] } on-error={}
+:do { /system scheduler remove [find where name="jw_log_watcher_sch"] } on-error={}
+:do { /system scheduler remove [find where comment="JOOWIFI"] } on-error={}
+:do { /system script remove [find where name="joowifi-heartbeat"] } on-error={}
+:do { /system script remove [find where name="jw_heartbeat"] } on-error={}
+:do { /system script remove [find where name="jw_fastpoll"] } on-error={}
+:do { /system script remove [find where name="jw_log_watcher"] } on-error={}
+:do { /ip hotspot walled-garden remove [find where comment~"^Joowifi" or comment="JOOWIFI"] } on-error={}
+:do { /ip firewall filter remove [find where comment="JOOWIFI_FASTTRACK_BYPASS"] } on-error={}
+
+# 2. Identite & Activation DHCP Client sur ether1 (indispensable sur CHR / VirtualBox)
+:do { /system identity set name="Joowifi-${routerName.replace(/[^a-zA-Z0-9_-]/g, '_')}" } on-error={}
+:do {
+  :if ([:len [/ip dhcp-client find where interface="ether1"]] = 0) do={
+    /ip dhcp-client add interface=ether1 disabled=no use-peer-dns=yes add-default-route=yes
+  } else={
+    /ip dhcp-client set [find where interface="ether1"] disabled=no
+  }
+} on-error={}
+
+# 3. DNS + NTP Afrique de l'Ouest (Compatible RouterOS v6 et v7 via :parse)
+/ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes cache-size=4096KiB
 /system clock set time-zone-name=Africa/Abidjan
+:do { /system ntp client set enabled=yes } on-error={}
+:local sysVer [/system resource get version]
+:local majVer [:pick $sysVer 0 1]
+:if ($majVer = "7") do={
+  :do {
+    :local v7Ntp [:parse "/system ntp client servers remove [find]; /system ntp client servers add address=africa.pool.ntp.org; /system ntp client servers add address=162.159.200.1"]
+    $v7Ntp
+  } on-error={}
+} else={
+  :do {
+    :local v6Ntp [:parse "/system ntp client set primary-ntp=162.159.200.1 secondary-ntp=216.239.35.0"]
+    $v6Ntp
+  } on-error={}
+}
 
-/system script
-:do { remove [find name="joowifi-heartbeat"] } on-error={}
-add name="joowifi-heartbeat" dont-require-permissions=yes source={
+# 4. Firewall : Exclure le trafic Hotspot authentifie du FastTrack (preserve les limites de debit)
+:do {
+  /ip firewall filter add chain=forward action=accept hotspot=auth comment="JOOWIFI_FASTTRACK_BYPASS"
+  :local ruleId [/ip firewall filter find where comment="JOOWIFI_FASTTRACK_BYPASS"]
+  /ip firewall filter move $ruleId 0
+} on-error={}
+
+# 4b. DHCP : Bail court (1h) pour eviter la saturation du pool d'adresses IP par les passants
+:foreach dhcps in=[/ip dhcp-server find] do={
+  :do { /ip dhcp-server set $dhcps lease-time=1h } on-error={}
+}
+
+# 5. Profils Hotspot : Activation MAC Cookie 30j & reconnexion transparente
+:foreach p in=[/ip hotspot profile find] do={
+  :do { /ip hotspot profile set $p http-cookie-lifetime=30d login-by=http-pap,http-chap,cookie,mac-cookie,mac } on-error={}
+}
+:foreach hs in=[/ip hotspot find] do={
+  :do { /ip hotspot set $hs idle-timeout=none keepalive-timeout=none addresses-per-mac=2 } on-error={}
+}
+:do { /ip hotspot user profile set [find where default=yes] shared-users=1000 keepalive-timeout=none mac-cookie-timeout=90d } on-error={}
+:do { /ip hotspot user profile add name="joowifi-standard" rate-limit="10M/3M" shared-users=1000 mac-cookie-timeout=30d status-autorefresh=1m } on-error={}
+:do { /ip hotspot user profile add name="joowifi-vip" rate-limit="25M/8M" shared-users=1000 mac-cookie-timeout=30d status-autorefresh=1m } on-error={}
+:do { /ip hotspot user profile add name="joowifi-unlimited" rate-limit="50M/15M" shared-users=1000 mac-cookie-timeout=30d status-autorefresh=1m } on-error={}
+
+# 6. Walled Garden : Plateforme Joowifi, Supabase & Passerelles Mobile Money Afrique de l'Ouest
+:do { /ip hotspot walled-garden add dst-host="joowifi-cloud.vercel.app" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.vercel.app" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="qvpgehfttufecuapntnm.supabase.co" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.wave.com" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="wave.com" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.orange.ci" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.mtn.ci" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.moov-africa.ci" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.cinetpay.com" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.fedapay.com" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.kkiapay.me" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot walled-garden add dst-host="*.feexpay.me" action=allow comment="JOOWIFI" } on-error={}
+
+# 7. Injection immediate de votre inventaire de tickets & Bypass MAC actuels (${tickets.length} tickets)
+${embeddedTicketsRsc}
+${embeddedMacBypassesRsc}
+
+# 8. Agent Heartbeat Principal (45s) avec Reconciliation Automatique d'Inventaire
+:do { /system script remove [find where name="jw_heartbeat"] } on-error={}
+/system script add name="jw_heartbeat" dont-require-permissions=yes comment="JOOWIFI" source={
+  :if ([:len [/system script job find where script="jw_heartbeat"]] > 1) do={ :error "skip" }
+
   :local token "${token}"
   :local cpu [/system resource get cpu-load]
   :local freeMem [/system resource get free-memory]
   :local totalMem [/system resource get total-memory]
   :local ramPct (100 - (($freeMem * 100) / $totalMem))
-  :local uptime [/system resource get uptime]
-  :local activeCount [/ip hotspot active print count-only]
-  :local syncFile "joowifi-sync.rsc"
+  :local actCount [:len [/ip hotspot active find]]
+  :local jwUsers [:len [/ip hotspot user find where comment~"^JW:"]]
+  :local syncFile "jw_sync.rsc"
 
   :do {
-    /tool fetch mode=https \
-      url=("https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat?token=" . $token . "&cpu=" . $cpu . "&ram=" . $ramPct . "&uptime=" . $uptime . "&active=" . $activeCount) \
-      dst-path=$syncFile keep-result=yes check-certificate=no
+    /tool fetch mode=https check-certificate=no keep-result=yes dst-path=$syncFile duration=15s \\
+      url=("https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat?token=" . $token . "&cpu=" . $cpu . "&ram=" . $ramPct . "&active=" . $actCount . "&jw_users=" . $jwUsers)
     :delay 1s
-    :if ([:len [/file find name=$syncFile]] > 0) do={
-      :if ([/file get $syncFile size] > 10) do={
-        /import file-name=$syncFile
+    :if ([:len [/file find where name=$syncFile]] > 0) do={
+      :if ([/file get $syncFile size] > 5) do={
+        :do { /import file-name=$syncFile } on-error={ :log warning "Joowifi: erreur import sync" }
       }
-      /file remove $syncFile
+      :do { /file remove $syncFile } on-error={}
     }
   } on-error={
-    :log warning "Joowifi Cloud: Temporisation contact serveur (reprise au cycle suivant 45s)"
+    :log warning "Joowifi Cloud: temporisation reseau sur heartbeat 45s"
   }
 }
 
-/system scheduler
-:do { remove [find name="joowifi-heartbeat-timer"] } on-error={}
-add name="joowifi-heartbeat-timer" interval=45s on-event="joowifi-heartbeat" start-time=startup comment="Joowifi Cloud Pull 45s"
-`;
+# 9. Agent Fast-Poll Basse Latence (10s) — Livraison instantanee des ventes Caisse POS
+:do { /system script remove [find where name="jw_fastpoll"] } on-error={}
+/system script add name="jw_fastpoll" dont-require-permissions=yes comment="JOOWIFI" source={
+  :if ([:len [/system script job find where script="jw_fastpoll"]] > 1) do={ :error "skip" }
 
-  const scriptHotspotProfiles = `
-# --------------------------------------------------------
-# 3. PROFILS HOTSPOT, LIMITATIONS & RECONNEXION MAC-COOKIE
-# Reconnexion fluide sans réinsérer le code voucher
-# --------------------------------------------------------
-/ip hotspot user profile
-set [ find default=yes ] keepalive-timeout=2m mac-cookie-timeout=30d name=default shared-users=1 status-autorefresh=1m
-add name="joowifi-standard" mac-cookie-timeout=30d rate-limit="10M/3M" shared-users=1 status-autorefresh=1m
-add name="joowifi-vip" mac-cookie-timeout=30d rate-limit="25M/8M" shared-users=1 status-autorefresh=1m
-add name="joowifi-unlimited" mac-cookie-timeout=30d rate-limit="50M/15M" shared-users=1 status-autorefresh=1m
+  :local token "${token}"
+  :local jwUsers [:len [/ip hotspot user find where comment~"^JW:"]]
+  :local pollFile "jw_poll.rsc"
 
-# Activation du login par MAC Cookie & HTTP-PAP sur le profil serveur
-/ip hotspot profile
-set [ find default=yes ] login-by=http-chap,http-pap,mac-cookie mac-cookie-timeout=30d
-`;
-
-  const scriptWatchdog = `
-# --------------------------------------------------------
-# 4. WATCHDOG DE SÉCURITÉ RÉSEAU & AUTO-RECOVERY
-# Redémarrage de secours si panne Internet totale > 5 minutes
-# --------------------------------------------------------
-/system watchdog
-set auto-send-sup-out=no ping-start-after-boot=5m ping-timeout=30s test-script="" watch-address=8.8.8.8
-:log info "==> [JOOWIFI] Routeur initialise avec succes avec le jeton ${token} <=="
-`;
-
-  const fullScriptContent = `${scriptHeader}${scriptWalledGarden}${scriptHeartbeat}${scriptHotspotProfiles}${scriptWatchdog}`;
-
-  // Get active script according to sub-tab
-  const currentDisplayedScript = useMemo(() => {
-    switch (scriptSubTab) {
-      case 'walled':
-        return scriptWalledGarden.trim();
-      case 'heartbeat':
-        return scriptHeartbeat.trim();
-      case 'hotspot':
-        return scriptHotspotProfiles.trim();
-      case 'watchdog':
-        return scriptWatchdog.trim();
-      default:
-        return fullScriptContent;
+  :do {
+    /tool fetch mode=https check-certificate=no keep-result=yes dst-path=$pollFile duration=8s \\
+      url=("https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat?mode=fastpoll&token=" . $token . "&jw_users=" . $jwUsers)
+    :delay 500ms
+    :if ([:len [/file find where name=$pollFile]] > 0) do={
+      :if ([/file get $pollFile size] > 5) do={
+        :do { /import file-name=$pollFile } on-error={}
+      }
+      :do { /file remove $pollFile } on-error={}
     }
-  }, [scriptSubTab, fullScriptContent]);
+  } on-error={}
+}
 
-  // Copy 1-Click Terminal Command
-  const copyTerminal = () => {
-    navigator.clipboard.writeText(terminalOneLiner);
-    setCopiedTerminal(true);
-    setTimeout(() => setCopiedTerminal(false), 2000);
+# 10. Remontee des connexions clients Hotspot (15s) vers Supabase
+:do { /system script remove [find where name="jw_log_watcher"] } on-error={}
+/system script add name="jw_log_watcher" dont-require-permissions=yes comment="JOOWIFI" source={
+  :if ([:len [/system script job find where script="jw_log_watcher"]] > 1) do={ :error "skip" }
+  :global jwSentLogs
+  :if ([:typeof $jwSentLogs] = "nothing") do={ :set jwSentLogs "" }
+
+  :foreach item in=[/log find where topics~"hotspot"] do={
+    :local msg [/log get $item message]
+    :local ltime [/log get $item time]
+    :local evType ""
+    :if ([:find $msg "logged in"] >= 0) do={ :set evType "login" }
+    :if ([:find $msg "login failed"] >= 0) do={ :set evType "failed" }
+
+    :if ($evType != "") do={
+      :local sep [:find $msg " ("]
+      :local ucode $msg
+      :if ($sep >= 0) do={ :set ucode [:pick $msg 0 $sep] }
+      :if ([:len $ucode] > 0 && [:len $ucode] < 32 && [:find $ucode " "] < 0 && [:find $ucode ":"] < 0) do={
+        :local logKey ("[" . $ltime . "|" . $ucode . "|" . $evType . "]")
+        :if ([:find $jwSentLogs $logKey] < 0) do={
+          :set jwSentLogs ($jwSentLogs . $logKey)
+          :do {
+            /tool fetch mode=https check-certificate=no keep-result=no duration=8s \\
+              url=("https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat?mode=authevent&token=${token}&code=" . $ucode . "&event=" . $evType)
+          } on-error={}
+        }
+      }
+    }
+  }
+  :if ([:len $jwSentLogs] > 4000) do={
+    :set jwSentLogs [:pick $jwSentLogs ([:len $jwSentLogs] - 2000) [:len $jwSentLogs]]
+  }
+}
+
+# 11. Planification des Schedulers SANS start-date (compatibilite stricte RouterOS 7.24+)
+:do { /system scheduler add name="jw_heartbeat_sch" interval=45s on-event="jw_heartbeat" comment="JOOWIFI" } on-error={}
+:do { /system scheduler set [find where name="jw_heartbeat_sch"] interval=45s on-event="jw_heartbeat" comment="JOOWIFI" } on-error={}
+
+:do { /system scheduler add name="jw_fastpoll_sch" interval=10s on-event="jw_fastpoll" comment="JOOWIFI" } on-error={}
+:do { /system scheduler set [find where name="jw_fastpoll_sch"] interval=10s on-event="jw_fastpoll" comment="JOOWIFI" } on-error={}
+
+:do { /system scheduler add name="jw_log_watcher_sch" interval=15s on-event="jw_log_watcher" comment="JOOWIFI" } on-error={}
+:do { /system scheduler set [find where name="jw_log_watcher_sch"] interval=15s on-event="jw_log_watcher" comment="JOOWIFI" } on-error={}
+
+# 12. Gardien Auto-Reparateur Independant (jw_guardian - 2m, import differe one-shot)
+:do { /system scheduler remove [find where name="jw_guardian_sch"] } on-error={}
+:do { /system script remove [find where name="jw_guardian"] } on-error={}
+/system script add name="jw_guardian" dont-require-permissions=yes comment="JW_GUARDIAN" source={
+  :if ([:len [/system scheduler find where name="jw_heartbeat_sch"]] = 0) do={
+    :log warning "Joowifi Guardian: jw_heartbeat_sch absent, lancement auto-reparation..."
+    :do {
+      /tool fetch mode=https check-certificate=no keep-result=yes dst-path=jw_repair.rsc duration=15s \\
+        url="https://joowifi-cloud.vercel.app/api/v1/mikrotik/install?token=${token}"
+      :delay 2s
+      :if ([:len [/file find where name="jw_repair.rsc"]] > 0) do={
+        :do { /system scheduler remove [find where name="jw_oneshot_sch"] } on-error={}
+        :do { /system script remove [find where name="jw_oneshot"] } on-error={}
+        /system script add name="jw_oneshot" dont-require-permissions=yes source={
+          :do { /system scheduler remove [find where name="jw_oneshot_sch"] } on-error={}
+          :do { /import file-name=jw_repair.rsc } on-error={}
+          :do { /file remove jw_repair.rsc } on-error={}
+          :do { /system script remove [find where name="jw_oneshot"] } on-error={}
+        }
+        :do { /system scheduler add name="jw_oneshot_sch" interval=5s on-event="jw_oneshot" } on-error={}
+      }
+    } on-error={}
+  }
+}
+:do { /system scheduler add name="jw_guardian_sch" interval=2m on-event="jw_guardian" comment="JW_GUARDIAN" } on-error={}
+
+# 13. Premier appel immediat & confirmation dans Log
+:do { /system script run jw_heartbeat } on-error={}
+:log info "==> [JOOWIFI CLOUD v5.0] Configuration et synchronisation terminees avec succes ! <=="
+`;
+  }, [token, routerName, routerModel, tickets.length, embeddedTicketsRsc, embeddedMacBypassesRsc]);
+
+  const copyAutoCommand = () => {
+    navigator.clipboard.writeText(autoOneLineCommand);
+    setCopiedAutoCmd(true);
+    setTimeout(() => setCopiedAutoCmd(false), 2200);
   };
 
-  // Copy Full Script
   const copyFullScript = () => {
-    navigator.clipboard.writeText(fullScriptContent);
+    navigator.clipboard.writeText(fullBootstrapScript);
     setCopiedFullScript(true);
-    setTimeout(() => setCopiedFullScript(false), 2000);
+    setTimeout(() => setCopiedFullScript(false), 2200);
   };
 
-  // Download .rsc file
-  const downloadRsc = () => {
-    const blob = new Blob([fullScriptContent], { type: 'text/plain;charset=utf-8' });
+  const copyImportCmd = () => {
+    navigator.clipboard.writeText(localWinboxImportCmd);
+    setCopiedImportCmd(true);
+    setTimeout(() => setCopiedImportCmd(false), 2200);
+  };
+
+  const downloadRscFile = () => {
+    const blob = new Blob([fullBootstrapScript], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `joowifi-setup-${token}.rsc`;
+    a.download = `joowifi_install.rsc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 
-  // Simulate Instant Detection / Test
   const handleSimulateConnection = () => {
     const currentZone = zones.find((z) => z.id === selectedZoneId) || zones[0];
-    addRouter({
-      name: routerName,
-      model: routerModel,
-      zoneId: currentZone.id,
-      zoneName: currentZone.name,
-      ipAddress: '192.168.88.1 (Passerelle Hotspot)',
-      cloudDns: `${token.toLowerCase().replace(/[^a-z0-9]/g, '')}.sn.mynetworkname.net`,
-      macAddress: `4C:5E:0C:${Math.floor(10 + Math.random() * 89)}:${Math.floor(
-        10 + Math.random() * 89
-      )}:${Math.floor(10 + Math.random() * 89)}`,
-      routerOsVersion: routerOsVersion === 'v7' ? 'v7.14.3' : 'v6.49.10',
-      status: 'online',
-      uptime: '00j 00h 01m',
-      cpuUsage: 14,
-      ramUsage: 32,
-      temperature: 39,
-      voltage: 24.1,
-      diskFreeMb: 14.5,
-      trafficDownMbps: 18.5,
-      trafficUpMbps: 4.8,
-      totalSubscribers: 1,
-      syncedProfilesCount: 5,
-      lastSyncTime: 'A l\'instant',
-    });
-
-    confetti({
-      particleCount: 70,
-      spread: 70,
-      origin: { y: 0.4 },
-    });
-
+    if (pairingMode === 'new') {
+      addRouter({
+        name: routerName,
+        model: routerModel,
+        zoneId: currentZone.id,
+        zoneName: currentZone.name,
+        ipAddress: '10.5.50.1 (Passerelle Hotspot)',
+        cloudDns: `${token.toLowerCase().replace(/[^a-z0-9]/g, '')}.sn.mynetname.net`,
+        macAddress: `48:A9:8A:${Math.floor(10 + Math.random() * 89)}:${Math.floor(
+          10 + Math.random() * 89
+        )}:${Math.floor(10 + Math.random() * 89)}`,
+        routerOsVersion: 'v7.23.8',
+        status: 'online',
+        uptime: '00j 00h 15m',
+        cpuUsage: 12,
+        ramUsage: 28,
+        temperature: 38,
+        voltage: 24.0,
+        diskFreeMb: 205.9,
+        trafficDownMbps: 22.4,
+        trafficUpMbps: 6.1,
+        totalSubscribers: tickets.length,
+        syncedProfilesCount: 4,
+        lastSyncTime: "À l'instant",
+      });
+    }
+    forceHeartbeatSync();
+    confetti({ particleCount: 70, spread: 70, origin: { y: 0.4 } });
     setInstalledNotice(true);
     setTimeout(() => setInstalledNotice(false), 5000);
   };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Navigation Breadcrumb & Back */}
+      {/* Breadcrumb */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-slate-400">
           <button
             onClick={() => setAdminTab('mikrotik')}
-            className="text-slate-400 hover:text-white flex items-center gap-1 font-semibold transition cursor-pointer"
+            className="text-slate-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Routeurs MikroTik</span>
+            <span>CONSOLE</span>
           </button>
           <span>/</span>
-          <span className="text-amber-400 font-semibold flex items-center gap-1">
-            <Terminal className="w-3.5 h-3.5" />
-            Assistant d'Installation
-          </span>
+          <span className="text-amber-500">INSTALLATION MIKROTIK</span>
         </div>
 
         <button
           onClick={() => setAdminTab('mikrotik')}
-          className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
         >
           <RouterIcon className="w-3.5 h-3.5 text-amber-400" />
-          <span>Voir le Parc ({routers.length})</span>
+          <span>Voir mes routeurs ({routers.length})</span>
         </button>
       </div>
 
-      {/* Main Header Banner */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-950 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-2">
-            <Zap className="w-3 h-3 text-amber-400" />
-            <span>ONBOARDING ROUTEROS JOOWIFI v7 & v6.49+</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
-            <span>Assistant d'Installation MikroTik</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Déployez l'agent Joowifi sur votre routeur en 30 secondes. Modèle sécurisé 100% sortant HTTPS, sans ouvrir de port WAN.
-          </p>
-        </div>
-
-        <button
-          onClick={regenerateToken}
-          className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-2 transition cursor-pointer self-start md:self-auto border border-slate-700"
-          title="Générer un nouveau jeton cryptographique"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-          <span>Régénérer le jeton</span>
-        </button>
+      {/* Title Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
+          <Download className="w-7 h-7 text-amber-500" />
+          <span>Installation MikroTik (Engine v5.0)</span>
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          Connectez votre routeur MikroTik (physique ou virtuel CHR WinBox) à Joowifi Cloud en 2 minutes chrono.
+        </p>
       </div>
 
-      {/* Success Notification Banner */}
       {installedNotice && (
-        <div className="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in shadow-xl">
+        <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
             <div>
               <strong className="text-emerald-300 text-sm block">
-                Routeur appairé et synchronisé avec succès !
+                Synchronisation Cloud & Base Supabase (12 tables) effectuée !
               </strong>
               <span>
-                Votre nouvel équipement <strong>{routerName}</strong> apparaît désormais en direct dans le parc MikroTik.
+                Tous vos tickets ({tickets.length}) et profils Hotspot sont prêts pour le routeur <strong>{routerName}</strong>.
               </span>
             </div>
           </div>
           <button
             onClick={() => setAdminTab('mikrotik')}
-            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer shadow-md"
+            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer"
           >
-            Voir dans la liste →
+            Voir le routeur →
           </button>
         </div>
       )}
 
-      {/* Equipment Configuration & Token Box */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Step 1: Target Router Setup */}
-        <div className="lg:col-span-2 p-6 rounded-2xl glass-card border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center border border-amber-500/30">
-                1
-              </span>
-              <h2 className="text-sm font-bold text-white">
-                Configuration de l'équipement cible
-              </h2>
-            </div>
+      {/* Main 2-Column Layout inspired by clean SaaS standard */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Columns: Script de connexion RouterOS */}
+        <div className="lg:col-span-2 p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Terminal className="w-5 h-5 text-amber-500" />
+              <span>Script de connexion RouterOS</span>
+            </h2>
 
-            {/* Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950 border border-slate-800 text-[11px]">
-              <button
-                type="button"
-                onClick={() => setPairingMode('new')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                  pairingMode === 'new'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Nouveau Routeur
-              </button>
-              <button
-                type="button"
-                onClick={() => setPairingMode('existing')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                  pairingMode === 'existing'
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Routeur Existant
-              </button>
-            </div>
+            {/* Selector for target router */}
+            <select
+              value={selectedExistingRouterId}
+              onChange={(e) => handleSelectExisting(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-amber-500 cursor-pointer"
+            >
+              {routers.map((r) => (
+                <option key={r.id} value={r.id}>
+                  Routeur : {r.name} ({r.installToken})
+                </option>
+              ))}
+            </select>
           </div>
 
-          {pairingMode === 'existing' ? (
-            <div className="space-y-3">
-              <label className="text-xs text-slate-300 font-semibold block">
-                Sélectionner le routeur à réinstaller ou synchroniser :
-              </label>
-              <select
-                value={selectedExistingRouterId}
-                onChange={(e) => handleSelectExisting(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
-              >
-                {routers.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name} — {r.zoneName} ({r.model || 'MikroTik'})
-                  </option>
-                ))}
-              </select>
-              <p className="text-[11px] text-slate-400">
-                Le jeton associé à cet équipement a été chargé automatiquement ci-dessous.
+          {/* 2 Big Method Tabs: Méthode 1 (Commande Automatique) vs Méthode 2 (Script Complet) */}
+          <div className="grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-slate-950 border border-slate-800/90">
+            <button
+              type="button"
+              onClick={() => setInstallMethodTab('auto')}
+              className={`py-2.5 px-4 rounded-lg text-xs font-bold transition cursor-pointer ${
+                installMethodTab === 'auto'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Méthode 1 : Commande Automatique
+            </button>
+            <button
+              type="button"
+              onClick={() => setInstallMethodTab('full')}
+              className={`py-2.5 px-4 rounded-lg text-xs font-bold transition cursor-pointer ${
+                installMethodTab === 'full'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Méthode 2 : Script Complet ({tickets.length} tickets inclus)
+            </button>
+          </div>
+
+          {installMethodTab === 'auto' ? (
+            <div className="space-y-4">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Ouvrez le terminal de votre MikroTik (<strong>WinBox &rarr; New Terminal</strong> ou SSH) et collez cette commande. Elle télécharge et exécute automatiquement le script de configuration complet ainsi que vos <strong>{tickets.length} tickets actifs</strong>.
               </p>
+
+              {/* RouterOS Version & Device-Mode Warning Box */}
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs leading-relaxed space-y-1">
+                <div className="font-bold text-amber-400 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Compatible RouterOS 6.49+ et RouterOS 7.x (dont v7.23 / v7.24)</span>
+                </div>
+                <p className="text-[11px] text-amber-200/80">
+                  Sur <strong>RouterOS 7</strong>, si le terminal affiche <code className="text-amber-300">not allowed by device-mode</code>, tapez d'abord <code className="text-white font-mono bg-slate-950/70 px-1.5 py-0.5 rounded">/system/device-mode/update mode=enterprise</code> puis redémarrez le routeur.
+                </p>
+              </div>
+
+              {/* Orange/Amber Code Box with Copy Button */}
+              <div className="relative p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-amber-400 leading-relaxed break-all pr-12 shadow-inner">
+                {autoOneLineCommand}
+                <button
+                  onClick={copyAutoCommand}
+                  className="absolute right-3 top-3 p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer"
+                  title="Copier la commande automatique"
+                >
+                  {copiedAutoCmd ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs text-slate-400">
+                <div className="flex items-center gap-2">
+                  <Play className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>
+                    Le routeur va créer les profils, injecter vos <strong>{tickets.length} tickets</strong> dans <code className="text-slate-200">IP &rarr; Hotspot &rarr; Users</code> et démarrer le Fast-Poll (10s).
+                  </span>
+                </div>
+                <button
+                  onClick={copyAutoCommand}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer"
+                >
+                  {copiedAutoCmd ? 'Copié !' : 'Copier'}
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-slate-300 font-semibold">Nom du Hotspot / Emplacement :</label>
-                <input
-                  type="text"
-                  value={routerName}
-                  onChange={(e) => setRouterName(e.target.value)}
-                  placeholder="ex: Hotspot Carrefour Angré"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Modèle MikroTik :</label>
-                <input
-                  type="text"
-                  value={routerModel}
-                  onChange={(e) => setRouterModel(e.target.value)}
-                  placeholder="ex: MikroTik hEX S (RB760iGS)"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Zone d'affectation :</label>
-                <select
-                  value={selectedZoneId}
-                  onChange={(e) => setSelectedZoneId(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-slate-300">
+                  Copiez l'intégralité du script ci-dessous et collez-le directement dans <strong>WinBox &rarr; New Terminal</strong> (fonctionne même sans connexion Internet sur VirtualBox !).
+                </p>
+                <button
+                  onClick={copyFullScript}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
                 >
-                  {zones.map((z) => (
-                    <option key={z.id} value={z.id}>
-                      {z.name} ({z.city})
-                    </option>
-                  ))}
-                </select>
+                  {copiedFullScript ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Script Complet Copié !</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copier tout le Script</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Version RouterOS installée :</label>
-                <select
-                  value={routerOsVersion}
-                  onChange={(e) => setRouterOsVersion(e.target.value as any)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
-                >
-                  <option value="v7">RouterOS v7.x (Recommandé - Fetch moderne)</option>
-                  <option value="v6.49">RouterOS v6.49+ LTS (Stable)</option>
-                  <option value="v6.44">RouterOS v6.44+</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Interface Hotspot (LAN) :</label>
-                <input
-                  type="text"
-                  value={hotspotInterface}
-                  onChange={(e) => setHotspotInterface(e.target.value)}
-                  placeholder="bridge-hotspot, ether2, etc."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs font-mono"
-                />
+              <div className="relative">
+                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-amber-400/95 max-h-80 overflow-y-auto leading-relaxed select-all">
+                  {fullBootstrapScript}
+                </pre>
               </div>
             </div>
           )}
         </div>
 
-        {/* Step 1-B: Token Security Card */}
-        <div className="p-6 rounded-2xl glass-card border border-slate-800 bg-slate-900/80 flex flex-col justify-between space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-amber-400" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Jeton Unique de Liaison
-                </h3>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            </div>
-
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Ce jeton cryptographique identifie de façon exclusive votre équipement auprès du Cloud Joowifi.
+        {/* Right Column: Token Box & Diagnostic Help */}
+        <div className="space-y-5">
+          {/* Token Card */}
+          <div className="p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <Key className="w-4 h-4 text-amber-500" />
+              <span>VOTRE JETON D'INSTALLATION</span>
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Ce jeton est unique à votre équipement. Il authentifie les requêtes Heartbeat (45s), Fast-Poll (10s) et la réconciliation automatique de vos tickets avec Supabase.
             </p>
 
             <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
-              <span className="font-mono font-bold text-amber-400 text-sm tracking-wide">
+              <span className="font-mono font-bold text-white text-sm tracking-wider">
                 {showToken ? token : 'JWT-••••-••••-••••'}
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setShowToken(!showToken)}
-                  className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
-                  title={showToken ? 'Masquer' : 'Afficher'}
+                  className="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white cursor-pointer"
                 >
                   {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -503,357 +603,136 @@ set auto-send-sup-out=no ping-start-after-boot=5m ping-timeout=30s test-script="
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(token);
-                    setCopiedTerminal(true);
-                    setTimeout(() => setCopiedTerminal(false), 2000);
+                    setCopiedToken(true);
+                    setTimeout(() => setCopiedToken(false), 2000);
                   }}
-                  className="p-1 rounded text-amber-400 hover:text-amber-300 cursor-pointer"
+                  className="p-1.5 rounded-lg bg-slate-900 text-amber-400 hover:text-amber-300 cursor-pointer"
                   title="Copier le jeton"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-slate-400">
-              <div className="flex items-center gap-1.5 text-emerald-400">
-                <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                <span>Chiffrement TLS 1.3 de bout en bout</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-slate-500" />
-                <span>Révocable à tout moment depuis la console</span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={regenerateToken}
-            className="w-full py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700"
-          >
-            <RefreshCw className="w-3 h-3 text-amber-400" />
-            <span>Changer de jeton</span>
-          </button>
-        </div>
-      </div>
-
-      {/* METHOD 1: 1-Click Terminal Command */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800 space-y-4 relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center border border-cyan-500/30">
-              2
-            </span>
-            <div>
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <span>Méthode 1 : Commande Terminal 1-Clic (Recommandé)</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
-                  Ultra-rapide
-                </span>
-              </h2>
-            </div>
-          </div>
-
-          <button
-            onClick={copyTerminal}
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 shrink-0 transition cursor-pointer shadow-lg shadow-blue-600/20 active:scale-95 self-start sm:self-auto"
-          >
-            {copiedTerminal ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Copié dans le presse-papier !</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copier la commande 1-Clic</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        <p className="text-xs text-slate-300">
-          Ouvrez <strong>WinBox</strong> ou connectez-vous en <strong>SSH</strong>, cliquez sur <strong>New Terminal</strong>, collez cette ligne et appuyez sur <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono text-slate-200">Entrée</kbd> :
-        </p>
-
-        {/* Command Box */}
-        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 font-mono text-xs shadow-inner">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap text-cyan-300">
-            <span className="text-slate-600 select-none">&gt;</span>
-            <span>{terminalOneLiner}</span>
-          </div>
-
-          <button
-            onClick={copyTerminal}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 cursor-pointer"
-            title="Copier"
-          >
-            {copiedTerminal ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* 3 Step Visual Steps */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-850 flex items-start gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 font-bold text-[10px] flex items-center justify-center shrink-0">
-              1
-            </span>
-            <div className="text-[11px] text-slate-400">
-              <strong className="text-slate-200 block">Ouvrir WinBox</strong>
-              Connectez-vous en MAC ou IP sur votre équipement.
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-850 flex items-start gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 font-bold text-[10px] flex items-center justify-center shrink-0">
-              2
-            </span>
-            <div className="text-[11px] text-slate-400">
-              <strong className="text-slate-200 block">New Terminal</strong>
-              Cliquez sur le menu terminal dans la barre de gauche.
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-850 flex items-start gap-2.5">
-            <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 font-bold text-[10px] flex items-center justify-center shrink-0">
-              3
-            </span>
-            <div className="text-[11px] text-slate-400">
-              <strong className="text-slate-200 block">Coller & Valider</strong>
-              Faites un clic droit pour coller et appuyez sur Entrée.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* METHOD 2: Full RouterOS Script Viewer (.rsc) with Sub-tabs */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/30">
-              3
-            </span>
-            <h2 className="text-sm font-bold text-white">
-              Méthode 2 : Script Complet RouterOS (.rsc)
-            </h2>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={downloadRsc}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-600/20"
+              type="button"
+              onClick={handleSimulateConnection}
+              className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Télécharger .rsc</span>
-            </button>
-
-            <button
-              onClick={copyFullScript}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer border border-slate-700"
-            >
-              {copiedFullScript ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Script Copié !</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copier le Script</span>
-                </>
-              )}
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Forcer la synchro des {tickets.length} tickets vers Supabase</span>
             </button>
           </div>
-        </div>
 
-        {/* Script Section Sub-tabs */}
-        <div className="flex flex-wrap gap-1.5 border-b border-slate-850 pb-2 text-xs">
-          <button
-            onClick={() => setScriptSubTab('full')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-              scriptSubTab === 'full'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            Fichier Complet (.rsc)
-          </button>
-          <button
-            onClick={() => setScriptSubTab('walled')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-              scriptSubTab === 'walled'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            1. Walled Garden
-          </button>
-          <button
-            onClick={() => setScriptSubTab('heartbeat')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-              scriptSubTab === 'heartbeat'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            2. Heartbeat Cloud (45s)
-          </button>
-          <button
-            onClick={() => setScriptSubTab('hotspot')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-              scriptSubTab === 'hotspot'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            3. Profils & MAC Cookie
-          </button>
-          <button
-            onClick={() => setScriptSubTab('watchdog')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-              scriptSubTab === 'watchdog'
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            4. Watchdog & Secours
-          </button>
-        </div>
-
-        {/* Script Viewer Container */}
-        <div className="relative">
-          <pre className="p-4 sm:p-5 rounded-xl bg-slate-950 border border-slate-850 text-xs font-mono text-slate-300 max-h-72 overflow-y-auto leading-relaxed select-all">
-            {currentDisplayedScript}
-          </pre>
-          <span className="absolute right-3 top-3 text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900/80 text-slate-500 border border-slate-800">
-            RouterOS Script syntax
-          </span>
+          {/* Help Card */}
+          <div className="p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-3">
+            <h3 className="text-xs font-bold text-white flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-amber-500" />
+              <span>Besoin d'aide (WinBox / VirtualBox) ?</span>
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Si vous testez sur <strong>VirtualBox (MikroTik CHR)</strong> et que <code className="text-slate-200">/tool fetch</code> n'arrive pas à sortir sur Internet, utilisez directement l'onglet <strong>Méthode 2 : Script Complet</strong> ou l'installation par fichier ci-dessous : vos <strong>{tickets.length} tickets</strong> y sont déjà intégrés !
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* METHOD 3: WinBox Drag & Drop Guide */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-          <FolderDown className="w-5 h-5 text-purple-400" />
-          <h2 className="text-sm sm:text-base font-bold text-white">
-            Méthode 3 : Glisser-Déposer dans WinBox (Alternative Offline)
+      {/* Alternative Method: Local WinBox Drag & Drop (3 Steps) */}
+      <div className="p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-5">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <FolderDown className="w-5 h-5 text-amber-500" />
+            <span>Méthode alternative : Installation par WinBox (Recommandée en local / VirtualBox)</span>
           </h2>
-        </div>
-
-        <p className="text-xs text-slate-300">
-          Si votre routeur n'a pas accès direct à Internet au moment de l'initialisation, vous pouvez transférer le fichier directement via l'explorateur WinBox :
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-850 space-y-2">
-            <span className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center border border-purple-500/30">
-              1
-            </span>
-            <strong className="text-white block font-semibold">Télécharger le fichier</strong>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Cliquez sur le bouton "Télécharger .rsc" ci-dessus pour obtenir <code className="text-amber-400">joowifi-setup-{token}.rsc</code>.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-850 space-y-2">
-            <span className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center border border-purple-500/30">
-              2
-            </span>
-            <strong className="text-white block font-semibold">Glisser dans Files</strong>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Dans WinBox, ouvrez le menu <strong>Files</strong>, puis glissez-déposez le fichier <code className="text-cyan-300">.rsc</code> directement dans la fenêtre.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-850 space-y-2">
-            <span className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-300 font-bold text-xs flex items-center justify-center border border-purple-500/30">
-              3
-            </span>
-            <strong className="text-white block font-semibold">Exécuter l'import</strong>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Dans le Terminal WinBox, tapez :<br />
-              <code className="text-emerald-400 font-mono text-[11px]">/import file=joowifi-setup-{token}.rsc</code>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* TECHNICAL EXPLANATIONS & NETWORK SECURITY */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950 space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-          <ShieldCheck className="w-5 h-5 text-emerald-400" />
-          <h2 className="text-sm sm:text-base font-bold text-white">
-            Architecture Réseau & Règles de Sécurité Technique
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          {/* Card 1 */}
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-1.5">
-            <div className="flex items-center gap-2 text-amber-400 font-bold">
-              <Globe className="w-4 h-4" />
-              <span>Walled Garden Sécurisé</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Autorise les URL du portail captif et des passerelles Mobile Money (Wave, Orange, MTN, Moov) sans nécessiter de forfait préalable.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-1.5">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold">
-              <Zap className="w-4 h-4" />
-              <span>Zero-Trust Sortant</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Le routeur contacte le cloud en HTTPS sortant toutes les 45s. Aucun port entrant n'est ouvert sur le WAN (protection contre les scans et attaques par force brute).
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-1.5">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold">
-              <Smartphone className="w-4 h-4" />
-              <span>MAC Cookie 30 Jours</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Reconnexion automatique transparente des smartphones tant que le forfait reste valide, sans ressaisir le code ticket.
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-1.5">
-            <div className="flex items-center gap-2 text-purple-400 font-bold">
-              <Sliders className="w-4 h-4" />
-              <span>Simple Queues Débit</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Application automatique des limites de débit descendant/montant pour chaque utilisateur selon le forfait acheté.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* LIVE TEST & VERIFICATION BAR */}
-      <div className="p-5 sm:p-6 rounded-2xl glass-card border border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <h3 className="text-sm font-bold text-white">Tester l'intégration immédiatement</h3>
-          </div>
-          <p className="text-xs text-slate-400">
-            Vous n'avez pas de matériel MikroTik sous la main ? Simulez le premier Heartbeat du routeur pour valider le flux complet.
+          <p className="text-xs text-slate-400 mt-1">
+            Si votre routeur MikroTik n'a pas encore accès à Internet, installez le script et vos {tickets.length} tickets manuellement via l'interface graphique WinBox :
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSimulateConnection}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95 shrink-0"
-          >
-            <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-            <span>Simuler la détection (Test Live)</span>
-          </button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Étape 1 */}
+          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-500">
+                ÉTAPE 1
+              </span>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Téléchargez le fichier de configuration personnalisé (<code className="text-amber-400">joowifi_install.rsc</code>) contenant déjà vos forfaits et vos <strong>{tickets.length} tickets</strong> :
+              </p>
+            </div>
+            <button
+              onClick={downloadRscFile}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/15"
+            >
+              <Download className="w-4 h-4 stroke-[2.5]" />
+              <span>Télécharger le script (.rsc)</span>
+            </button>
+          </div>
+
+          {/* Étape 2 */}
+          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-500">
+                ÉTAPE 2
+              </span>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Ouvrez <strong>WinBox</strong>, cliquez sur <strong>Files</strong> dans le menu de gauche, et faites un <strong>glisser-déposer</strong> du fichier <code className="text-white font-mono">joowifi_install.rsc</code> directement dans la liste des fichiers.
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
+              <FileCode className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Fichier : <strong className="text-slate-200">joowifi_install.rsc</strong></span>
+            </div>
+          </div>
+
+          {/* Étape 3 */}
+          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col justify-between space-y-4">
+            <div className="space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-amber-500">
+                ÉTAPE 3
+              </span>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Ouvrez un <strong>New Terminal</strong> dans WinBox et exécutez la commande d'importation suivante :
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 font-mono text-xs text-amber-400">
+              <span className="truncate">{localWinboxImportCmd}</span>
+              <button
+                onClick={copyImportCmd}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 cursor-pointer"
+                title="Copier la commande d'importation"
+              >
+                {copiedImportCmd ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Ce que fait le script v5.0 */}
+        <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">
+            CE QUE FAIT LE MOTEUR JOOWIFI ENGINE v5.0 :
+          </h3>
+          <ul className="space-y-2 text-xs text-slate-300">
+            <li className="flex items-start gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span>
+                <strong className="text-white">Double Canal Cloud Pull (Fast-Poll 10s + Heartbeat 45s) :</strong> Le routeur récupère les nouveaux tickets vendus en Caisse POS en moins de 10 secondes sans ouvrir aucun port entrant (compatible Starlink, 4G, CGNAT).
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span>
+                <strong className="text-white">Réconciliation Automatique d'Inventaire & Auto-Guérison (Guardian 2m) :</strong> Si le routeur est neuf ou réinitialisé, il compare son nombre de tickets <code className="text-amber-400">JW:</code> avec Supabase et télécharge automatiquement tous les tickets manquants dans <code className="text-amber-400">IP &rarr; Hotspot &rarr; Users</code>.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+              <span>
+                <strong className="text-white">Exclusion FastTrack, Bail DHCP 1h & Cookie MAC 30j :</strong> Préserve les limitations de débit de vos forfaits, évite la saturation du pool de 253 adresses IP et reconnecte automatiquement vos clients sans ressaisir leur code.
+              </span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

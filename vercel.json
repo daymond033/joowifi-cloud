@@ -1,19 +1,27 @@
 {
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    }
+  ],
   "rewrites": [
     {
+      "source": "/api/v1/mikrotik/install",
+      "destination": "/api/install.js"
+    },
+    {
       "source": "/api/v1/mikrotik/heartbeat",
-      "destination": "/api/heartbeat"
+      "destination": "/api/heartbeat.js"
     },
     {
       "source": "/api/supabase",
-      "destination": "/api/supabase"
+      "destination": "/api/supabase.js"
     },
     {
-      "source": "/pos",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/dashboard",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
