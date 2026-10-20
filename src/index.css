@@ -1,12 +1,56 @@
 @import "tailwindcss";
 
+:root,
+[data-jw-theme="emerald"] {
+  --jw-bg-primary: #040812;
+  --jw-bg-secondary: #091020;
+  --jw-card-bg: rgba(11, 20, 38, 0.76);
+  --jw-panel-bg: rgba(7, 13, 26, 0.88);
+  --jw-border: rgba(56, 189, 248, 0.14);
+  --jw-accent: #10b981;
+  --jw-accent-light: #34d399;
+  --jw-accent-secondary: #06b6d4;
+  --jw-accent-glow: rgba(16, 185, 129, 0.24);
+  --jw-text-main: #f8fafc;
+}
+
+[data-jw-theme="indigo"] {
+  --jw-bg-primary: #060714;
+  --jw-bg-secondary: #0d1026;
+  --jw-card-bg: rgba(16, 19, 44, 0.78);
+  --jw-panel-bg: rgba(10, 12, 30, 0.9);
+  --jw-border: rgba(129, 140, 248, 0.16);
+  --jw-accent: #6366f1;
+  --jw-accent-light: #818cf8;
+  --jw-accent-secondary: #06b6d4;
+  --jw-accent-glow: rgba(99, 102, 241, 0.26);
+  --jw-text-main: #f8fafc;
+}
+
+[data-jw-theme="sunset"] {
+  --jw-bg-primary: #080a12;
+  --jw-bg-secondary: #101524;
+  --jw-card-bg: rgba(17, 23, 39, 0.78);
+  --jw-panel-bg: rgba(11, 15, 25, 0.9);
+  --jw-border: rgba(244, 63, 94, 0.15);
+  --jw-accent: #f43f5e;
+  --jw-accent-light: #fb7185;
+  --jw-accent-secondary: #8b5cf6;
+  --jw-accent-glow: rgba(244, 63, 94, 0.24);
+  --jw-text-main: #f8fafc;
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #070A12;
-    color: #F8FAFC;
+    background-color: var(--jw-bg-primary);
+    color: var(--jw-text-main);
+    background-image:
+      radial-gradient(at 0% 0%, var(--jw-accent-glow) 0px, transparent 45%),
+      radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.12) 0px, transparent 45%);
+    background-attachment: fixed;
   }
-  
+
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
@@ -16,34 +60,111 @@
   }
 }
 
-/* Glassmorphism & dark theme utility helpers */
+/* Global Dynamic Accent Remapping: dissociates all 22 views from legacy orange/amber into Joowifi Cyber-Emerald / Indigo */
+[data-jw-theme="emerald"] .text-amber-400,
+[data-jw-theme="emerald"] .text-amber-500 {
+  color: #34d399 !important;
+}
+[data-jw-theme="emerald"] .bg-amber-500 {
+  background-color: #10b981 !important;
+}
+[data-jw-theme="emerald"] .hover\:bg-amber-400:hover {
+  background-color: #34d399 !important;
+}
+[data-jw-theme="emerald"] .bg-amber-500\/10,
+[data-jw-theme="emerald"] .bg-amber-500\/15,
+[data-jw-theme="emerald"] .bg-amber-500\/20 {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+}
+[data-jw-theme="emerald"] .border-amber-500,
+[data-jw-theme="emerald"] .border-amber-500\/20,
+[data-jw-theme="emerald"] .border-amber-500\/25,
+[data-jw-theme="emerald"] .border-amber-500\/30,
+[data-jw-theme="emerald"] .border-amber-500\/40 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+[data-jw-theme="emerald"] .from-amber-500 {
+  --tw-gradient-from: #10b981 !important;
+}
+[data-jw-theme="emerald"] .to-orange-600,
+[data-jw-theme="emerald"] .to-amber-600 {
+  --tw-gradient-to: #0891b2 !important;
+}
+
+[data-jw-theme="indigo"] .text-amber-400,
+[data-jw-theme="indigo"] .text-amber-500 {
+  color: #818cf8 !important;
+}
+[data-jw-theme="indigo"] .bg-amber-500 {
+  background-color: #6366f1 !important;
+}
+[data-jw-theme="indigo"] .hover\:bg-amber-400:hover {
+  background-color: #818cf8 !important;
+}
+[data-jw-theme="indigo"] .bg-amber-500\/10,
+[data-jw-theme="indigo"] .bg-amber-500\/15,
+[data-jw-theme="indigo"] .bg-amber-500\/20 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+}
+[data-jw-theme="indigo"] .border-amber-500,
+[data-jw-theme="indigo"] .border-amber-500\/20,
+[data-jw-theme="indigo"] .border-amber-500\/25,
+[data-jw-theme="indigo"] .border-amber-500\/30,
+[data-jw-theme="indigo"] .border-amber-500\/40 {
+  border-color: rgba(99, 102, 241, 0.38) !important;
+}
+[data-jw-theme="indigo"] .from-amber-500 {
+  --tw-gradient-from: #6366f1 !important;
+}
+[data-jw-theme="indigo"] .to-orange-600,
+[data-jw-theme="indigo"] .to-amber-600 {
+  --tw-gradient-to: #06b6d4 !important;
+}
+
+/* Bento & Aurora Glassmorphism Surfaces */
 .glass-panel {
-  background: rgba(11, 15, 25, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--jw-panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--jw-border);
 }
 
 .glass-card {
-  background: rgba(15, 20, 32, 0.7);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--jw-card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--jw-border);
+  box-shadow: 0 18px 40px -15px rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(52, 211, 153, 0.26);
+}
+
+.bento-card {
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.85) 0%, rgba(8, 14, 28, 0.92) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 45px -18px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-dropdown {
-  background: rgba(11, 15, 25, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 13, 26, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
-.glow-orange-soft {
-  box-shadow: 0 0 60px -12px rgba(249, 115, 22, 0.2);
+@keyframes pulse-flow {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0; }
 }
 
-.glow-ambient {
-  box-shadow: 0 0 80px -20px rgba(234, 88, 12, 0.22);
+.animate-data-flow {
+  animation: pulse-flow 2.4s infinite linear;
 }
 
 /* Custom subtle scrollbar */
@@ -52,14 +173,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(11, 15, 25, 0.6);
+  background: rgba(6, 10, 20, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(52, 211, 153, 0.25);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.45);
+  background: rgba(52, 211, 153, 0.45);
 }
 
 /* Print thermal ticket styles */
@@ -88,5 +209,3 @@
     background: #ffffff !important;
   }
 }
-
-
