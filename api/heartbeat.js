@@ -1,7 +1,7 @@
 // ============================================================================
-// JOOWIFI CLOUD v5.0 — ENDPOINT UNIFIE : HEARTBEAT (45s), FASTPOLL (10s) & AUTH
+// JOOWIFI CLOUD v5.1 — ENDPOINT HEARTBEAT (45s), FASTPOLL (10s) & AUTH-EVENTS
 // URL : https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat
-// Inclut la Réconciliation Automatique d'Inventaire avec public.tickets (Supabase)
+// Inclut l'Acknowledgment (router_synced) + Re-sync auto si routeur vide (jw_users=0)
 // ============================================================================
 
 export default async function handler(req, res) {
@@ -76,12 +76,18 @@ export default async function handler(req, res) {
       return res.status(200).send(`# [JOOWIFI] Auth event recorded (${code})\n`);
     }
 
-    const outputLines = [
-      ':do { /ip hotspot user profile add name="joowifi-standard" rate-limit="10M/3M" shared-users=1000 mac-cookie-timeout=30d } on-error={}',
-      ':do { /ip hotspot user profile add name="joowifi-vip" rate-limit="25M/8M" shared-users=1000 mac-cookie-timeout=30d } on-error={}',
-    ];
+    // 2. Si le routeur signale explicitement jw_users=0 (mémoire Hotspot vide suite à un reset ou 1ère install),
+    // on réarme router_synced = false dans public.tickets pour forcer l'envoi initial complet !
+    if (jwUsersParam === 0) {
+      await fetch(`${supabaseUrl}/rest/v1/tickets?status=neq.expire`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ router_synced: false }),
+      });
+    }
 
-    // 2. Exécuter le RPC mikrotik_heartbeat pour récupérer les commandes 'pending'
+    // 3. Appeler la fonction RPC public.mikrotik_heartbeat (qui dépile heartbeat_commands + tickets non synchronisés
+    // et passe automatiquement router_synced = true pour éviter toute boucle !)
     const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/mikrotik_heartbeat`, {
       method: 'POST',
       headers,
@@ -98,51 +104,11 @@ export default async function handler(req, res) {
     if (rpcRes.ok) {
       const scriptResult = await rpcRes.json();
       if (typeof scriptResult === 'string' && scriptResult.trim() !== '') {
-        const rawLines = scriptResult.split('\n').map((l) => l.trim()).filter(Boolean);
-        for (const line of rawLines) {
-          if (line.startsWith('#')) {
-            outputLines.push(line);
-          } else if (line.startsWith(':do {')) {
-            outputLines.push(line);
-          } else {
-            outputLines.push(`:do { ${line} } on-error={}`);
-          }
-        }
+        return res.status(200).send(`${scriptResult.trim()}\n`);
       }
     }
 
-    // 3. RECONCILIATION D'INVENTAIRE AUTOMATIQUE :
-    // Si le routeur a moins de tickets en mémoire que la table public.tickets (ou s'il vient d'être installé dans WinBox),
-    // on lui envoie tous les tickets actifs/vendeur/stock de public.tickets !
-    const ticketsRes = await fetch(
-      `${supabaseUrl}/rest/v1/tickets?select=code,password,forfait_id,price_xof,duration_label,status&limit=500`,
-      { method: 'GET', headers }
-    );
-
-    if (ticketsRes.ok) {
-      const tickets = await ticketsRes.json();
-      if (Array.isArray(tickets) && tickets.length > 0) {
-        const validTickets = tickets.filter(
-          (t) => t && t.code && t.status !== 'expire' && t.status !== 'bloque'
-        );
-        if (jwUsersParam < 0 || jwUsersParam < validTickets.length) {
-          for (const t of validTickets) {
-            const code = String(t.code).replace(/"/g, '');
-            const pwd = String(t.password || t.code).replace(/"/g, '');
-            const dur = String(t.duration_label || '24h').replace(/"/g, '').replace('j', 'd');
-            const prof = String(t.forfait_id || '').toLowerCase().includes('vip')
-              ? 'joowifi-vip'
-              : 'joowifi-standard';
-            const comment = `JW:${String(t.forfait_id || 'Pass WiFi').replace(/"/g, '')} (${t.price_xof || 0}F)`;
-            outputLines.push(
-              `:do { /ip hotspot user add name="${code}" password="${pwd}" profile="${prof}" limit-uptime="${dur}" comment="${comment}" } on-error={}`
-            );
-          }
-        }
-      }
-    }
-
-    return res.status(200).send(outputLines.join('\n') + '\n');
+    return res.status(200).send(`# [JOOWIFI] Heartbeat OK - Aucune commande en attente\n`);
   } catch (err) {
     return res.status(200).send(`# [JOOWIFI] Heartbeat secours OK (${token})\n`);
   }

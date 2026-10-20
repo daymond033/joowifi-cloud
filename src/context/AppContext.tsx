@@ -877,10 +877,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTickets((prev) => [...newTickets, ...prev]);
     syncTicketsToSupabase(newTickets);
     if (newTickets.length > 0) {
-      enqueueRouterCommand(
-        'ADD_TICKET',
-        `/ip hotspot user add name="${newTickets[0].code}" password="${newTickets[0].pin || newTickets[0].code}" profile="jw-prof-${forfait.id}" limit-uptime="${forfait.durationHours}h" comment="Lot ${batchId} (+${newTickets.length} tickets)"`
-      );
+      const profName = forfait.name.toLowerCase().includes('vip') ? 'joowifi-vip' : 'joowifi-standard';
+      const batchScript = newTickets
+        .map(
+          (t) =>
+            `:do { /ip hotspot user add name="${t.code}" password="${t.code}" profile="${profName}" limit-uptime="${forfait.durationHours}h" comment="JW:${forfait.name} (${forfait.price}F)" } on-error={}`
+        )
+        .join('\n');
+      enqueueRouterCommand('ADD_TICKET', batchScript);
     }
     addAuditLog(
       'Génération de tickets',
@@ -956,9 +960,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
+    const posProfName = forfait.name.toLowerCase().includes('vip') ? 'joowifi-vip' : 'joowifi-standard';
     enqueueRouterCommand(
       'ADD_TICKET',
-      `/ip hotspot user add name="${newTicket.code}" password="${newTicket.code}" profile="jw-prof-${forfait.id}" limit-uptime="${forfait.durationHours}h" comment="POS: ${activeStaff.name}"`,
+      `:do { /ip hotspot user add name="${newTicket.code}" password="${newTicket.code}" profile="${posProfName}" limit-uptime="${forfait.durationHours}h" comment="JW:POS ${activeStaff.name} (${forfait.price}F)" } on-error={}`,
       activeStaff.zoneName
     );
     addAuditLog(
