@@ -393,28 +393,28 @@ ${embeddedMacBypassesRsc}
         <div className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-slate-400">
           <button
             onClick={() => setAdminTab('mikrotik')}
-            className="text-slate-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
+            className="text-slate-400 hover:text-slate-800 flex items-center gap-1 transition cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>CONSOLE</span>
           </button>
           <span>/</span>
-          <span className="text-amber-500">INSTALLATION MIKROTIK</span>
+          <span className="text-[#007A78]">INSTALLATION MIKROTIK</span>
         </div>
 
         <button
           onClick={() => setAdminTab('mikrotik')}
-          className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
         >
-          <RouterIcon className="w-3.5 h-3.5 text-amber-400" />
+          <RouterIcon className="w-3.5 h-3.5 text-[#007A78]" />
           <span>Voir mes routeurs ({routers.length})</span>
         </button>
       </div>
 
       {/* Title Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
-          <Download className="w-7 h-7 text-amber-500" />
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 flex items-center gap-3">
+          <Download className="w-7 h-7 text-[#007A78]" />
           <span>Installation MikroTik (Engine v5.0)</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -423,11 +423,11 @@ ${embeddedMacBypassesRsc}
       </div>
 
       {installedNotice && (
-        <div className="p-4 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl">
+        <div className="p-4 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] text-[#005A5B] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl">
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-6 h-6 text-[#008060] shrink-0" />
             <div>
-              <strong className="text-emerald-300 text-sm block">
+              <strong className="text-[#005A5B] text-sm block">
                 Synchronisation Cloud & Base Supabase (12 tables) effectuée !
               </strong>
               <span>
@@ -437,7 +437,7 @@ ${embeddedMacBypassesRsc}
           </div>
           <button
             onClick={() => setAdminTab('mikrotik')}
-            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shrink-0 transition cursor-pointer"
           >
             Voir le routeur →
           </button>
@@ -447,10 +447,10 @@ ${embeddedMacBypassesRsc}
       {/* Main 2-Column Layout inspired by clean SaaS standard */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Columns: Script de connexion RouterOS */}
-        <div className="lg:col-span-2 p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-5">
+        <div className="lg:col-span-2 p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Terminal className="w-5 h-5 text-amber-500" />
+            <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <Terminal className="w-5 h-5 text-[#007A78]" />
               <span>Script de connexion RouterOS</span>
             </h2>
 
@@ -458,7 +458,7 @@ ${embeddedMacBypassesRsc}
             <select
               value={selectedExistingRouterId}
               onChange={(e) => handleSelectExisting(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               {routers.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -469,14 +469,14 @@ ${embeddedMacBypassesRsc}
           </div>
 
           {/* 2 Big Method Tabs: Méthode 1 (Commande Automatique) vs Méthode 2 (Script Complet) */}
-          <div className="grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-slate-950 border border-slate-800/90">
+          <div className="grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-[#F8FAFC] border border-slate-200">
             <button
               type="button"
               onClick={() => setInstallMethodTab('auto')}
               className={`py-2.5 px-4 rounded-lg text-xs font-bold transition cursor-pointer ${
                 installMethodTab === 'auto'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#008060] hover:bg-[#006B50] text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-800'
               }`}
             >
               Méthode 1 : Commande Automatique
@@ -486,8 +486,8 @@ ${embeddedMacBypassesRsc}
               onClick={() => setInstallMethodTab('full')}
               className={`py-2.5 px-4 rounded-lg text-xs font-bold transition cursor-pointer ${
                 installMethodTab === 'full'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#008060] hover:bg-[#006B50] text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-800'
               }`}
             >
               Méthode 2 : Script Complet ({tickets.length} tickets inclus)
@@ -496,47 +496,47 @@ ${embeddedMacBypassesRsc}
 
           {installMethodTab === 'auto' ? (
             <div className="space-y-4">
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 Ouvrez le terminal de votre MikroTik (<strong>WinBox &rarr; New Terminal</strong> ou SSH) et collez cette commande. Elle télécharge et exécute automatiquement le script de configuration complet ainsi que vos <strong>{tickets.length} tickets actifs</strong>.
               </p>
 
               {/* RouterOS Version & Device-Mode Warning Box */}
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs leading-relaxed space-y-1">
-                <div className="font-bold text-amber-400 flex items-center gap-1.5">
+              <div className="p-3.5 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] text-slate-700 text-xs leading-relaxed space-y-1">
+                <div className="font-bold text-[#007A78] flex items-center gap-1.5">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>Compatible RouterOS 6.49+ et RouterOS 7.x (dont v7.23 / v7.24)</span>
                 </div>
-                <p className="text-[11px] text-amber-200/80">
-                  Sur <strong>RouterOS 7</strong>, si le terminal affiche <code className="text-amber-300">not allowed by device-mode</code>, tapez d'abord <code className="text-white font-mono bg-slate-950/70 px-1.5 py-0.5 rounded">/system/device-mode/update mode=enterprise</code> puis redémarrez le routeur.
+                <p className="text-[11px] text-slate-700">
+                  Sur <strong>RouterOS 7</strong>, si le terminal affiche <code className="text-[#005A5B]">not allowed by device-mode</code>, tapez d'abord <code className="text-slate-800 font-mono bg-[#F8FAFC] px-1.5 py-0.5 rounded">/system/device-mode/update mode=enterprise</code> puis redémarrez le routeur.
                 </p>
               </div>
 
               {/* Orange/Amber Code Box with Copy Button */}
-              <div className="relative p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-amber-400 leading-relaxed break-all pr-12 shadow-inner">
+              <div className="relative p-4 rounded-xl bg-[#F8FAFC] border border-slate-200 font-mono text-xs text-[#007A78] leading-relaxed break-all pr-12 shadow-inner">
                 {autoOneLineCommand}
                 <button
                   onClick={copyAutoCommand}
-                  className="absolute right-3 top-3 p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer"
+                  className="absolute right-3 top-3 p-2 rounded-lg bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-800 border border-slate-300 transition cursor-pointer"
                   title="Copier la commande automatique"
                 >
                   {copiedAutoCmd ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
+                    <Check className="w-4 h-4 text-[#008060]" />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
                 </button>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-3 text-xs text-slate-400">
+              <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 flex items-center justify-between gap-3 text-xs text-slate-400">
                 <div className="flex items-center gap-2">
-                  <Play className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <Play className="w-3.5 h-3.5 text-[#007A78] shrink-0" />
                   <span>
-                    Le routeur va créer les profils, injecter vos <strong>{tickets.length} tickets</strong> dans <code className="text-slate-200">IP &rarr; Hotspot &rarr; Users</code> et démarrer le Fast-Poll (10s).
+                    Le routeur va créer les profils, injecter vos <strong>{tickets.length} tickets</strong> dans <code className="text-slate-700">IP &rarr; Hotspot &rarr; Users</code> et démarrer le Fast-Poll (10s).
                   </span>
                 </div>
                 <button
                   onClick={copyAutoCommand}
-                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shrink-0 transition cursor-pointer"
                 >
                   {copiedAutoCmd ? 'Copié !' : 'Copier'}
                 </button>
@@ -545,12 +545,12 @@ ${embeddedMacBypassesRsc}
           ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-slate-600">
                   Copiez l'intégralité du script ci-dessous et collez-le directement dans <strong>WinBox &rarr; New Terminal</strong> (fonctionne même sans connexion Internet sur VirtualBox !).
                 </p>
                 <button
                   onClick={copyFullScript}
-                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shrink-0"
                 >
                   {copiedFullScript ? (
                     <>
@@ -567,7 +567,7 @@ ${embeddedMacBypassesRsc}
               </div>
 
               <div className="relative">
-                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-amber-400/95 max-h-80 overflow-y-auto leading-relaxed select-all">
+                <pre className="p-4 rounded-xl bg-[#F8FAFC] border border-slate-200 text-xs font-mono text-[#007A78] max-h-80 overflow-y-auto leading-relaxed select-all">
                   {fullBootstrapScript}
                 </pre>
               </div>
@@ -578,24 +578,24 @@ ${embeddedMacBypassesRsc}
         {/* Right Column: Token Box & Diagnostic Help */}
         <div className="space-y-5">
           {/* Token Card */}
-          <div className="p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
-              <Key className="w-4 h-4 text-amber-500" />
+          <div className="p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+              <Key className="w-4 h-4 text-[#007A78]" />
               <span>VOTRE JETON D'INSTALLATION</span>
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
               Ce jeton est unique à votre équipement. Il authentifie les requêtes Heartbeat (45s), Fast-Poll (10s) et la réconciliation automatique de vos tickets avec Supabase.
             </p>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
-              <span className="font-mono font-bold text-white text-sm tracking-wider">
+            <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-slate-200 flex items-center justify-between gap-2">
+              <span className="font-mono font-bold text-slate-800 text-sm tracking-wider">
                 {showToken ? token : 'JWT-••••-••••-••••'}
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setShowToken(!showToken)}
-                  className="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white cursor-pointer"
+                  className="p-1.5 rounded-lg bg-white text-slate-400 hover:text-slate-800 cursor-pointer"
                 >
                   {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
@@ -606,10 +606,10 @@ ${embeddedMacBypassesRsc}
                     setCopiedToken(true);
                     setTimeout(() => setCopiedToken(false), 2000);
                   }}
-                  className="p-1.5 rounded-lg bg-slate-900 text-amber-400 hover:text-amber-300 cursor-pointer"
+                  className="p-1.5 rounded-lg bg-white text-[#007A78] hover:text-[#005A5B] cursor-pointer"
                   title="Copier le jeton"
                 >
-                  {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedToken ? <Check className="w-3.5 h-3.5 text-[#008060]" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -617,7 +617,7 @@ ${embeddedMacBypassesRsc}
             <button
               type="button"
               onClick={handleSimulateConnection}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl bg-[#E6F4F3] hover:bg-emerald-500/25 border border-[#99D5D3] text-[#005A5B] font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Forcer la synchro des {tickets.length} tickets vers Supabase</span>
@@ -625,23 +625,23 @@ ${embeddedMacBypassesRsc}
           </div>
 
           {/* Help Card */}
-          <div className="p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-3">
-            <h3 className="text-xs font-bold text-white flex items-center gap-2">
-              <HelpCircle className="w-4 h-4 text-amber-500" />
+          <div className="p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-3">
+            <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-[#007A78]" />
               <span>Besoin d'aide (WinBox / VirtualBox) ?</span>
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Si vous testez sur <strong>VirtualBox (MikroTik CHR)</strong> et que <code className="text-slate-200">/tool fetch</code> n'arrive pas à sortir sur Internet, utilisez directement l'onglet <strong>Méthode 2 : Script Complet</strong> ou l'installation par fichier ci-dessous : vos <strong>{tickets.length} tickets</strong> y sont déjà intégrés !
+              Si vous testez sur <strong>VirtualBox (MikroTik CHR)</strong> et que <code className="text-slate-700">/tool fetch</code> n'arrive pas à sortir sur Internet, utilisez directement l'onglet <strong>Méthode 2 : Script Complet</strong> ou l'installation par fichier ci-dessous : vos <strong>{tickets.length} tickets</strong> y sont déjà intégrés !
             </p>
           </div>
         </div>
       </div>
 
       {/* Alternative Method: Local WinBox Drag & Drop (3 Steps) */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800/90 bg-slate-900/60 space-y-5">
+      <div className="p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-5">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-            <FolderDown className="w-5 h-5 text-amber-500" />
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+            <FolderDown className="w-5 h-5 text-[#007A78]" />
             <span>Méthode alternative : Installation par WinBox (Recommandée en local / VirtualBox)</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
@@ -651,18 +651,18 @@ ${embeddedMacBypassesRsc}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Étape 1 */}
-          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col justify-between space-y-4">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-500">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#007A78]">
                 ÉTAPE 1
               </span>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Téléchargez le fichier de configuration personnalisé (<code className="text-amber-400">joowifi_install.rsc</code>) contenant déjà vos forfaits et vos <strong>{tickets.length} tickets</strong> :
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Téléchargez le fichier de configuration personnalisé (<code className="text-[#007A78]">joowifi_install.rsc</code>) contenant déjà vos forfaits et vos <strong>{tickets.length} tickets</strong> :
               </p>
             </div>
             <button
               onClick={downloadRscFile}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/15"
+              className="w-full py-3 px-4 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-extrabold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/15"
             >
               <Download className="w-4 h-4 stroke-[2.5]" />
               <span>Télécharger le script (.rsc)</span>
@@ -670,66 +670,66 @@ ${embeddedMacBypassesRsc}
           </div>
 
           {/* Étape 2 */}
-          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col justify-between space-y-4">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-500">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#007A78]">
                 ÉTAPE 2
               </span>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Ouvrez <strong>WinBox</strong>, cliquez sur <strong>Files</strong> dans le menu de gauche, et faites un <strong>glisser-déposer</strong> du fichier <code className="text-white font-mono">joowifi_install.rsc</code> directement dans la liste des fichiers.
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Ouvrez <strong>WinBox</strong>, cliquez sur <strong>Files</strong> dans le menu de gauche, et faites un <strong>glisser-déposer</strong> du fichier <code className="text-slate-800 font-mono">joowifi_install.rsc</code> directement dans la liste des fichiers.
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
-              <FileCode className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Fichier : <strong className="text-slate-200">joowifi_install.rsc</strong></span>
+            <div className="p-3 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-400 flex items-center gap-2">
+              <FileCode className="w-4 h-4 text-[#007A78] shrink-0" />
+              <span>Fichier : <strong className="text-slate-700">joowifi_install.rsc</strong></span>
             </div>
           </div>
 
           {/* Étape 3 */}
-          <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800/90 flex flex-col justify-between space-y-4">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-500">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#007A78]">
                 ÉTAPE 3
               </span>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 Ouvrez un <strong>New Terminal</strong> dans WinBox et exécutez la commande d'importation suivante :
               </p>
             </div>
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 font-mono text-xs text-amber-400">
+            <div className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2 font-mono text-xs text-[#007A78]">
               <span className="truncate">{localWinboxImportCmd}</span>
               <button
                 onClick={copyImportCmd}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 cursor-pointer"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 shrink-0 cursor-pointer"
                 title="Copier la commande d'importation"
               >
-                {copiedImportCmd ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedImportCmd ? <Check className="w-3.5 h-3.5 text-[#008060]" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
         </div>
 
         {/* Ce que fait le script v5.0 */}
-        <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3">
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">
+        <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-3">
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
             CE QUE FAIT LE MOTEUR JOOWIFI ENGINE v5.0 :
           </h3>
-          <ul className="space-y-2 text-xs text-slate-300">
+          <ul className="space-y-2 text-xs text-slate-600">
             <li className="flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
               <span>
-                <strong className="text-white">Double Canal Cloud Pull (Fast-Poll 10s + Heartbeat 45s) :</strong> Le routeur récupère les nouveaux tickets vendus en Caisse POS en moins de 10 secondes sans ouvrir aucun port entrant (compatible Starlink, 4G, CGNAT).
+                <strong className="text-slate-800">Double Canal Cloud Pull (Fast-Poll 10s + Heartbeat 45s) :</strong> Le routeur récupère les nouveaux tickets vendus en Caisse POS en moins de 10 secondes sans ouvrir aucun port entrant (compatible Starlink, 4G, CGNAT).
               </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
               <span>
-                <strong className="text-white">Réconciliation Automatique d'Inventaire & Auto-Guérison (Guardian 2m) :</strong> Si le routeur est neuf ou réinitialisé, il compare son nombre de tickets <code className="text-amber-400">JW:</code> avec Supabase et télécharge automatiquement tous les tickets manquants dans <code className="text-amber-400">IP &rarr; Hotspot &rarr; Users</code>.
+                <strong className="text-slate-800">Réconciliation Automatique d'Inventaire & Auto-Guérison (Guardian 2m) :</strong> Si le routeur est neuf ou réinitialisé, il compare son nombre de tickets <code className="text-[#007A78]">JW:</code> avec Supabase et télécharge automatiquement tous les tickets manquants dans <code className="text-[#007A78]">IP &rarr; Hotspot &rarr; Users</code>.
               </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
               <span>
-                <strong className="text-white">Exclusion FastTrack, Bail DHCP 1h & Cookie MAC 30j :</strong> Préserve les limitations de débit de vos forfaits, évite la saturation du pool de 253 adresses IP et reconnecte automatiquement vos clients sans ressaisir leur code.
+                <strong className="text-slate-800">Exclusion FastTrack, Bail DHCP 1h & Cookie MAC 30j :</strong> Préserve les limitations de débit de vos forfaits, évite la saturation du pool de 253 adresses IP et reconnecte automatiquement vos clients sans ressaisir leur code.
               </span>
             </li>
           </ul>

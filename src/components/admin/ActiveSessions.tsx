@@ -201,10 +201,10 @@ export const ActiveSessions: React.FC = () => {
       case 'tablet':
         return <Tablet className="w-3.5 h-3.5 text-purple-400" />;
       case 'smart_tv':
-        return <Tv className="w-3.5 h-3.5 text-amber-400" />;
+        return <Tv className="w-3.5 h-3.5 text-[#007A78]" />;
       case 'smartphone':
       default:
-        return <Smartphone className="w-3.5 h-3.5 text-emerald-400" />;
+        return <Smartphone className="w-3.5 h-3.5 text-[#008060]" />;
     }
   };
 
@@ -212,12 +212,12 @@ export const ActiveSessions: React.FC = () => {
     <div className="space-y-6">
       {/* Toast notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900/95 border border-amber-500/40 text-amber-300 rounded-xl shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5">
-          <Info className="w-5 h-5 text-amber-400 flex-shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-white border border-[#99D5D3] text-[#005A5B] rounded-xl shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom-5">
+          <Info className="w-5 h-5 text-[#007A78] flex-shrink-0" />
           <span className="text-xs font-medium">{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="text-slate-400 hover:text-white text-xs ml-2"
+            className="text-slate-400 hover:text-slate-800 text-xs ml-2"
           >
             ×
           </button>
@@ -225,21 +225,21 @@ export const ActiveSessions: React.FC = () => {
       )}
 
       {/* 1. EN-TÊTE & CONTRÔLE DU TEMPS RÉEL */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl glass-card border border-slate-800 bg-slate-900/40">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl glass-card border border-slate-200 bg-white">
         <div>
           {/* Breadcrumb / Tag badge */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
-              <Activity className="w-3 h-3 text-amber-400 animate-pulse" />
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase font-semibold bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3] flex items-center gap-1.5">
+              <Activity className="w-3 h-3 text-[#007A78] animate-pulse" />
               <span>SUPERVISION HOTSPOT MIKROTIK</span>
             </span>
             <span className="text-xs text-slate-500">•</span>
             <span className="text-xs text-slate-400 font-mono">/dashboard/sessions</span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Activity className="w-6 h-6 text-amber-400" />
+          <h1 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]">
+              <Activity className="w-6 h-6 text-[#007A78]" />
             </span>
             <span>Sessions et hôtes connectés</span>
           </h1>
@@ -252,13 +252,13 @@ export const ActiveSessions: React.FC = () => {
         {/* Dynamic synchronization tools on the right */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Real-time status badge with pulsating green LED */}
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono shadow-inner">
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-mono shadow-inner">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
             <div className="flex flex-col">
-              <span className="text-white font-semibold text-[11px] leading-tight">
+              <span className="text-slate-800 font-semibold text-[11px] leading-tight">
                 Temps réel actif ({heartbeatSecondsRemaining}s)
               </span>
               <span className="text-[10px] text-slate-400 leading-tight">Heartbeat Cloud Pull</span>
@@ -269,12 +269,12 @@ export const ActiveSessions: React.FC = () => {
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className={`px-3.5 py-2 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-750 text-slate-200 text-xs font-medium flex items-center gap-2 transition active:scale-95 cursor-pointer shadow-sm ${
+            className={`px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-750 text-slate-700 text-xs font-medium flex items-center gap-2 transition active:scale-95 cursor-pointer shadow-sm ${
               isRefreshing ? 'opacity-70 cursor-not-allowed' : ''
             }`}
             title="Forcer la synchronisation avec les tables MikroTik"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#007A78] ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Actualiser</span>
           </button>
         </div>
@@ -283,18 +283,18 @@ export const ActiveSessions: React.FC = () => {
       {/* 2. RANGÉE DES 3 MÉTRIQUES MAJEURES (KPI CARDS) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* KPI 1 : ABONNÉS EN LIGNE */}
-        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-emerald-950/20 group hover:border-emerald-500/40 transition">
+        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-emerald-950/20 group hover:border-[#99D5D3] transition">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-semibold">
                 Abonnés en ligne
               </p>
-              <div className="text-3xl font-black text-white font-mono mt-1 flex items-baseline gap-2">
+              <div className="text-3xl font-black text-slate-800 font-mono mt-1 flex items-baseline gap-2">
                 <span>{totalSubscribers}</span>
-                <span className="text-xs text-emerald-400 font-sans font-medium">actifs</span>
+                <span className="text-xs text-[#008060] font-sans font-medium">actifs</span>
               </div>
             </div>
-            <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="p-3 rounded-xl bg-[#E6F4F3] text-[#008060] border border-[#99D5D3]">
               <Wifi className="w-5 h-5" />
             </div>
           </div>
@@ -305,13 +305,13 @@ export const ActiveSessions: React.FC = () => {
         </div>
 
         {/* KPI 2 : TOTAL DES ÉQUIPEMENTS (HÔTES) */}
-        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-blue-950/20 group hover:border-blue-500/40 transition">
+        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-blue-950/20 group hover:border-blue-500/40 transition">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-semibold">
                 Total des équipements
               </p>
-              <div className="text-3xl font-black text-white font-mono mt-1 flex items-baseline gap-2">
+              <div className="text-3xl font-black text-slate-800 font-mono mt-1 flex items-baseline gap-2">
                 <span>{totalHosts}</span>
                 <span className="text-xs text-blue-400 font-sans font-medium">hôtes détectés</span>
               </div>
@@ -327,23 +327,23 @@ export const ActiveSessions: React.FC = () => {
         </div>
 
         {/* KPI 3 : DÉBIT INSTANTANÉ TOTAL */}
-        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-amber-950/20 group hover:border-amber-500/40 transition">
+        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-amber-950/20 group hover:border-[#99D5D3] transition">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-semibold">
                 Bande passante active
               </p>
-              <div className="text-3xl font-black text-white font-mono mt-1 flex items-baseline gap-2">
+              <div className="text-3xl font-black text-slate-800 font-mono mt-1 flex items-baseline gap-2">
                 <span>{totalBandwidthMbps}</span>
-                <span className="text-xs text-amber-400 font-mono font-semibold">Mbps</span>
+                <span className="text-xs text-[#007A78] font-mono font-semibold">Mbps</span>
               </div>
             </div>
-            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="p-3 rounded-xl bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]">
               <Gauge className="w-5 h-5" />
             </div>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-3 font-mono">
-            <span className="flex items-center gap-1 text-emerald-400">
+            <span className="flex items-center gap-1 text-[#008060]">
               <ArrowDown className="w-3 h-3" /> {(totalBandwidthDown / 1024).toFixed(1)} Mbps
             </span>
             <span className="flex items-center gap-1 text-blue-400">
@@ -354,11 +354,11 @@ export const ActiveSessions: React.FC = () => {
       </div>
 
       {/* 3. BARRE DE FILTRAGE PAR ÉQUIPEMENT & CONTRÔLE */}
-      <div className="p-4 rounded-2xl glass-card border border-slate-800 bg-slate-900/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 rounded-2xl glass-card border border-slate-200 bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Left: Router select dropdown with server icon */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 max-w-xl">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-300 whitespace-nowrap">
-            <Server className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 whitespace-nowrap">
+            <Server className="w-4 h-4 text-[#007A78]" />
             <span>Filtrer par équipement :</span>
           </div>
 
@@ -366,7 +366,7 @@ export const ActiveSessions: React.FC = () => {
             <select
               value={selectedRouterId}
               onChange={(e) => setSelectedRouterId(e.target.value)}
-              className="w-full appearance-none px-3.5 py-2 pr-9 rounded-xl bg-slate-900 border border-slate-700 hover:border-slate-600 text-white text-xs font-mono focus:outline-none focus:border-amber-500 transition cursor-pointer"
+              className="w-full appearance-none px-3.5 py-2 pr-9 rounded-xl bg-white border border-slate-300 hover:border-slate-600 text-slate-800 text-xs font-mono focus:outline-none focus:border-amber-500 transition cursor-pointer"
             >
               <option value="all">Tous les équipements ({routers.length} routeurs)</option>
               {routers.map((r) => (
@@ -388,12 +388,12 @@ export const ActiveSessions: React.FC = () => {
               placeholder="Rechercher IP, MAC, ticket..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white border border-slate-300 text-slate-800 text-xs placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-2 text-slate-400 hover:text-white text-xs"
+                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-800 text-xs"
               >
                 ×
               </button>
@@ -415,15 +415,15 @@ export const ActiveSessions: React.FC = () => {
       </div>
 
       {/* 4. NAVIGATION À 2 ONGLETS CONTEXTUELS */}
-      <div className="flex items-center justify-between border-b border-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-200">
         <div className="flex items-center gap-2">
           {/* Onglet 1 : Sessions actives */}
           <button
             onClick={() => setActiveTab('sessions')}
             className={`px-4 py-2.5 text-xs sm:text-sm font-semibold flex items-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'sessions'
-                ? 'border-amber-500 text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                ? 'border-amber-500 text-[#007A78] bg-[#E6F4F3]'
+                : 'border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             <Radio className="w-4 h-4" />
@@ -431,8 +431,8 @@ export const ActiveSessions: React.FC = () => {
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
                 activeTab === 'sessions'
-                  ? 'bg-amber-500/20 text-amber-300'
-                  : 'bg-slate-800 text-slate-400'
+                  ? 'bg-[#E6F4F3] text-[#005A5B]'
+                  : 'bg-slate-100 text-slate-400'
               }`}
             >
               {filteredSessions.length}
@@ -444,8 +444,8 @@ export const ActiveSessions: React.FC = () => {
             onClick={() => setActiveTab('hosts')}
             className={`px-4 py-2.5 text-xs sm:text-sm font-semibold flex items-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'hosts'
-                ? 'border-amber-500 text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                ? 'border-amber-500 text-[#007A78] bg-[#E6F4F3]'
+                : 'border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             <HardDrive className="w-4 h-4" />
@@ -453,8 +453,8 @@ export const ActiveSessions: React.FC = () => {
             <span
               className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
                 activeTab === 'hosts'
-                  ? 'bg-amber-500/20 text-amber-300'
-                  : 'bg-slate-800 text-slate-400'
+                  ? 'bg-[#E6F4F3] text-[#005A5B]'
+                  : 'bg-slate-100 text-slate-400'
               }`}
             >
               {filteredHosts.length}
@@ -472,8 +472,8 @@ export const ActiveSessions: React.FC = () => {
                 onClick={() => setHostStatusFilter(mode)}
                 className={`px-2 py-1 rounded-lg text-[10px] font-medium transition cursor-pointer ${
                   hostStatusFilter === mode
-                    ? 'bg-slate-800 text-amber-400 border border-slate-700'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-slate-100 text-[#007A78] border border-slate-300'
+                    : 'text-slate-400 hover:text-slate-700'
                 }`}
               >
                 {mode === 'all'
@@ -491,10 +491,10 @@ export const ActiveSessions: React.FC = () => {
 
       {/* 5. VUE ONGLET 1 : SESSIONS ACTIVES (ABONNÉS AUTHENTIFIÉS) */}
       {activeTab === 'sessions' && (
-        <div className="rounded-2xl glass-card border border-slate-800 overflow-hidden bg-slate-900/40 shadow-xl">
+        <div className="rounded-2xl glass-card border border-slate-200 overflow-hidden bg-white shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/95 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800 font-mono">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-white text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-200 font-mono">
                 <tr>
                   <th className="py-3 px-4">Utilisateur / Ticket</th>
                   <th className="py-3 px-4">Adresse IP</th>
@@ -511,10 +511,10 @@ export const ActiveSessions: React.FC = () => {
                   <tr>
                     <td colSpan={8} className="py-14 text-center">
                       <div className="max-w-md mx-auto flex flex-col items-center">
-                        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3">
+                        <div className="w-14 h-14 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78] mb-3">
                           <Radio className="w-7 h-7" />
                         </div>
-                        <h3 className="text-base font-bold text-white font-sans">
+                        <h3 className="text-base font-bold text-slate-800 font-sans">
                           Aucun abonné connecté actuellement
                         </h3>
                         <p className="text-xs text-slate-400 font-sans mt-1">
@@ -524,7 +524,7 @@ export const ActiveSessions: React.FC = () => {
                         </p>
                         <button
                           onClick={handleManualRefresh}
-                          className="mt-4 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer"
+                          className="mt-4 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#007A78] border border-slate-300 text-xs font-sans font-medium flex items-center gap-1.5 cursor-pointer"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                           <span>Actualiser le polling</span>
@@ -538,11 +538,11 @@ export const ActiveSessions: React.FC = () => {
                       {/* Utilisateur / Ticket */}
                       <td className="py-3.5 px-4 font-sans">
                         <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300">
+                          <div className="p-1.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-600">
                             {renderDeviceIcon(s.deviceType)}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-xs font-mono flex items-center gap-1.5">
+                            <div className="font-bold text-slate-800 text-xs font-mono flex items-center gap-1.5">
                               <span>{s.username}</span>
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                             </div>
@@ -554,8 +554,8 @@ export const ActiveSessions: React.FC = () => {
                       </td>
 
                       {/* IP */}
-                      <td className="py-3.5 px-4 text-slate-200">
-                        <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-blue-300">
+                      <td className="py-3.5 px-4 text-slate-700">
+                        <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[11px] text-blue-300">
                           {s.ipAddress}
                         </span>
                       </td>
@@ -567,7 +567,7 @@ export const ActiveSessions: React.FC = () => {
 
                       {/* Routeur */}
                       <td className="py-3.5 px-4 font-sans">
-                        <div className="text-xs text-slate-300 font-medium truncate max-w-[180px]">
+                        <div className="text-xs text-slate-600 font-medium truncate max-w-[180px]">
                           {s.routerName}
                         </div>
                         <div className="text-[10px] text-slate-500 font-mono">
@@ -575,9 +575,9 @@ export const ActiveSessions: React.FC = () => {
                           <span
                             className={
                               s.signalDbm > -65
-                                ? 'text-emerald-400'
+                                ? 'text-[#008060]'
                                 : s.signalDbm > -75
-                                ? 'text-amber-400'
+                                ? 'text-[#007A78]'
                                 : 'text-rose-400'
                             }
                           >
@@ -588,12 +588,12 @@ export const ActiveSessions: React.FC = () => {
 
                       {/* Durée de Connexion */}
                       <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1.5 text-slate-300 text-[11px]">
+                        <div className="flex items-center gap-1.5 text-slate-600 text-[11px]">
                           <Clock className="w-3.5 h-3.5 text-slate-400" />
                           <span>{formatUptime(s.uptimeMinutes)}</span>
                         </div>
                         {s.timeRemainingMinutes !== undefined && (
-                          <div className="text-[10px] text-amber-400 font-sans">
+                          <div className="text-[10px] text-[#007A78] font-sans">
                             Reste : {formatUptime(s.timeRemainingMinutes)}
                           </div>
                         )}
@@ -601,16 +601,16 @@ export const ActiveSessions: React.FC = () => {
 
                       {/* Profil / Forfait */}
                       <td className="py-3.5 px-4 font-sans">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/25">
-                          <Sparkles className="w-3 h-3 text-amber-400" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]">
+                          <Sparkles className="w-3 h-3 text-[#007A78]" />
                           <span>{s.forfaitName}</span>
                         </span>
                       </td>
 
                       {/* Consommation & Débit */}
                       <td className="py-3.5 px-4">
-                        <div className="text-[11px] text-slate-200 flex items-center gap-1.5">
-                          <span className="text-emerald-400 flex items-center">
+                        <div className="text-[11px] text-slate-700 flex items-center gap-1.5">
+                          <span className="text-[#008060] flex items-center">
                             <ArrowDown className="w-3 h-3" />
                             {s.bytesInMb.toFixed(1)} Mo
                           </span>
@@ -630,7 +630,7 @@ export const ActiveSessions: React.FC = () => {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setSelectedSessionForModal(s)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
                             title="Inspecter les détails de la session"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -658,10 +658,10 @@ export const ActiveSessions: React.FC = () => {
 
       {/* 6. VUE ONGLET 2 : HÔTES PHYSIQUES WIFI (DHCP LEASES / WIRELESS REGISTRATION) */}
       {activeTab === 'hosts' && (
-        <div className="rounded-2xl glass-card border border-slate-800 overflow-hidden bg-slate-900/40 shadow-xl">
+        <div className="rounded-2xl glass-card border border-slate-200 overflow-hidden bg-white shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/95 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800 font-mono">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-white text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-200 font-mono">
                 <tr>
                   <th className="py-3 px-4">Adresse MAC / Fabricant</th>
                   <th className="py-3 px-4">Adresse IP Attribuée</th>
@@ -681,7 +681,7 @@ export const ActiveSessions: React.FC = () => {
                         <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-3">
                           <HardDrive className="w-7 h-7" />
                         </div>
-                        <h3 className="text-base font-bold text-white font-sans">
+                        <h3 className="text-base font-bold text-slate-800 font-sans">
                           Aucun hôte physique détecté
                         </h3>
                         <p className="text-xs text-slate-400 font-sans mt-1">
@@ -695,7 +695,7 @@ export const ActiveSessions: React.FC = () => {
                     <tr key={h.id} className="hover:bg-slate-850/60 transition group">
                       {/* MAC & Constructeur */}
                       <td className="py-3.5 px-4 font-sans">
-                        <div className="font-mono text-xs font-bold text-white">{h.macAddress}</div>
+                        <div className="font-mono text-xs font-bold text-slate-800">{h.macAddress}</div>
                         <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 font-sans">
                           <span>{h.deviceVendor || 'Périphérique WiFi standard'}</span>
                         </div>
@@ -703,18 +703,18 @@ export const ActiveSessions: React.FC = () => {
 
                       {/* IP */}
                       <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-200">
+                        <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[11px] text-slate-700">
                           {h.ipAddress}
                         </span>
                       </td>
 
                       {/* Routeur & Interface */}
                       <td className="py-3.5 px-4 font-sans">
-                        <div className="text-xs text-slate-300 font-medium truncate max-w-[170px]">
+                        <div className="text-xs text-slate-600 font-medium truncate max-w-[170px]">
                           {h.routerName}
                         </div>
                         <div className="text-[10px] text-slate-500 font-mono">
-                          Iface : <span className="text-amber-400">{h.interfaceName}</span>
+                          Iface : <span className="text-[#007A78]">{h.interfaceName}</span>
                         </div>
                       </td>
 
@@ -730,21 +730,21 @@ export const ActiveSessions: React.FC = () => {
                                 : 'bg-rose-400'
                             }`}
                           />
-                          <span className="text-slate-200 text-xs">{h.signalDbm} dBm</span>
+                          <span className="text-slate-700 text-xs">{h.signalDbm} dBm</span>
                         </div>
                       </td>
 
                       {/* Statut d'accès */}
                       <td className="py-3.5 px-4 font-sans">
                         {h.status === 'authenticated' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E6F4F3] text-[#008060] border border-[#99D5D3] font-mono">
+                            <CheckCircle2 className="w-3 h-3 text-[#008060]" />
                             <span>AUTHENTIFIÉ</span>
                           </span>
                         )}
                         {h.status === 'unauthenticated' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 font-mono">
-                            <Lock className="w-3 h-3 text-amber-400" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3] font-mono">
+                            <Lock className="w-3 h-3 text-[#007A78]" />
                             <span>PORTAIL CAPTIF</span>
                           </span>
                         )}
@@ -762,7 +762,7 @@ export const ActiveSessions: React.FC = () => {
                       </td>
 
                       {/* Trafic */}
-                      <td className="py-3.5 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-slate-600">
                         <span>{h.bytesTotalMb.toFixed(1)} Mo</span>
                       </td>
 
@@ -779,16 +779,16 @@ export const ActiveSessions: React.FC = () => {
                               setAuthorizingHostId(h.id);
                               setSelectedHostForModal(h);
                             }}
-                            className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-medium transition cursor-pointer flex items-center gap-1 ml-auto"
+                            className="px-2.5 py-1.5 rounded-lg bg-[#E6F4F3] hover:bg-amber-500/25 text-[#005A5B] border border-[#99D5D3] text-xs font-medium transition cursor-pointer flex items-center gap-1 ml-auto"
                             title="Autoriser manuellement cet appareil sans saisir de code"
                           >
-                            <Unlock className="w-3.5 h-3.5 text-amber-400" />
+                            <Unlock className="w-3.5 h-3.5 text-[#007A78]" />
                             <span>Autoriser</span>
                           </button>
                         ) : (
                           <button
                             onClick={() => setSelectedHostForModal(h)}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition cursor-pointer flex items-center gap-1 ml-auto"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition cursor-pointer flex items-center gap-1 ml-auto"
                           >
                             <Eye className="w-3.5 h-3.5 text-slate-400" />
                             <span>Détails</span>
@@ -805,29 +805,29 @@ export const ActiveSessions: React.FC = () => {
       )}
 
       {/* 7. ENCART PÉDAGOGIQUE DU DÉLAI DE SYNCHRONISATION PULL */}
-      <div className="p-5 rounded-2xl glass-card border border-amber-500/20 bg-amber-950/10 flex flex-col sm:flex-row items-start gap-4">
-        <div className="p-3 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex-shrink-0">
-          <Info className="w-5 h-5 text-amber-400" />
+      <div className="p-5 rounded-2xl glass-card border border-[#99D5D3] bg-amber-50 flex flex-col sm:flex-row items-start gap-4">
+        <div className="p-3 rounded-xl bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3] flex-shrink-0">
+          <Info className="w-5 h-5 text-[#007A78]" />
         </div>
         <div className="space-y-1.5">
-          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
             <span>Fonctionnement de la synchronisation asynchrone (Pull Model)</span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#E6F4F3] text-[#005A5B] border border-[#99D5D3]">
               Heartbeat 45s
             </span>
           </h4>
-          <p className="text-xs text-slate-300 leading-relaxed">
+          <p className="text-xs text-slate-600 leading-relaxed">
             Joowifi utilise une architecture <strong>Zero-Trust sécurisée</strong> : les routeurs MikroTik interrogent
             régulièrement la console cloud (modèle <em>Pull</em> sortant) pour récupérer les ordres d'expulsion,
             mettre à jour les compteurs de quotas et synchroniser les profils Hotspot.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-[11px] text-slate-400">
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200">
+              <CheckCircle2 className="w-4 h-4 text-[#008060] flex-shrink-0" />
               <span><strong>Aucun port entrant ouvert :</strong> Votre routeur est protégé derrière le NAT/CGNAT.</span>
             </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-              <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-200">
+              <Clock className="w-4 h-4 text-[#007A78] flex-shrink-0" />
               <span><strong>Délai effectif d'expulsion :</strong> Les déconnexions manuelles prennent effet lors du cycle suivant (au maximum {heartbeatSecondsRemaining}s).</span>
             </div>
           </div>
@@ -837,14 +837,14 @@ export const ActiveSessions: React.FC = () => {
       {/* MODAL 1 : DÉTAIL SESSION CLIENT */}
       {selectedSessionForModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl glass-card border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div className="w-full max-w-lg rounded-2xl glass-card border border-slate-300 bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                <div className="p-2 rounded-xl bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]">
                   <Radio className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white font-mono">
+                  <h3 className="text-base font-bold text-slate-800 font-mono">
                     Session {selectedSessionForModal.username}
                   </h3>
                   <p className="text-xs text-slate-400">Détails techniques de l'abonné connecté</p>
@@ -852,7 +852,7 @@ export const ActiveSessions: React.FC = () => {
               </div>
               <button
                 onClick={() => setSelectedSessionForModal(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+                className="text-slate-400 hover:text-slate-800 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 ✕
               </button>
@@ -860,38 +860,38 @@ export const ActiveSessions: React.FC = () => {
 
             <div className="p-5 space-y-4 text-xs font-mono">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200">
                   <span className="text-[10px] text-slate-500 block uppercase">Adresse IP</span>
                   <span className="text-blue-300 font-bold text-sm">{selectedSessionForModal.ipAddress}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200">
                   <span className="text-[10px] text-slate-500 block uppercase">Adresse MAC</span>
-                  <span className="text-slate-200 font-bold text-sm">{selectedSessionForModal.macAddress}</span>
+                  <span className="text-slate-700 font-bold text-sm">{selectedSessionForModal.macAddress}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200">
                   <span className="text-[10px] text-slate-500 block uppercase">Routeur MikroTik</span>
-                  <span className="text-slate-300 font-bold font-sans text-xs">{selectedSessionForModal.routerName}</span>
+                  <span className="text-slate-600 font-bold font-sans text-xs">{selectedSessionForModal.routerName}</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200">
                   <span className="text-[10px] text-slate-500 block uppercase">Forfait / Profil</span>
-                  <span className="text-amber-400 font-bold font-sans text-xs">{selectedSessionForModal.forfaitName}</span>
+                  <span className="text-[#007A78] font-bold font-sans text-xs">{selectedSessionForModal.forfaitName}</span>
                 </div>
               </div>
 
               {/* Data consumption card */}
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+              <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between text-slate-400">
                   <span>Volume consommé (Download / Upload)</span>
-                  <span className="text-white font-bold">
+                  <span className="text-slate-800 font-bold">
                     {(selectedSessionForModal.bytesInMb + selectedSessionForModal.bytesOutMb).toFixed(1)} Mo
                   </span>
                 </div>
-                <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden flex">
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
                   <div className="bg-emerald-500 h-full w-[80%]" title="Download" />
                   <div className="bg-blue-500 h-full w-[20%]" title="Upload" />
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-400">
-                  <span className="text-emerald-400 flex items-center gap-1">
+                  <span className="text-[#008060] flex items-center gap-1">
                     <ArrowDown className="w-3 h-3" /> {selectedSessionForModal.bytesInMb.toFixed(1)} Mo
                   </span>
                   <span className="text-blue-400 flex items-center gap-1">
@@ -900,16 +900,16 @@ export const ActiveSessions: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-slate-300">
+              <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 flex items-center justify-between text-slate-600">
                 <span>Temps de session écoulé :</span>
-                <span className="text-white font-bold">{formatUptime(selectedSessionForModal.uptimeMinutes)}</span>
+                <span className="text-slate-800 font-bold">{formatUptime(selectedSessionForModal.uptimeMinutes)}</span>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between font-sans">
+            <div className="p-4 bg-[#F8FAFC] border-t border-slate-200 flex items-center justify-between font-sans">
               <button
                 onClick={() => setSelectedSessionForModal(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium cursor-pointer"
               >
                 Fermer
               </button>
@@ -928,30 +928,30 @@ export const ActiveSessions: React.FC = () => {
       {/* MODAL 2 : AUTORISER MANUELLEMENT UN HÔTE PHYSIQUE */}
       {authorizingHostId && selectedHostForModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl glass-card border border-amber-500/30 bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div className="w-full max-w-md rounded-2xl glass-card border border-[#99D5D3] bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                <div className="p-2 rounded-xl bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]">
                   <Unlock className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Autoriser l'appareil</h3>
+                  <h3 className="text-base font-bold text-slate-800">Autoriser l'appareil</h3>
                   <p className="text-xs text-slate-400">Attribution d'une session WiFi instantanée</p>
                 </div>
               </div>
               <button
                 onClick={() => setAuthorizingHostId(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-slate-400 hover:text-slate-800 p-1 rounded-lg hover:bg-slate-100"
               >
                 ✕
               </button>
             </div>
 
             <div className="p-5 space-y-4">
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1 font-mono text-xs">
+              <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-1 font-mono text-xs">
                 <div className="text-slate-400 flex justify-between">
                   <span>MAC :</span>
-                  <span className="text-amber-400 font-bold">{selectedHostForModal.macAddress}</span>
+                  <span className="text-[#007A78] font-bold">{selectedHostForModal.macAddress}</span>
                 </div>
                 <div className="text-slate-400 flex justify-between">
                   <span>IP Attribuée :</span>
@@ -959,18 +959,18 @@ export const ActiveSessions: React.FC = () => {
                 </div>
                 <div className="text-slate-400 flex justify-between">
                   <span>Routeur :</span>
-                  <span className="text-slate-200">{selectedHostForModal.routerName}</span>
+                  <span className="text-slate-700">{selectedHostForModal.routerName}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-medium text-slate-600 mb-1.5">
                   Sélectionner le forfait à assigner :
                 </label>
                 <select
                   value={selectedForfaitForAuth}
                   onChange={(e) => setSelectedForfaitForAuth(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-amber-500 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-300 text-slate-800 text-xs font-mono focus:outline-none focus:border-amber-500 cursor-pointer"
                 >
                   {forfaits.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -984,16 +984,16 @@ export const ActiveSessions: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between">
+            <div className="p-4 bg-[#F8FAFC] border-t border-slate-200 flex items-center justify-between">
               <button
                 onClick={() => setAuthorizingHostId(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 onClick={() => handleAuthorizeHostSubmit(selectedHostForModal.id)}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/20"
+                className="px-4 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/20"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Confirmer l'accès</span>

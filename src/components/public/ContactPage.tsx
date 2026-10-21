@@ -23,13 +23,13 @@ export const ContactPage: React.FC = () => {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-16">
       {/* Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#008060] px-3 py-1 rounded-full bg-[#E6F4F3] border border-[#99D5D3]">
           Support & Commercial
         </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-sans">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-800 font-sans">
           Contactez l'équipe Joo studio
         </h1>
-        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
           Une question sur votre routeur MikroTik, un devis pour un déploiement multi-sites ou une
           demande d'intégration personnalisée ? Nous sommes à votre écoute à Abidjan.
         </p>
@@ -39,30 +39,30 @@ export const ContactPage: React.FC = () => {
         {/* Left: Contact Info (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           <div className="p-6 rounded-2xl glass-card space-y-6">
-            <h2 className="text-base font-bold text-white border-b border-slate-800 pb-3">
+            <h2 className="text-base font-bold text-slate-800 border-b border-slate-200 pb-3">
               Coordonnées Officielles
             </h2>
 
             <div className="space-y-4 text-xs">
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+                <div className="w-8 h-8 rounded-lg bg-[#E6F4F3] text-[#007A78] flex items-center justify-center shrink-0 border border-[#99D5D3]">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="font-semibold text-white block">Siège Joo studio</span>
+                  <span className="font-semibold text-slate-800 block">Siège Joo studio</span>
                   <p className="text-slate-400">Cocody, Abidjan, Côte d'Ivoire</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                <div className="w-8 h-8 rounded-lg bg-[#E6F4F3] text-[#008060] flex items-center justify-center shrink-0 border border-[#99D5D3]">
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="font-semibold text-white block">Téléphone & WhatsApp</span>
+                  <span className="font-semibold text-slate-800 block">Téléphone & WhatsApp</span>
                   <a
                     href="tel:+2250100443839"
-                    className="text-emerald-400 hover:underline block font-mono"
+                    className="text-[#008060] hover:underline block font-mono"
                   >
                     +225 01 00 44 38 39
                   </a>
@@ -75,10 +75,10 @@ export const ContactPage: React.FC = () => {
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="font-semibold text-white block">Courriel Électronique</span>
+                  <span className="font-semibold text-slate-800 block">Courriel Électronique</span>
                   <a
                     href="mailto:joostudio.pro@gmail.com"
-                    className="text-amber-400 hover:underline block font-mono"
+                    className="text-[#007A78] hover:underline block font-mono"
                   >
                     joostudio.pro@gmail.com
                   </a>
@@ -101,9 +101,9 @@ export const ContactPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs space-y-2">
-            <div className="flex items-center gap-2 text-slate-300 font-semibold">
-              <Clock className="w-4 h-4 text-amber-400" />
+          <div className="p-5 rounded-2xl bg-white border border-slate-200 text-xs space-y-2">
+            <div className="flex items-center gap-2 text-slate-600 font-semibold">
+              <Clock className="w-4 h-4 text-[#007A78]" />
               <span>Assistance d'urgence en direct</span>
             </div>
             <p className="text-slate-400 leading-relaxed text-[11px]">
@@ -115,14 +115,14 @@ export const ContactPage: React.FC = () => {
 
         {/* Right: Contact Form (7 cols) */}
         <div className="lg:col-span-7">
-          <div className="p-8 rounded-2xl glass-card border border-slate-800">
+          <div className="p-8 rounded-2xl glass-card border border-slate-200">
             {submitted ? (
               <div className="py-12 text-center space-y-4">
-                <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+                <div className="w-14 h-14 rounded-full bg-[#E6F4F3] text-[#008060] flex items-center justify-center mx-auto border border-[#99D5D3]">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-white">Message bien reçu !</h3>
-                <p className="text-xs text-slate-300 max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-xl font-bold text-slate-800">Message bien reçu !</h3>
+                <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
                   Merci {formData.name}. Un conseiller technique de Joo studio va vous contacter
                   par téléphone ou e-mail dans les plus brefs délais.
                 </p>
@@ -138,70 +138,70 @@ export const ContactPage: React.FC = () => {
                       message: '',
                     });
                   }}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs hover:bg-slate-200 transition"
                 >
                   Envoyer un autre message
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h3 className="text-base font-bold text-white mb-2">Envoyez-nous un message</h3>
+                <h3 className="text-base font-bold text-slate-800 mb-2">Envoyez-nous un message</h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1 text-xs">
-                    <label className="text-slate-300 font-medium">Nom complet *</label>
+                    <label className="text-slate-600 font-medium">Nom complet *</label>
                     <input
                       type="text"
                       required
                       placeholder="Ex: Jean-Marc Koffi"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1 text-xs">
-                    <label className="text-slate-300 font-medium">Email *</label>
+                    <label className="text-slate-600 font-medium">Email *</label>
                     <input
                       type="email"
                       required
                       placeholder="votre-nom@exemple.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1 text-xs">
-                    <label className="text-slate-300 font-medium">Téléphone (WhatsApp)</label>
+                    <label className="text-slate-600 font-medium">Téléphone (WhatsApp)</label>
                     <input
                       type="tel"
                       placeholder="+225 07 00 00 00"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1 text-xs">
-                    <label className="text-slate-300 font-medium">Ville / Pays</label>
+                    <label className="text-slate-600 font-medium">Ville / Pays</label>
                     <input
                       type="text"
                       placeholder="Abidjan, Bouaké..."
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1 text-xs">
-                    <label className="text-slate-300 font-medium">Nb de Routeurs</label>
+                    <label className="text-slate-600 font-medium">Nb de Routeurs</label>
                     <select
                       value={formData.routerCount}
                       onChange={(e) => setFormData({ ...formData, routerCount: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs"
+                      className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs"
                     >
                       <option value="1">1 routeur</option>
                       <option value="2 à 5">2 à 5 routeurs</option>
@@ -212,19 +212,19 @@ export const ContactPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1 text-xs">
-                  <label className="text-slate-300 font-medium">Votre message ou projet</label>
+                  <label className="text-slate-600 font-medium">Votre message ou projet</label>
                   <textarea
                     rows={4}
                     placeholder="Décrivez vos besoins, votre modèle de vente ou vos questions techniques..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25"
+                  className="w-full py-3 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-extrabold font-bold text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Envoyer la demande</span>

@@ -36,10 +36,10 @@ export const AuditLogs: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78]">
               <FileText className="w-5 h-5" />
             </div>
             <span>Journal d'Activité & Audit de Sécurité</span>
@@ -51,7 +51,7 @@ export const AuditLogs: React.FC = () => {
 
         <button
           onClick={exportCSV}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+          className="px-4 py-2.5 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
         >
           <Download className="w-4 h-4" />
           <span>Exporter le Journal (CSV)</span>
@@ -59,7 +59,7 @@ export const AuditLogs: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="p-4 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-2xl bg-white backdrop-blur-md border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" />
           <input
@@ -67,21 +67,21 @@ export const AuditLogs: React.FC = () => {
             placeholder="Rechercher par action, cible, ticket ou utilisateur..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono">
+        <div className="flex items-center gap-2 text-xs text-[#008060] font-mono">
           <ShieldCheck className="w-4 h-4" />
           <span>{filtered.length} événement(s) certifiés</span>
         </div>
       </div>
 
       {/* Logs Table */}
-      <div className="rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 overflow-hidden">
+      <div className="rounded-2xl bg-white backdrop-blur-md border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/90 text-slate-400 uppercase tracking-wider text-[10px] border-b border-white/10">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-[#F8FAFC] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Horodatage</th>
                 <th className="py-3 px-4">Opérateur</th>
@@ -93,7 +93,7 @@ export const AuditLogs: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/5 font-mono tabular-nums">
               {filtered.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-900/60 transition">
+                <tr key={log.id} className="hover:bg-white transition">
                   <td className="py-3 px-4 text-slate-400 text-[11px]">
                     {new Date(log.timestamp).toLocaleDateString('fr-FR', {
                       day: '2-digit',
@@ -102,9 +102,9 @@ export const AuditLogs: React.FC = () => {
                       minute: '2-digit',
                     })}
                   </td>
-                  <td className="py-3 px-4 font-sans text-slate-200">{log.user}</td>
-                  <td className="py-3 px-4 font-sans font-bold text-amber-400">{log.action}</td>
-                  <td className="py-3 px-4 font-sans text-white font-semibold">{log.target}</td>
+                  <td className="py-3 px-4 font-sans text-slate-700">{log.user}</td>
+                  <td className="py-3 px-4 font-sans font-bold text-[#007A78]">{log.action}</td>
+                  <td className="py-3 px-4 font-sans text-slate-800 font-semibold">{log.target}</td>
                   <td className="py-3 px-4 font-sans text-slate-400 text-[11px]">{log.details}</td>
                   <td className="py-3 px-4 text-right text-slate-500 text-[11px]">{log.ip}</td>
                 </tr>

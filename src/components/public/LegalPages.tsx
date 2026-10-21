@@ -9,15 +9,15 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
     switch (tab) {
       case 'privacy':
         return (
-          <div className="space-y-6 text-sm text-slate-300 leading-relaxed">
-            <div className="flex items-center gap-3 text-amber-400 mb-2">
+          <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+            <div className="flex items-center gap-3 text-[#007A78] mb-2">
               <Shield className="w-6 h-6" />
-              <h1 className="text-2xl font-bold text-white">Politique de Confidentialité</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Politique de Confidentialité</h1>
             </div>
             <p className="text-xs text-slate-400">Dernière mise à jour : 07 Octobre 2026</p>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">1. Collecte des Données</h2>
+              <h2 className="text-base font-semibold text-slate-800">1. Collecte des Données</h2>
               <p>
                 Joo studio (Abidjan, Côte d'Ivoire), exploitant de la plateforme Joowifi, s'engage à
                 protéger la vie privée de ses utilisateurs et de leurs abonnés WiFi. Nous collectons
@@ -30,7 +30,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">2. Sécurité et Chiffrement</h2>
+              <h2 className="text-base font-semibold text-slate-800">2. Sécurité et Chiffrement</h2>
               <p>
                 Toutes les communications entre les routeurs MikroTik et la plateforme Joowifi sont
                 chiffrées de bout en bout via TLS (HTTPS). Les mots de passe administrateur et
@@ -41,7 +41,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">3. Non-Cession des Données</h2>
+              <h2 className="text-base font-semibold text-slate-800">3. Non-Cession des Données</h2>
               <p>
                 Aucune donnée personnelle n'est commercialisée, louée ou cédée à des tiers. Les
                 données financières de paiement transitent directement par les APIs sécurisées des
@@ -53,15 +53,15 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
 
       case 'terms':
         return (
-          <div className="space-y-6 text-sm text-slate-300 leading-relaxed">
-            <div className="flex items-center gap-3 text-amber-400 mb-2">
+          <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+            <div className="flex items-center gap-3 text-[#007A78] mb-2">
               <Scale className="w-6 h-6" />
-              <h1 className="text-2xl font-bold text-white">Conditions Générales d'Utilisation (CGU)</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Conditions Générales d'Utilisation (CGU)</h1>
             </div>
             <p className="text-xs text-slate-400">Dernière mise à jour : 07 Octobre 2026</p>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">1. Objet du Service</h2>
+              <h2 className="text-base font-semibold text-slate-800">1. Objet du Service</h2>
               <p>
                 Joowifi est une solution SaaS développée par Joo studio permettant la gestion cloud
                 et le contrôle d'équipements réseaux MikroTik RouterBOARD pour l'émission et la vente
@@ -70,7 +70,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">2. Responsabilité de l'Opérateur</h2>
+              <h2 className="text-base font-semibold text-slate-800">2. Responsabilité de l'Opérateur</h2>
               <p>
                 L'utilisateur de la plateforme (l'opérateur ou gérant du hotspot) demeure seul
                 responsable du respect des lois et réglementations relatives aux télécommunications
@@ -80,7 +80,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">3. Disponibilité du Service</h2>
+              <h2 className="text-base font-semibold text-slate-800">3. Disponibilité du Service</h2>
               <p>
                 Joo studio met en œuvre tous les moyens raisonnables pour garantir une disponibilité
                 de 99,9% des serveurs cloud Joowifi. En cas d'indisponibilité momentanée du cloud,
@@ -93,15 +93,15 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
 
       case 'refund':
         return (
-          <div className="space-y-6 text-sm text-slate-300 leading-relaxed">
-            <div className="flex items-center gap-3 text-emerald-400 mb-2">
+          <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+            <div className="flex items-center gap-3 text-[#008060] mb-2">
               <RefreshCw className="w-6 h-6" />
-              <h1 className="text-2xl font-bold text-white">Politique de Remboursement</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Politique de Remboursement</h1>
             </div>
             <p className="text-xs text-slate-400">Dernière mise à jour : 07 Octobre 2026</p>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">1. Abonnements SaaS</h2>
+              <h2 className="text-base font-semibold text-slate-800">1. Abonnements SaaS</h2>
               <p>
                 Les abonnements Joowifi (Starter, Pro, Business, Enterprise) sont mensuels et sans
                 engagement. En cas d'insatisfaction ou d'erreur de souscription lors des 7 premiers
@@ -111,7 +111,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">2. Portefeuille Joowifi Pay</h2>
+              <h2 className="text-base font-semibold text-slate-800">2. Portefeuille Joowifi Pay</h2>
               <p>
                 Les crédits déposés sur le portefeuille Joowifi Pay n'expirent jamais. Tout solde
                 non utilisé peut être retourné vers le compte Mobile Money d'origine de l'opérateur
@@ -123,15 +123,15 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
 
       case 'cookies':
         return (
-          <div className="space-y-6 text-sm text-slate-300 leading-relaxed">
-            <div className="flex items-center gap-3 text-amber-400 mb-2">
+          <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+            <div className="flex items-center gap-3 text-[#007A78] mb-2">
               <Cookie className="w-6 h-6" />
-              <h1 className="text-2xl font-bold text-white">Politique des Cookies & MAC Cookies</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Politique des Cookies & MAC Cookies</h1>
             </div>
             <p className="text-xs text-slate-400">Dernière mise à jour : 07 Octobre 2026</p>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">1. Cookies de Session Admin & Vendeur</h2>
+              <h2 className="text-base font-semibold text-slate-800">1. Cookies de Session Admin & Vendeur</h2>
               <p>
                 Joowifi utilise exclusivement des cookies techniques strictement nécessaires au
                 maintien de votre session de connexion (JWT sécurisé, httpOnly). Aucun cookie de
@@ -140,7 +140,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">2. Mécanisme « MAC Cookie » MikroTik</h2>
+              <h2 className="text-base font-semibold text-slate-800">2. Mécanisme « MAC Cookie » MikroTik</h2>
               <p>
                 Sur le portail captif WiFi, l'option « MAC Cookie » permet d'associer l'adresse MAC
                 d'un abonné à son ticket valide. Lorsqu'un client quitte la zone de couverture puis
@@ -154,20 +154,20 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
       case 'legal':
       default:
         return (
-          <div className="space-y-6 text-sm text-slate-300 leading-relaxed">
-            <div className="flex items-center gap-3 text-amber-400 mb-2">
+          <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+            <div className="flex items-center gap-3 text-[#007A78] mb-2">
               <FileText className="w-6 h-6" />
-              <h1 className="text-2xl font-bold text-white">Mentions Légales</h1>
+              <h1 className="text-2xl font-bold text-slate-800">Mentions Légales</h1>
             </div>
             <p className="text-xs text-slate-400">Dernière mise à jour : 07 Octobre 2026</p>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">1. Éditeur de l'Application</h2>
+              <h2 className="text-base font-semibold text-slate-800">1. Éditeur de l'Application</h2>
               <p>
                 L'application web et plateforme SaaS <strong>Joowifi</strong> est éditée par :
               </p>
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1 font-mono">
-                <p className="text-white font-bold">Joo studio</p>
+              <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-1 font-mono">
+                <p className="text-slate-800 font-bold">Joo studio</p>
                 <p>Abidjan, Côte d'Ivoire</p>
                 <p>Courriel : joostudio.pro@gmail.com</p>
                 <p>Téléphone / WhatsApp : +225 01 00 44 38 39</p>
@@ -176,7 +176,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-base font-semibold text-white">2. Propriété Intellectuelle</h2>
+              <h2 className="text-base font-semibold text-slate-800">2. Propriété Intellectuelle</h2>
               <p>
                 L'ensemble des éléments constituant l'application Joowifi (marques, logos, code
                 source, interfaces, graphismes et documentation) sont la propriété exclusive de Joo
@@ -192,7 +192,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       {/* Navigation tabs between legal docs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-4 mb-8">
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4 mb-8">
         {[
           { tab: 'legal', label: 'Mentions Légales' },
           { tab: 'privacy', label: 'Confidentialité' },
@@ -205,8 +205,8 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
             onClick={() => setPublicTab(item.tab as PublicTab)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
               tab === item.tab
-                ? 'bg-amber-500 text-slate-950 font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-[#008060] text-white font-bold'
+                : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
             }`}
           >
             {item.label}
@@ -214,7 +214,7 @@ export const LegalPages: React.FC<{ tab: PublicTab }> = ({ tab }) => {
         ))}
       </div>
 
-      <div className="p-8 sm:p-10 rounded-3xl glass-card border border-slate-800">
+      <div className="p-8 sm:p-10 rounded-3xl glass-card border border-slate-200">
         {renderContent()}
       </div>
     </div>

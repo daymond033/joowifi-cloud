@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { StaffItem } from '../../types';
 import {
   Users,
   Plus,
   Phone,
-  Percent,
-  AlertCircle,
-  Coins,
   MapPin,
-  X,
-  Smartphone,
+  Percent,
+  Wallet,
+  TrendingUp,
   Power,
   Trash2,
+  Smartphone,
+  CheckCircle2,
+  X,
   Search,
+  DollarSign,
 } from 'lucide-react';
 
 export const StaffManager: React.FC = () => {
@@ -21,179 +22,194 @@ export const StaffManager: React.FC = () => {
     staff,
     zones,
     addStaff,
+    rechargeStaff,
     toggleStaffStatus,
     deleteStaff,
-    rechargeStaff,
     formatMoney,
+    setCurrentSpace,
     pendingSosAlerts,
     clearSosAlert,
-    setCurrentSpace,
-    login,
   } = useApp();
 
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [rechargeModalStaff, setRechargeModalStaff] = useState<StaffItem | null>(null);
-  const [rechargeAmount, setRechargeAmount] = useState<number>(20000);
+  const [selectedZoneFilter, setSelectedZoneFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [zoneFilter, setZoneFilter] = useState('all');
 
-  const [formData, setFormData] = useState<{
-    name: string;
-    phone: string;
-    zoneId: string;
-    zoneName: string;
-    commissionRate: number;
-    balanceCredit: number;
-    dailyGoal: number;
-    active: boolean;
-  }>({
-    name: '',
-    phone: '+225 ',
-    zoneId: zones[0]?.id || 'zone-1',
-    zoneName: zones[0]?.name || 'Cocody',
-    commissionRate: 12,
-    balanceCredit: 30000,
-    dailyGoal: 20000,
-    active: true,
+  // Add Staff Modal
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('+225 ');
+  const [newZoneId, setNewZoneId] = useState(zones[0]?.id || 'zone-1');
+  const [newCommission, setNewCommission] = useState(10);
+  const [newInitialCredit, setNewInitialCredit] = useState(25000);
+  const [newDailyGoal, setNewDailyGoal] = useState(15000);
+
+  // Recharge Modal
+  const [rechargeModalStaffId, setRechargeModalStaffId] = useState<string | null>(null);
+  const [rechargeAmount, setRechargeAmount] = useState(15000);
+
+  const filteredStaff = staff.filter((s) => {
+    const matchZone =
+      selectedZoneFilter === 'all' ||
+      s.zoneId === selectedZoneFilter ||
+      s.zoneName === selectedZoneFilter;
+    const matchQuery =
+      s.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+      s.phone.toLowerCase().includes(searchQuery.trim().toLowerCase());
+    return matchZone && matchQuery;
   });
 
-  const filteredStaff = staff.filter((member) => {
-    const matchesZone = zoneFilter === 'all' || member.zoneId === zoneFilter;
-    const matchesSearch =
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.zoneName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesZone && matchesSearch;
-  });
+  const totalTodaySales = staff.reduce((acc, s) => acc + s.todaySales, 0);
+  const totalCreditInField = staff.reduce((acc, s) => acc + s.balanceCredit, 0);
+  const totalCommissions = staff.reduce(
+    (acc, s) => acc + Math.round((s.totalSales * s.commissionRate) / 100),
+    0
+  );
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleCreateStaff = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) return;
-    const selectedZone = zones.find((z) => z.id === formData.zoneId);
+    if (!newName.trim()) return;
+    const targetZone = zones.find((z) => z.id === newZoneId) || zones[0];
     addStaff({
-      ...formData,
-      zoneName: selectedZone?.name || formData.zoneName,
-      lastActive: 'À l’instant',
-    });
-    setFormData({
-      ...formData,
-      name: '',
-      phone: '+225 ',
+      name: newName.trim(),
+      phone: newPhone.trim(),
+      zoneId: targetZone?.id || 'zone-1',
+      zoneName: targetZone?.name || 'Kiosque Principal Joowifi',
+      commissionRate: Number(newCommission),
+      balanceCredit: Number(newInitialCredit),
+      dailyGoal: Number(newDailyGoal),
+      active: true,
     });
     setAddModalOpen(false);
+    setNewName('');
   };
 
-  const handleRechargeSubmit = (e: React.FormEvent) => {
+  const handleConfirmRecharge = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rechargeModalStaff) return;
-    rechargeStaff(rechargeModalStaff.id, rechargeAmount);
-    setRechargeModalStaff(null);
-  };
-
-  const handleOpenPOSAsVendor = (member: StaffItem) => {
-    login(`${member.name.toLowerCase().replace(/\s+/g, '.')}@joowifi.pro`, 'staff', member.name);
-    setCurrentSpace('pos');
+    if (!rechargeModalStaffId) return;
+    rechargeStaff(rechargeModalStaffId, Number(rechargeAmount));
+    setRechargeModalStaffId(null);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10">
+    <div className="space-y-5 pb-12 text-[#1E293B]">
+      {/* 1. TOP COMMAND & FILTER BAR (Clean White Card) */}
+      <div className="bg-white rounded-lg border border-slate-200 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-2xs">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <span>Équipe Vendeurs & Caisse POS Terrain</span>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#008060] mb-1">
+            RÉSEAU DE DISTRIBUTION & TERMINAUX CAISSE POS
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
+            Gestion des Agents Vendeurs ({staff.length})
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Gérez vos gérants de cabines et vendeurs ambulants, fixez leurs commissions et rechargez leur crédit d'émission.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Gérez les soldes prépayés, les taux de commission et les accès Caisse POS de vos revendeurs terrain.
           </p>
         </div>
 
-        <button
-          onClick={() => setAddModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Ajouter un Vendeur POS</span>
-        </button>
-      </div>
-
-      {/* SOS Alerts Bar (if any vendor sent an SOS) */}
-      {pendingSosAlerts.length > 0 && (
-        <div className="p-4 rounded-2xl bg-rose-950/50 border border-rose-500/40 text-xs text-rose-200 space-y-2.5">
-          <div className="font-bold flex items-center gap-2 text-white">
-            <AlertCircle className="w-4 h-4 text-rose-400 animate-bounce" />
-            <span>Alertes SOS Recharge reçues du terrain ({pendingSosAlerts.length})</span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher un agent..."
+              className="pl-8 pr-3 py-1.5 rounded bg-[#F4F7FA] border border-slate-300 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-[#008060]"
+            />
           </div>
-          {pendingSosAlerts.map((sos) => (
-            <div
-              key={sos.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950/90 p-3 rounded-xl border border-rose-500/30"
-            >
-              <div>
-                <strong className="text-white">{sos.staffName}</strong> demande une recharge urgente de{' '}
-                <strong className="text-amber-400 font-mono">{formatMoney(sos.amount)}</strong>
-                <span className="text-[10px] text-slate-400 ml-2">({sos.time})</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const st = staff.find((s) => s.name.includes(sos.staffName.split(' ')[0])) || staff[0];
-                    if (st) {
-                      setRechargeModalStaff(st);
-                      setRechargeAmount(sos.amount);
-                    }
-                    clearSosAlert(sos.id);
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold cursor-pointer active:scale-95"
-                >
-                  Créditer maintenant
-                </button>
-                <button
-                  onClick={() => clearSosAlert(sos.id)}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-white cursor-pointer"
-                >
-                  Ignorer
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {/* Search & Zone Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" />
-          <input
-            type="text"
-            placeholder="Rechercher un vendeur par nom, téléphone ou zone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-amber-500"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
           <select
-            value={zoneFilter}
-            onChange={(e) => setZoneFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            value={selectedZoneFilter}
+            onChange={(e) => setSelectedZoneFilter(e.target.value)}
+            className="px-3 py-1.5 rounded bg-[#F4F7FA] border border-slate-300 text-xs font-medium text-slate-700 focus:outline-none cursor-pointer"
           >
-            <option value="all">Toutes les zones ({zones.length})</option>
+            <option value="all">Tous les sites ({zones.length})</option>
             {zones.map((z) => (
               <option key={z.id} value={z.id}>
                 {z.name}
               </option>
             ))}
           </select>
+
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="px-4 py-2 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Ajouter un Vendeur</span>
+          </button>
         </div>
       </div>
 
-      {/* Staff Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* 2. KPI SUMMARY STRIP */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-4 bg-white rounded-lg border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <span className="text-[11px] font-bold uppercase text-slate-400">VENTES POS DU JOUR</span>
+            <div className="text-2xl font-bold text-[#008060] font-mono mt-0.5">
+              {formatMoney(totalTodaySales)}
+            </div>
+            <span className="text-[11px] text-slate-500">Encaissements cumulés</span>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-[#E6F4F3] text-[#008060] flex items-center justify-center">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="p-4 bg-white rounded-lg border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <span className="text-[11px] font-bold uppercase text-slate-400">CRÉDIT EN CIRCULATION</span>
+            <div className="text-2xl font-bold text-slate-800 font-mono mt-0.5">
+              {formatMoney(totalCreditInField)}
+            </div>
+            <span className="text-[11px] text-slate-500">Solde prépayé disponible</span>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] text-[#0066CC] flex items-center justify-center">
+            <Wallet className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="p-4 bg-white rounded-lg border border-slate-200 flex items-center justify-between shadow-2xs">
+          <div>
+            <span className="text-[11px] font-bold uppercase text-slate-400">COMMISSIONS AGENTS</span>
+            <div className="text-2xl font-bold text-slate-800 font-mono mt-0.5">
+              {formatMoney(totalCommissions)}
+            </div>
+            <span className="text-[11px] text-slate-500">Rémunération vendeurs</span>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-[#E6F4F3] text-[#007A78] flex items-center justify-center">
+            <DollarSign className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* SOS Requests if any */}
+      {pendingSosAlerts.length > 0 && (
+        <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-xs">
+            <strong className="text-rose-800 block text-sm">
+              Demande SOS Crédit : {pendingSosAlerts[0].vendorName} ({pendingSosAlerts[0].zoneName})
+            </strong>
+            <span className="text-rose-700">
+              Solde actuel : {formatMoney(pendingSosAlerts[0].currentBalance)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                rechargeStaff(pendingSosAlerts[0].vendorId, 25000);
+                clearSosAlert(pendingSosAlerts[0].id);
+              }}
+              className="px-3.5 py-1.5 rounded bg-[#008060] text-white font-semibold text-xs cursor-pointer"
+            >
+              Créditer +25 000 F
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3. CLEAN WHITE CORPORATE VENDOR CARDS (No more muddy grey bg-slate-900/40!) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredStaff.map((member) => {
           const commissionsTotal = Math.round(
             (member.totalSales * member.commissionRate) / 100
@@ -206,17 +222,18 @@ export const StaffManager: React.FC = () => {
           return (
             <div
               key={member.id}
-              className="p-6 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 space-y-4 hover:border-amber-500/30 transition"
+              className="bg-white rounded-lg border border-slate-200 hover:border-[#008060] p-5 space-y-4 transition shadow-2xs"
             >
+              {/* Top Row: Avatar, Name/Phone, Active Status */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 text-amber-400 font-extrabold flex items-center justify-center border border-amber-500/30 font-mono">
+                  <div className="w-11 h-11 rounded-lg bg-[#E6F4F3] text-[#005A5B] font-bold text-sm flex items-center justify-center border border-[#99D5D3] font-mono">
                     {member.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">{member.name}</h3>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5 font-mono">
-                      <Phone className="w-3 h-3 text-emerald-400" />
+                    <h3 className="text-sm font-bold text-slate-900">{member.name}</h3>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5 font-mono">
+                      <Phone className="w-3 h-3 text-[#008060]" />
                       <span>{member.phone}</span>
                     </div>
                   </div>
@@ -225,11 +242,10 @@ export const StaffManager: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => toggleStaffStatus(member.id)}
-                    title={member.active ? 'Suspendre ce vendeur' : 'Réactiver ce vendeur'}
-                    className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 cursor-pointer transition ${
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded flex items-center gap-1 cursor-pointer transition ${
                       member.active
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        ? 'bg-[#E6F4F3] text-[#008060] border border-[#99D5D3]'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
                     }`}
                   >
                     <Power className="w-3 h-3" />
@@ -237,82 +253,88 @@ export const StaffManager: React.FC = () => {
                   </button>
                   <button
                     onClick={() => deleteStaff(member.id)}
-                    title="Supprimer ce vendeur"
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800/60 transition cursor-pointer"
+                    title="Supprimer cet agent"
+                    className="p-1.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Zone and Commission */}
-              <div className="flex items-center justify-between text-xs text-slate-300 pt-1">
-                <div className="flex items-center gap-1.5 text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
+              {/* Zone & Commission Strip */}
+              <div className="flex items-center justify-between text-xs pt-1">
+                <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                  <MapPin className="w-3.5 h-3.5 text-[#007A78]" />
                   <span>{member.zoneName}</span>
                 </div>
-                <div className="flex items-center gap-1 text-amber-300 font-mono font-semibold">
-                  <Percent className="w-3.5 h-3.5" />
+                <div className="px-2.5 py-0.5 rounded bg-[#EFF6FF] text-[#0066CC] border border-blue-200 font-semibold flex items-center gap-1">
+                  <Percent className="w-3 h-3" />
                   <span>Commission : {member.commissionRate}%</span>
                 </div>
               </div>
 
-              {/* Metrics Box */}
-              <div className="grid grid-cols-3 gap-2 p-3.5 rounded-xl bg-slate-950/90 border border-white/10 text-center text-xs font-mono tabular-nums">
+              {/* 3-Column Financial Box on crisp #F8FAFC */}
+              <div className="grid grid-cols-3 gap-2 p-3.5 rounded-lg bg-[#F8FAFC] border border-slate-200 text-center text-xs font-mono tabular-nums">
                 <div>
-                  <span className="text-[10px] text-slate-500 block uppercase font-sans">Solde Crédit</span>
-                  <span className="font-bold text-emerald-400 text-xs">
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-semibold">
+                    Solde Crédit
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs mt-0.5 block">
                     {formatMoney(member.balanceCredit)}
                   </span>
                 </div>
-                <div>
-                  <span className="text-[10px] text-slate-500 block uppercase font-sans">Ventes Jour</span>
-                  <span className="font-bold text-amber-400 text-xs">
+                <div className="border-x border-slate-200">
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-semibold">
+                    Ventes Jour
+                  </span>
+                  <span className="font-bold text-[#008060] text-xs mt-0.5 block">
                     {formatMoney(member.todaySales)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 block uppercase font-sans">Commissions</span>
-                  <span className="font-bold text-cyan-400 text-xs">
+                  <span className="text-[10px] text-slate-400 block uppercase font-sans font-semibold">
+                    Commissions
+                  </span>
+                  <span className="font-bold text-[#0066CC] text-xs mt-0.5 block">
                     {formatMoney(commissionsTotal)}
                   </span>
                 </div>
               </div>
 
-              {/* Daily Goal bar */}
+              {/* Daily Goal Progress Bar */}
               <div className="space-y-1">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-400">Objectif journalier ({goalPercent}%)</span>
-                  <span className="text-slate-300 font-mono tabular-nums">
-                    {formatMoney(member.todaySales)} / {formatMoney(member.dailyGoal)}
+                <div className="flex justify-between text-[11px] text-slate-500">
+                  <span>Objectif journalier ({goalPercent}%)</span>
+                  <span className="font-mono">
+                    {formatMoney(member.todaySales)} / {formatMoney(member.dailyGoal || 15000)}
                   </span>
                 </div>
-                <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                   <div
-                    className="h-full bg-gradient-to-r from-amber-500 to-emerald-400"
+                    className="h-full bg-[#008060] transition-all duration-300"
                     style={{ width: `${goalPercent}%` }}
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/10">
+              <div className="flex items-center justify-between gap-2 pt-1">
                 <button
-                  onClick={() => handleOpenPOSAsVendor(member)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-white/10 text-amber-300 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                  onClick={() => setCurrentSpace('pos')}
+                  className="px-3.5 py-2 rounded bg-[#F4F7FA] hover:bg-slate-200 border border-slate-300 text-slate-700 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                  <Smartphone className="w-3.5 h-3.5 text-[#007A78]" />
                   <span>Ouvrir sa Caisse POS</span>
                 </button>
 
                 <button
                   onClick={() => {
-                    setRechargeModalStaff(member);
-                    setRechargeAmount(25000);
+                    setRechargeModalStaffId(member.id);
+                    setRechargeAmount(15000);
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-emerald-500/20 active:scale-95"
+                  className="px-4 py-2 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
                 >
-                  <Coins className="w-3.5 h-3.5" />
+                  <Wallet className="w-3.5 h-3.5" />
                   <span>Recharger Crédit</span>
                 </button>
               </div>
@@ -321,51 +343,117 @@ export const StaffManager: React.FC = () => {
         })}
       </div>
 
-      {/* MODAL: ADD STAFF */}
-      {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[#0B0F19] border border-white/15 p-6 shadow-2xl text-slate-100 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-base font-bold text-white">Ajouter un Vendeur POS</h3>
-              <button
-                onClick={() => setAddModalOpen(false)}
-                className="text-slate-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
+      {/* Modal Recharge Crédit */}
+      {rechargeModalStaffId && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"
+          onClick={() => setRechargeModalStaffId(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-lg border border-slate-200 shadow-2xl overflow-hidden text-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 bg-[#005A5B] text-white flex items-center justify-between">
+              <h3 className="text-sm font-bold">Recharger le Crédit POS Vendeur</h3>
+              <button onClick={() => setRechargeModalStaffId(null)} className="text-teal-100 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
               </button>
             </div>
+            <form onSubmit={handleConfirmRecharge} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1.5">
+                  Montant de crédit à ajouter (FCFA) :
+                </label>
+                <input
+                  type="number"
+                  min={1000}
+                  step={500}
+                  value={rechargeAmount}
+                  onChange={(e) => setRechargeAmount(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 font-mono text-sm font-bold text-slate-800"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[5000, 15000, 25000, 50000].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setRechargeAmount(amt)}
+                    className={`px-3 py-1.5 rounded font-mono font-semibold cursor-pointer ${
+                      rechargeAmount === amt
+                        ? 'bg-[#008060] text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    +{amt.toLocaleString('fr-FR')} F
+                  </button>
+                ))}
+              </div>
+              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRechargeModalStaffId(null)}
+                  className="px-4 py-2 rounded bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded bg-[#008060] text-white font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Valider la Recharge</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-            <form onSubmit={handleAddSubmit} className="space-y-3.5 text-xs">
-              <div className="space-y-1">
-                <label className="text-slate-300 font-medium">Nom complet du vendeur *</label>
+      {/* Modal Ajouter Vendeur */}
+      {addModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"
+          onClick={() => setAddModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-lg border border-slate-200 shadow-2xl overflow-hidden text-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 bg-[#005A5B] text-white flex items-center justify-between">
+              <h3 className="text-sm font-bold">Nouvel Agent Vendeur POS</h3>
+              <button onClick={() => setAddModalOpen(false)} className="text-teal-100 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateStaff} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Nom complet :</label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Ibrahima Konaté (Gare Sud)"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Ex: Célestine Yao"
+                  className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 text-slate-800"
                 />
               </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 font-medium">Numéro de téléphone WhatsApp *</label>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Téléphone WhatsApp / Mobile Money :</label>
                 <input
-                  type="tel"
+                  type="text"
                   required
-                  placeholder="+225 07 00 00 00"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs font-mono"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 font-mono text-slate-800"
                 />
               </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 font-medium">Zone assignée :</label>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Site d'affectation :</label>
                 <select
-                  value={formData.zoneId}
-                  onChange={(e) => setFormData({ ...formData, zoneId: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs"
+                  value={newZoneId}
+                  onChange={(e) => setNewZoneId(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 text-slate-800"
                 >
                   {zones.map((z) => (
                     <option key={z.id} value={z.id}>
@@ -374,118 +462,45 @@ export const StaffManager: React.FC = () => {
                   ))}
                 </select>
               </div>
-
-              <div className="grid grid-cols-2 gap-3 font-mono">
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-sans font-medium">Commission (%)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Commission (%) :</label>
                   <input
                     type="number"
-                    min="0"
-                    max="50"
-                    value={formData.commissionRate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, commissionRate: Number(e.target.value) })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs"
+                    min={0}
+                    max={50}
+                    value={newCommission}
+                    onChange={(e) => setNewCommission(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 font-mono text-slate-800"
                   />
                 </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-300 font-sans font-medium">Crédit Initial (FCFA)</label>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Crédit Initial (FCFA) :</label>
                   <input
                     type="number"
-                    min="5000"
-                    step="5000"
-                    value={formData.balanceCredit}
-                    onChange={(e) =>
-                      setFormData({ ...formData, balanceCredit: Number(e.target.value) })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs"
+                    min={0}
+                    step={1000}
+                    value={newInitialCredit}
+                    onChange={(e) => setNewInitialCredit(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 font-mono text-slate-800"
                   />
                 </div>
               </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-300 font-medium">Objectif Journalier (FCFA)</label>
-                <input
-                  type="number"
-                  min="5000"
-                  step="5000"
-                  value={formData.dailyGoal}
-                  onChange={(e) => setFormData({ ...formData, dailyGoal: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white font-mono focus:outline-none focus:border-amber-500 text-xs"
-                />
+              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddModalOpen(false)}
+                  className="px-4 py-2 rounded bg-slate-100 text-slate-700 font-semibold cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded bg-[#008060] text-white font-semibold cursor-pointer"
+                >
+                  Créer l'Agent POS
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-extrabold text-xs transition cursor-pointer shadow-lg shadow-amber-500/25 mt-2 active:scale-95"
-              >
-                Créer l'accès vendeur POS
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: RECHARGE STAFF CREDIT */}
-      {rechargeModalStaff && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-[#0B0F19] border border-white/15 p-6 shadow-2xl text-slate-100 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Coins className="w-4 h-4 text-emerald-400" />
-                <span>Recharger le Crédit Vendeur</span>
-              </h3>
-              <button
-                onClick={() => setRechargeModalStaff(null)}
-                className="text-slate-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleRechargeSubmit} className="space-y-4 text-xs">
-              <p className="text-slate-300">
-                Créditer le plafond d'émission de tickets de{' '}
-                <strong className="text-white">{rechargeModalStaff.name}</strong>.
-              </p>
-
-              <div className="space-y-1">
-                <label className="text-slate-400 font-semibold">Montant rapide :</label>
-                <div className="grid grid-cols-3 gap-2 font-mono">
-                  {[10000, 25000, 50000].map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setRechargeAmount(amt)}
-                      className={`py-2 rounded-xl font-bold border transition cursor-pointer ${
-                        rechargeAmount === amt
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                          : 'bg-slate-900 border-white/10 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      {formatMoney(amt)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <input
-                type="number"
-                min="1000"
-                step="1000"
-                value={rechargeAmount}
-                onChange={(e) => setRechargeAmount(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-emerald-500 text-xs font-mono"
-              />
-
-              <button
-                type="submit"
-                className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition cursor-pointer shadow-lg shadow-emerald-500/25 active:scale-95"
-              >
-                Valider la recharge (+{formatMoney(rechargeAmount)})
-              </button>
             </form>
           </div>
         </div>

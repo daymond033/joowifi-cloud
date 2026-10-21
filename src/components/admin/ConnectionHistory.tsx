@@ -50,10 +50,10 @@ export const ConnectionHistory: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78]">
               <History className="w-5 h-5" />
             </div>
             <span>Historique des Connexions & Cookie MAC (24h)</span>
@@ -64,13 +64,13 @@ export const ConnectionHistory: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-xl bg-slate-950 p-1 border border-white/10 text-xs">
+          <div className="flex rounded-xl bg-[#F8FAFC] p-1 border border-slate-200 text-xs">
             <button
               onClick={() => setFilterStatus('all')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
                 filterStatus === 'all'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#008060] hover:bg-[#006B50] text-white font-bold'
+                  : 'text-slate-400 hover:text-slate-800'
               }`}
             >
               Toutes ({connectionLogs.length})
@@ -79,8 +79,8 @@ export const ConnectionHistory: React.FC = () => {
               onClick={() => setFilterStatus('success')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
                 filterStatus === 'success'
-                  ? 'bg-emerald-500 text-slate-950 font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#008060] text-white font-bold'
+                  : 'text-slate-400 hover:text-slate-800'
               }`}
             >
               Réussies ({successCount})
@@ -90,7 +90,7 @@ export const ConnectionHistory: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
                 filterStatus === 'failed'
                   ? 'bg-rose-500 text-white font-bold'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-400 hover:text-slate-800'
               }`}
             >
               Refusées ({failedCount})
@@ -99,9 +99,9 @@ export const ConnectionHistory: React.FC = () => {
 
           <button
             onClick={exportHistoryCSV}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-slate-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5 text-amber-400" />
+            <Download className="w-3.5 h-3.5 text-[#007A78]" />
             <span>CSV</span>
           </button>
         </div>
@@ -109,7 +109,7 @@ export const ConnectionHistory: React.FC = () => {
 
       {/* Summary & Search Bar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-        <div className="lg:col-span-8 p-4 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 flex flex-col sm:flex-row gap-3">
+        <div className="lg:col-span-8 p-4 rounded-2xl bg-white backdrop-blur-md border border-slate-200 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" />
             <input
@@ -117,14 +117,14 @@ export const ConnectionHistory: React.FC = () => {
               placeholder="Rechercher un code ticket, une adresse MAC ou un motif..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-amber-500"
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 placeholder-slate-500 text-xs focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <select
             value={selectedRouter}
             onChange={(e) => setSelectedRouter(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            className="px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-amber-500"
           >
             <option value="all">Tous les routeurs MikroTik</option>
             {routers.map((r) => (
@@ -135,21 +135,21 @@ export const ConnectionHistory: React.FC = () => {
           </select>
         </div>
 
-        <div className="lg:col-span-4 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 flex items-center justify-between text-xs">
+        <div className="lg:col-span-4 p-4 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-between text-xs">
           <div className="flex items-center gap-2.5">
-            <Cookie className="w-5 h-5 text-emerald-400 shrink-0" />
+            <Cookie className="w-5 h-5 text-[#008060] shrink-0" />
             <div>
-              <strong className="text-white block">Taux d'accès réussi : {successRate}%</strong>
+              <strong className="text-slate-800 block">Taux d'accès réussi : {successRate}%</strong>
               <span className="text-[11px] text-slate-400">Synchronisation Cookie MAC active</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 overflow-hidden">
+      <div className="rounded-2xl bg-white backdrop-blur-md border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/90 text-slate-400 uppercase tracking-wider text-[10px] border-b border-white/10">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-[#F8FAFC] text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4">Horodatage</th>
                 <th className="py-3 px-4">Statut</th>
@@ -161,13 +161,13 @@ export const ConnectionHistory: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-white/5 font-mono tabular-nums">
               {filtered.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-900/60 transition">
+                <tr key={log.id} className="hover:bg-white transition">
                   <td className="py-3 px-4 text-slate-400 text-[11px]">
                     {new Date(log.timestamp).toLocaleTimeString('fr-FR')}
                   </td>
                   <td className="py-3 px-4 font-sans">
                     {log.status === 'success' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#008060]">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Connecté</span>
                       </span>
@@ -178,9 +178,9 @@ export const ConnectionHistory: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 font-bold text-white">{log.username}</td>
-                  <td className="py-3 px-4 text-amber-300/90">{log.macAddress}</td>
-                  <td className="py-3 px-4 font-sans text-slate-300">{log.routerName}</td>
+                  <td className="py-3 px-4 font-bold text-slate-800">{log.username}</td>
+                  <td className="py-3 px-4 text-[#005A5B]/90">{log.macAddress}</td>
+                  <td className="py-3 px-4 font-sans text-slate-600">{log.routerName}</td>
                   <td className="py-3 px-4 font-sans text-slate-400">
                     {log.reason || 'Authentification acceptée (Cookie MAC enregistré)'}
                   </td>

@@ -144,10 +144,10 @@ export const CaptivePortalEditor: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78]">
               <Palette className="w-5 h-5" />
             </div>
             <span>Éditeur de Portail Captif (Live Sandbox)</span>
@@ -161,15 +161,15 @@ export const CaptivePortalEditor: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowSaveTemplateInput(!showSaveTemplateInput)}
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-amber-300 font-bold text-xs flex items-center gap-2 transition cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-[#005A5B] font-bold text-xs flex items-center gap-2 transition cursor-pointer"
           >
-            <BookmarkPlus className="w-4 h-4 text-amber-400" />
+            <BookmarkPlus className="w-4 h-4 text-[#007A78]" />
             <span>Enregistrer dans Mes Templates</span>
           </button>
 
           <button
             onClick={handleSave}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/25 active:scale-95"
+            className="px-5 py-2.5 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-extrabold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/25 active:scale-95"
           >
             <Save className="w-4 h-4" />
             <span>Publier sur les routeurs</span>
@@ -180,7 +180,7 @@ export const CaptivePortalEditor: React.FC = () => {
       {showSaveTemplateInput && (
         <form
           onSubmit={handleSaveAsNewTemplate}
-          className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 text-xs"
+          className="p-4 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] flex flex-col sm:flex-row items-stretch sm:items-center gap-3 text-xs"
         >
           <input
             type="text"
@@ -188,11 +188,11 @@ export const CaptivePortalEditor: React.FC = () => {
             placeholder="Nom de la déclinaison (ex: Portail Hôtel Ivoire, Campus Nord...)"
             value={saveTemplateName}
             onChange={(e) => setSaveTemplateName(e.target.value)}
-            className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-white/15 text-white focus:outline-none focus:border-amber-500"
+            className="flex-1 px-3.5 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500"
           />
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-extrabold cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#008060] text-white font-extrabold cursor-pointer"
           >
             Sauvegarder ce design
           </button>
@@ -204,8 +204,8 @@ export const CaptivePortalEditor: React.FC = () => {
         {/* LEFT CONFIGURATION CONTROLS */}
         <div className="lg:col-span-5 space-y-5 text-xs">
           {/* Scope Selector */}
-          <div className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 space-y-3">
-            <label className="text-slate-300 font-bold block">Périmètre d'application :</label>
+          <div className="p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200 space-y-3">
+            <label className="text-slate-600 font-bold block">Périmètre d'application :</label>
             <div className="grid grid-cols-3 gap-2">
               {(['global', 'zone', 'router'] as const).map((sc) => (
                 <button
@@ -214,8 +214,8 @@ export const CaptivePortalEditor: React.FC = () => {
                   onClick={() => setForm({ ...form, scope: sc })}
                   className={`py-2 px-2.5 rounded-xl border text-center font-bold transition cursor-pointer ${
                     form.scope === sc
-                      ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                      : 'bg-slate-950 border-white/10 text-slate-400 hover:text-white'
+                      ? 'bg-[#E6F4F3] border-amber-500 text-[#005A5B]'
+                      : 'bg-[#F8FAFC] border-slate-200 text-slate-400 hover:text-slate-800'
                   }`}
                 >
                   {sc === 'global' ? 'Global' : sc === 'zone' ? 'Par Zone' : 'Par Routeur'}
@@ -227,7 +227,7 @@ export const CaptivePortalEditor: React.FC = () => {
               <select
                 value={form.targetZoneId || zones[0]?.id}
                 onChange={(e) => setForm({ ...form, targetZoneId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white text-xs mt-2"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 text-xs mt-2"
               >
                 {zones.map((z) => (
                   <option key={z.id} value={z.id}>
@@ -241,7 +241,7 @@ export const CaptivePortalEditor: React.FC = () => {
               <select
                 value={form.targetRouterId || routers[0]?.id}
                 onChange={(e) => setForm({ ...form, targetRouterId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white text-xs mt-2"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 text-xs mt-2"
               >
                 {routers.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -253,8 +253,8 @@ export const CaptivePortalEditor: React.FC = () => {
           </div>
 
           {/* Theme Presets */}
-          <div className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 space-y-3">
-            <label className="text-slate-300 font-bold block">Thèmes prédéfinis :</label>
+          <div className="p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200 space-y-3">
+            <label className="text-slate-600 font-bold block">Thèmes prédéfinis :</label>
             <div className="grid grid-cols-2 gap-2">
               {presets.map((preset) => (
                 <button
@@ -263,13 +263,13 @@ export const CaptivePortalEditor: React.FC = () => {
                   onClick={() => applyPreset(preset)}
                   className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                     form.templateId === preset.id
-                      ? 'border-amber-500 bg-amber-500/10 text-white'
-                      : 'border-white/10 bg-slate-950/60 text-slate-300 hover:border-white/20'
+                      ? 'border-amber-500 bg-[#E6F4F3] text-slate-800'
+                      : 'border-slate-200 bg-[#F8FAFC] text-slate-600 hover:border-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0"
+                      className="w-3.5 h-3.5 rounded-full border border-slate-200 shrink-0"
                       style={{ backgroundColor: preset.primary }}
                     />
                     <strong className="text-xs truncate">{preset.name}</strong>
@@ -280,8 +280,8 @@ export const CaptivePortalEditor: React.FC = () => {
           </div>
 
           {/* Brand & Texts */}
-          <div className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 space-y-3">
-            <h3 className="font-bold text-white text-xs border-b border-white/10 pb-2">
+          <div className="p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200 space-y-3">
+            <h3 className="font-bold text-slate-800 text-xs border-b border-slate-200 pb-2">
               Identité & Textes d'Accueil
             </h3>
 
@@ -291,7 +291,7 @@ export const CaptivePortalEditor: React.FC = () => {
                 type="text"
                 value={form.brandName}
                 onChange={(e) => setForm({ ...form, brandName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs"
               />
             </div>
 
@@ -301,7 +301,7 @@ export const CaptivePortalEditor: React.FC = () => {
                 type="text"
                 value={form.tagline}
                 onChange={(e) => setForm({ ...form, tagline: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs"
               />
             </div>
 
@@ -311,7 +311,7 @@ export const CaptivePortalEditor: React.FC = () => {
                 rows={2}
                 value={form.welcomeMessage}
                 onChange={(e) => setForm({ ...form, welcomeMessage: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs resize-none"
               />
             </div>
 
@@ -321,7 +321,7 @@ export const CaptivePortalEditor: React.FC = () => {
                 type="tel"
                 value={form.supportPhone}
                 onChange={(e) => setForm({ ...form, supportPhone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-amber-500 text-xs font-mono"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs font-mono"
               />
             </div>
 
@@ -330,8 +330,8 @@ export const CaptivePortalEditor: React.FC = () => {
               <label className="text-slate-400 font-medium block mb-1">
                 Logo personnalisé (PNG/JPG/SVG, max 500 Ko) :
               </label>
-              <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-950 border border-white/10 hover:border-amber-500/40 cursor-pointer text-slate-300">
-                <Upload className="w-4 h-4 text-amber-400 shrink-0" />
+              <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] cursor-pointer text-slate-600">
+                <Upload className="w-4 h-4 text-[#007A78] shrink-0" />
                 <span className="truncate">
                   {form.logoUrl
                     ? 'Logo personnalisé actif (cliquer pour remplacer)'
@@ -343,8 +343,8 @@ export const CaptivePortalEditor: React.FC = () => {
           </div>
 
           {/* Color Palettes Custom Hex */}
-          <div className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 space-y-3">
-            <h3 className="font-bold text-white text-xs border-b border-white/10 pb-2">
+          <div className="p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200 space-y-3">
+            <h3 className="font-bold text-slate-800 text-xs border-b border-slate-200 pb-2">
               Couleurs Hexadécimales Personnalisées
             </h3>
 
@@ -362,7 +362,7 @@ export const CaptivePortalEditor: React.FC = () => {
                     type="text"
                     value={form.primaryColor}
                     onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                    className="w-full px-2 py-1.5 bg-slate-950 border border-white/10 rounded-lg text-[11px] text-white"
+                    className="w-full px-2 py-1.5 bg-[#F8FAFC] border border-slate-200 rounded-lg text-[11px] text-slate-800"
                   />
                 </div>
               </div>
@@ -380,7 +380,7 @@ export const CaptivePortalEditor: React.FC = () => {
                     type="text"
                     value={form.backgroundColor}
                     onChange={(e) => setForm({ ...form, backgroundColor: e.target.value })}
-                    className="w-full px-2 py-1.5 bg-slate-950 border border-white/10 rounded-lg text-[11px] text-white"
+                    className="w-full px-2 py-1.5 bg-[#F8FAFC] border border-slate-200 rounded-lg text-[11px] text-slate-800"
                   />
                 </div>
               </div>
@@ -388,13 +388,13 @@ export const CaptivePortalEditor: React.FC = () => {
           </div>
 
           {/* Module Toggles & Walled Garden */}
-          <div className="p-5 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/10 space-y-3">
-            <h3 className="font-bold text-white text-xs border-b border-white/10 pb-2">
+          <div className="p-5 rounded-2xl bg-white backdrop-blur-md border border-slate-200 space-y-3">
+            <h3 className="font-bold text-slate-800 text-xs border-b border-slate-200 pb-2">
               Modules & Domaines Walled Garden
             </h3>
 
-            <label className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-900 cursor-pointer">
-              <span className="text-slate-300">Saisie de Ticket / Voucher</span>
+            <label className="flex items-center justify-between p-2 rounded-lg hover:bg-white cursor-pointer">
+              <span className="text-slate-600">Saisie de Ticket / Voucher</span>
               <input
                 type="checkbox"
                 checked={form.enableVoucherInput}
@@ -403,8 +403,8 @@ export const CaptivePortalEditor: React.FC = () => {
               />
             </label>
 
-            <label className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-900 cursor-pointer">
-              <span className="text-slate-300">Achat direct Mobile Money</span>
+            <label className="flex items-center justify-between p-2 rounded-lg hover:bg-white cursor-pointer">
+              <span className="text-slate-600">Achat direct Mobile Money</span>
               <input
                 type="checkbox"
                 checked={form.enableMobileMoney}
@@ -413,8 +413,8 @@ export const CaptivePortalEditor: React.FC = () => {
               />
             </label>
 
-            <label className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-900 cursor-pointer">
-              <span className="text-slate-300">
+            <label className="flex items-center justify-between p-2 rounded-lg hover:bg-white cursor-pointer">
+              <span className="text-slate-600">
                 Essai Gratuit ({form.freeTrialDurationMinutes} min)
               </span>
               <input
@@ -425,7 +425,7 @@ export const CaptivePortalEditor: React.FC = () => {
               />
             </label>
 
-            <div className="pt-2 border-t border-white/10 space-y-2">
+            <div className="pt-2 border-t border-slate-200 space-y-2">
               <span className="text-[11px] text-slate-400 block">
                 Domaines autorisés avant connexion (Walled Garden) :
               </span>
@@ -433,7 +433,7 @@ export const CaptivePortalEditor: React.FC = () => {
                 {(form.walledGardenDomains || []).map((dom) => (
                   <span
                     key={dom}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-950 border border-white/10 font-mono text-[10px] text-emerald-300"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F8FAFC] border border-slate-200 font-mono text-[10px] text-[#005A5B]"
                   >
                     {dom}
                     <button
@@ -452,12 +452,12 @@ export const CaptivePortalEditor: React.FC = () => {
                   placeholder="ex: *.wave.com"
                   value={newDomain}
                   onChange={(e) => setNewDomain(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-white/10 text-white font-mono text-[11px]"
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#F8FAFC] border border-slate-200 text-slate-800 font-mono text-[11px]"
                 />
                 <button
                   type="button"
                   onClick={handleAddWalledGarden}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#005A5B] font-bold text-[11px] flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3 h-3" /> Ajouter
                 </button>
@@ -468,20 +468,20 @@ export const CaptivePortalEditor: React.FC = () => {
 
         {/* RIGHT LIVE SANDBOX PREVIEW */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <Eye className="w-4 h-4 text-amber-400" />
+          <div className="flex items-center justify-between bg-white backdrop-blur-md p-3 rounded-2xl border border-slate-200">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+              <Eye className="w-4 h-4 text-[#007A78]" />
               <span>Aperçu Interactif Sandbox (Testez les boutons ci-dessous)</span>
             </div>
 
-            <div className="flex rounded-xl bg-slate-950 p-1 border border-white/10 text-xs">
+            <div className="flex rounded-xl bg-[#F8FAFC] p-1 border border-slate-200 text-xs">
               <button
                 type="button"
                 onClick={() => setPreviewMode('mobile')}
                 className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition cursor-pointer ${
                   previewMode === 'mobile'
-                    ? 'bg-amber-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#008060] text-white'
+                    : 'text-slate-400 hover:text-slate-800'
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
@@ -492,8 +492,8 @@ export const CaptivePortalEditor: React.FC = () => {
                 onClick={() => setPreviewMode('desktop')}
                 className={`px-3 py-1 rounded-lg font-bold flex items-center gap-1.5 transition cursor-pointer ${
                   previewMode === 'desktop'
-                    ? 'bg-amber-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#008060] text-white'
+                    : 'text-slate-400 hover:text-slate-800'
                 }`}
               >
                 <Monitor className="w-3.5 h-3.5" />
@@ -503,12 +503,12 @@ export const CaptivePortalEditor: React.FC = () => {
           </div>
 
           {/* Sandbox Frame */}
-          <div className="flex justify-center bg-[#070A12] p-6 rounded-3xl border border-white/10 min-h-[620px] items-center">
+          <div className="flex justify-center bg-white p-6 rounded-3xl border border-slate-200 min-h-[620px] items-center">
             <div
               className={`transition-all duration-300 shadow-2xl overflow-hidden border ${
                 previewMode === 'mobile'
-                  ? 'w-[360px] h-[650px] rounded-[40px] border-slate-700'
-                  : 'w-full max-w-[620px] rounded-2xl border-slate-700'
+                  ? 'w-[360px] h-[650px] rounded-[40px] border-slate-300'
+                  : 'w-full max-w-[620px] rounded-2xl border-slate-300'
               }`}
               style={{
                 backgroundColor: form.backgroundColor,
@@ -555,8 +555,8 @@ export const CaptivePortalEditor: React.FC = () => {
 
                 {/* In-portal feedback banner (replaces alert) */}
                 {portalFeedback && (
-                  <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div className="p-3 rounded-xl bg-[#E6F4F3] border border-emerald-400/40 text-[#005A5B] text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#008060] shrink-0" />
                     <span>{portalFeedback}</span>
                   </div>
                 )}
@@ -611,7 +611,7 @@ export const CaptivePortalEditor: React.FC = () => {
                           placeholder="Entrez votre code ticket (Ex: JW-8492-710)"
                           value={testVoucherCode}
                           onChange={(e) => setTestVoucherCode(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/30 border border-white/20 text-xs placeholder:opacity-40 font-mono uppercase"
+                          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/30 border border-slate-200 text-xs placeholder:opacity-40 font-mono uppercase"
                         />
                       </div>
                       <button
@@ -637,7 +637,7 @@ export const CaptivePortalEditor: React.FC = () => {
                         <select
                           value={selectedTestForfaitId}
                           onChange={(e) => setSelectedTestForfaitId(e.target.value)}
-                          className="w-full px-2.5 py-2 rounded-xl bg-black/40 border border-white/20 text-xs font-mono"
+                          className="w-full px-2.5 py-2 rounded-xl bg-black/40 border border-slate-200 text-xs font-mono"
                         >
                           {forfaits.map((f) => (
                             <option key={f.id} value={f.id} className="text-black">
@@ -652,7 +652,7 @@ export const CaptivePortalEditor: React.FC = () => {
                         placeholder="Votre numéro (Wave / Orange / MTN)"
                         value={testPhone}
                         onChange={(e) => setTestPhone(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-black/30 border border-white/20 text-xs font-mono"
+                        className="w-full px-3 py-2 rounded-xl bg-black/30 border border-slate-200 text-xs font-mono"
                       />
 
                       <button
@@ -677,7 +677,7 @@ export const CaptivePortalEditor: React.FC = () => {
 
                   {/* Tab View 3: Free Trial */}
                   {activePortalTab === 'freetrial' && (
-                    <div className="text-center p-3 rounded-xl bg-black/20 border border-white/10 space-y-2">
+                    <div className="text-center p-3 rounded-xl bg-black/20 border border-slate-200 space-y-2">
                       <p className="text-xs">
                         Profitez de{' '}
                         <strong className="font-mono">{form.freeTrialDurationMinutes} minutes offertes</strong>{' '}
@@ -700,7 +700,7 @@ export const CaptivePortalEditor: React.FC = () => {
                 </div>
 
                 {/* Footer of portal */}
-                <div className="pt-2 border-t border-white/10 text-center text-[10px] opacity-70">
+                <div className="pt-2 border-t border-slate-200 text-center text-[10px] opacity-70">
                   Assistance WhatsApp / Appel :{' '}
                   <span className="font-mono font-bold">{form.supportPhone}</span>
                 </div>

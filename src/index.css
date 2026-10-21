@@ -1,24 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --omada-teal-dark: #005a5b;
-  --omada-teal: #007a78;
-  --omada-teal-light: #e6f4f3;
-  --omada-mint-btn: #7bc4b2;
-  --omada-charcoal: #2b2e33;
-  --omada-bg-page: #f4f6f8;
-  --omada-bg-card: #ffffff;
-  --omada-border: #e2e8f0;
-  --omada-text-main: #1e293b;
-  --omada-text-muted: #64748b;
+  --jw-teal-dark: #005a5b;
+  --jw-teal: #007a78;
+  --jw-green-cta: #008060;
+  --jw-blue-accent: #0066cc;
+  --jw-bg-page: #f4f7fa;
+  --jw-bg-card: #ffffff;
+  --jw-border: #e2e8f0;
+  --jw-text-main: #1e293b;
+  --jw-text-muted: #64748b;
 }
 
 @layer base {
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #f4f6f8;
+    background-color: #f4f7fa;
     color: #1e293b;
-    background-image: none;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
   }
 
   code, pre, .font-mono {
@@ -30,162 +31,24 @@
   }
 }
 
-/* ============================================================================
-   CORPORATE B2B LIGHT MODE & FLAT DESIGN SYSTEM (OMADA BY TP-LINK INSPIRED)
-   Convertit l'ensemble des surfaces de l'application en design plat, blanc,
-   épuré et institutionnel avec la couleur signature Vert Canard (#005A5B / #007A78)
-============================================================================ */
-
+/* Clean Corporate B2B Card & Surface Helpers */
 .glass-panel {
-  background-color: #ffffff !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-color: #e2e8f0 !important;
+  background-color: #ffffff;
+  border-color: #e2e8f0;
 }
 
 .glass-card,
 .bento-card {
-  background: #ffffff !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
-  color: #1e293b !important;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .glass-dropdown {
-  background: #ffffff !important;
-  backdrop-filter: none !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12) !important;
-  color: #1e293b !important;
-}
-
-/* Remapping legacy dark classes inside sub-views to Clean Corporate Light Mode */
-main .bg-slate-950,
-main .bg-slate-950\/60,
-main .bg-slate-950\/70,
-main .bg-slate-950\/75,
-main .bg-slate-950\/80,
-main .bg-slate-950\/90,
-main .bg-\[\#0B0F19\] {
-  background-color: #f8fafc !important;
-  color: #1e293b !important;
-}
-
-main .bg-slate-900,
-main .bg-slate-900\/60,
-main .bg-slate-900\/70,
-main .bg-slate-900\/80,
-main .bg-slate-900\/90 {
-  background-color: #ffffff !important;
-  color: #1e293b !important;
-}
-
-main .bg-slate-800,
-main .bg-slate-800\/60,
-main .bg-slate-800\/80,
-main .bg-slate-800\/90 {
-  background-color: #f1f5f9 !important;
-  color: #1e293b !important;
-}
-
-/* Keep terminal / code <pre> blocks in clean high-contrast slate */
-main pre.bg-slate-950,
-main .code-terminal-dark {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-}
-
-/* Typography contrast in light mode inside main workspace */
-main .text-white:not(.btn-teal-flat):not(.keep-white) {
-  color: #0f172a !important;
-}
-
-main .text-slate-100,
-main .text-slate-200 {
-  color: #1e293b !important;
-}
-
-main .text-slate-300 {
-  color: #334155 !important;
-}
-
-main .text-slate-400 {
-  color: #64748b !important;
-}
-
-/* Borders in light mode */
-main .border-slate-800,
-main .border-slate-800\/80,
-main .border-slate-800\/90,
-main .border-slate-850,
-main .border-slate-700,
-main .border-white\/5,
-main .border-white\/10,
-main .border-white\/15 {
-  border-color: #e2e8f0 !important;
-}
-
-/* Flat Teal Accent Remapping (Replaces all orange/amber/neon gradients with solid Omada Teal) */
-.bg-amber-500,
-.bg-orange-500,
-.bg-emerald-500,
-.bg-gradient-to-r.from-amber-500,
-.bg-gradient-to-r.from-emerald-500,
-.bg-gradient-to-br.from-amber-500 {
-  background-image: none !important;
-  background-color: #007a78 !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-}
-
-.hover\:bg-amber-400:hover,
-.hover\:bg-emerald-400:hover,
-.hover\:from-amber-400:hover,
-.hover\:from-emerald-400:hover {
-  background-image: none !important;
-  background-color: #005a5b !important;
-  color: #ffffff !important;
-}
-
-main .text-amber-400,
-main .text-amber-500,
-main .text-emerald-400,
-main .text-emerald-300,
-main .text-cyan-400,
-main .text-cyan-300 {
-  color: #007a78 !important;
-}
-
-main .bg-amber-500\/10,
-main .bg-amber-500\/15,
-main .bg-amber-500\/20,
-main .bg-emerald-500\/10,
-main .bg-emerald-500\/15,
-main .bg-emerald-500\/20,
-main .bg-cyan-500\/10,
-main .bg-cyan-500\/15 {
-  background-color: #e6f4f3 !important;
-}
-
-main .border-amber-500,
-main .border-amber-500\/20,
-main .border-amber-500\/25,
-main .border-amber-500\/30,
-main .border-emerald-500\/25,
-main .border-emerald-500\/30,
-main .border-emerald-500\/40,
-main .border-cyan-500\/25,
-main .border-cyan-500\/30 {
-  border-color: #99d5d3 !important;
-}
-
-/* Keep explicit white text on solid teal / dark banners */
-.keep-white,
-.keep-white * {
-  color: #ffffff;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.14);
 }
 
 /* Subtle corporate scrollbar */

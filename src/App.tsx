@@ -11,15 +11,36 @@ import {
   Ticket,
   ArrowRight,
   ShieldCheck,
-  Command,
   Globe,
   LogOut,
+  LayoutDashboard,
+  Wifi,
+  Router as RouterIcon,
+  Users,
+  Wallet,
+  Settings,
+  Terminal,
+  MapPin,
+  Radio,
+  Activity,
+  History,
+  Laptop,
+  Calculator,
+  TrendingUp,
+  DollarSign,
+  CreditCard,
+  Palette,
+  ShoppingBag,
+  Bell,
+  FileText,
+  User,
+  Bot,
+  Boxes,
 } from 'lucide-react';
 
 // Common Components
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
-import { Sidebar } from './components/common/Sidebar';
 import { BottomNav } from './components/common/BottomNav';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { OfflineBanner } from './components/common/OfflineBanner';
@@ -72,14 +93,14 @@ const ToastContainer: React.FC = () => {
           key={t.id}
           className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-lg border shadow-lg bg-white text-xs font-medium ${
             t.type === 'success'
-              ? 'border-[#007A78] text-slate-800'
+              ? 'border-[#008060] text-slate-800'
               : t.type === 'error'
               ? 'border-rose-500 text-rose-800'
               : 'border-slate-300 text-slate-800'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            {t.type === 'success' && <CheckCircle2 className="w-4 h-4 text-[#007A78] shrink-0" />}
+            {t.type === 'success' && <CheckCircle2 className="w-4 h-4 text-[#008060] shrink-0" />}
             {t.type === 'error' && <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
             {t.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />}
             {t.type === 'info' && <Info className="w-4 h-4 text-[#007A78] shrink-0" />}
@@ -97,6 +118,18 @@ const ToastContainer: React.FC = () => {
   );
 };
 
+interface PillarGroup {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tabs: {
+    id: AdminTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string;
+  }[];
+}
+
 export default function App() {
   const {
     currentSpace,
@@ -104,10 +137,13 @@ export default function App() {
     publicTab,
     adminTab,
     setAdminTab,
+    zones,
     tickets,
     staff,
     routers,
     sessions,
+    macBypasses,
+    pendingSosAlerts,
     currency,
     setCurrency,
     heartbeatSecondsRemaining,
@@ -116,7 +152,7 @@ export default function App() {
     showToast,
   } = useApp();
 
-  // Global Search / Command Palette (Ctrl+K)
+  const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('all');
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
 
@@ -133,6 +169,88 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // 6 Structured Workspace Pillars (Replaces the old 25-item vertical sidebar!)
+  const pillars: PillarGroup[] = useMemo(
+    () => [
+      {
+        id: 'supervision',
+        label: 'Supervision',
+        icon: LayoutDashboard,
+        tabs: [
+          { id: 'dashboard', label: 'Vue Globale 6.3', icon: LayoutDashboard },
+          { id: 'sante', label: 'Santé & SLA Réseau', icon: Activity },
+          { id: 'sessions', label: 'Clients Connectés', icon: Radio, badge: `${sessions.length}` },
+          { id: 'connexions', label: 'Journal Connexions', icon: History },
+          { id: 'assistant', label: 'Diagnostic IA', icon: Bot, badge: 'IA' },
+        ],
+      },
+      {
+        id: 'hotspot',
+        label: 'Vouchers & Forfaits',
+        icon: Ticket,
+        tabs: [
+          { id: 'tickets', label: 'Stock de Vouchers', icon: Ticket, badge: `${tickets.length}` },
+          { id: 'forfaits', label: 'Catalogue Forfaits', icon: Wifi },
+          { id: 'personnalisation', label: 'Portail Captif (login.html)', icon: Palette },
+          { id: 'marketplace', label: 'Galerie de Portails', icon: ShoppingBag },
+          { id: 'marketplace-mes-templates', label: 'Mes Thèmes', icon: Boxes },
+        ],
+      },
+      {
+        id: 'equipements',
+        label: 'Équipements MikroTik',
+        icon: RouterIcon,
+        tabs: [
+          { id: 'mikrotik', label: 'Passerelles MikroTik', icon: RouterIcon, badge: `${routers.length}` },
+          { id: 'installation', label: 'Script Auto-Install (.rsc)', icon: Terminal, badge: 'v5.1' },
+          { id: 'zones', label: 'Sites & Zones WiFi', icon: MapPin, badge: `${zones.length}` },
+          { id: 'mac-bypass', label: 'Bindings MAC & Caméras IP', icon: Laptop, badge: `${macBypasses.length}` },
+        ],
+      },
+      {
+        id: 'vendeurs',
+        label: 'Réseau Vendeurs POS',
+        icon: Users,
+        tabs: [
+          {
+            id: 'staff',
+            label: 'Équipe Vendeurs',
+            icon: Users,
+            badge: pendingSosAlerts.length > 0 ? `${pendingSosAlerts.length} SOS` : `${staff.length}`,
+          },
+          { id: 'ventes', label: 'Journal Ventes POS', icon: TrendingUp },
+          { id: 'pos', label: 'Simulateur Caisse POS', icon: Smartphone },
+        ],
+      },
+      {
+        id: 'finances',
+        label: 'Finances & Mobile Money',
+        icon: Wallet,
+        tabs: [
+          { id: 'comptabilite', label: 'Analytique & ROI FAI', icon: Calculator },
+          { id: 'portefeuille', label: 'Portefeuille Mobile Money', icon: Wallet },
+          { id: 'gains', label: 'Reversements & Gains', icon: DollarSign },
+          { id: 'abonnements', label: 'Licence Cloud', icon: CreditCard },
+        ],
+      },
+      {
+        id: 'systeme',
+        label: 'Système',
+        icon: Settings,
+        tabs: [
+          { id: 'notifications', label: 'Alertes Telegram', icon: Bell },
+          { id: 'logs', label: 'Journal d’Audit', icon: FileText },
+          { id: 'profil', label: 'Profil & Devise', icon: User },
+        ],
+      },
+    ],
+    [sessions.length, tickets.length, routers.length, zones.length, macBypasses.length, pendingSosAlerts.length, staff.length]
+  );
+
+  const activePillar = useMemo(() => {
+    return pillars.find((p) => p.tabs.some((t) => t.id === adminTab)) || pillars[0];
+  }, [pillars, adminTab]);
+
   const matchedTickets = useMemo(() => {
     const q = cmdQuery.trim().toLowerCase();
     if (!q) return tickets.slice(0, 6);
@@ -146,19 +264,10 @@ export default function App() {
       .slice(0, 8);
   }, [cmdQuery, tickets]);
 
-  const quickNavActions: { label: string; sub: string; tab: AdminTab }[] = [
-    { label: 'Vue d’ensemble SDN', sub: 'Supervision globale des sites et routeurs', tab: 'dashboard' },
-    { label: 'Gestionnaire de Vouchers', sub: `${tickets.length} tickets synchronisés Supabase`, tab: 'tickets' },
-    { label: 'Assistant Script MikroTik (.rsc)', sub: 'Déploiement Fast-Poll 10s & Heartbeat 45s', tab: 'installation' },
-    { label: 'Équipe Vendeurs POS', sub: `${staff.length} agents enregistrés`, tab: 'staff' },
-    { label: 'Contrôleurs MikroTik', sub: `${routers.length} équipements supervisés`, tab: 'mikrotik' },
-    { label: 'Studio Portail Captif', sub: 'Configuration login.html & Mobile Money', tab: 'personnalisation' },
-  ];
-
-  // 1. ESPACE VENDEUR (POS KIOSQUE PWA EN MODE CLAIR INSTITUTIONNEL)
+  // 1. ESPACE VENDEUR (POS KIOSQUE PWA)
   if (currentSpace === 'pos') {
     return (
-      <div className="min-h-screen bg-[#F4F6F8] text-[#1E293B] flex flex-col font-sans">
+      <div className="min-h-screen bg-[#F4F7FA] text-[#1E293B] flex flex-col font-sans">
         <ToastContainer />
         <PWAInstallBanner />
         <OfflineBanner />
@@ -170,16 +279,17 @@ export default function App() {
     );
   }
 
-  // 2. ESPACE ADMINISTRATEUR (OMADA CLOUD SDN CONTROLLER STYLE — CLEAN LIGHT & FLAT TEAL)
+  // 2. ESPACE ADMINISTRATEUR — NOUVELLE ARCHITECTURE OMADA CONTROLLER 6.3
+  //    (Barre Supérieure Verte + Barre Horizontale de Sous-Onglets Blanche + Rail d'Icônes 56px à gauche)
   if (currentSpace === 'admin') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#F4F6F8] text-[#1E293B] font-sans">
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#F4F7FA] text-[#1E293B] font-sans select-none">
         <ToastContainer />
         <PWAInstallBanner />
         <OfflineBanner />
         <AuthModal />
 
-        {/* Modal de Recherche Globale (Ctrl+K) */}
+        {/* Command Palette (Ctrl+K) */}
         {cmdOpen && (
           <div
             className="fixed inset-0 z-[75] bg-slate-900/40 flex items-start justify-center pt-16 px-4"
@@ -190,154 +300,163 @@ export default function App() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 border-b border-slate-200 flex items-center gap-3 bg-[#F8FAFC]">
-                <Search className="w-5 h-5 text-[#007A78] shrink-0" />
+                <Search className="w-5 h-5 text-[#008060] shrink-0" />
                 <input
                   type="text"
                   autoFocus
                   value={cmdQuery}
                   onChange={(e) => setCmdQuery(e.target.value)}
-                  placeholder="Rechercher un code voucher (ex: efdj, 3yn5), un vendeur ou un équipement..."
+                  placeholder="Rechercher un voucher (efdj, 3yn5...), un vendeur ou un routeur..."
                   className="w-full bg-transparent text-slate-800 text-sm focus:outline-none placeholder:text-slate-400"
                 />
                 <button
                   onClick={() => setCmdOpen(false)}
-                  className="px-2 py-1 rounded bg-white border border-slate-300 text-[10px] font-mono text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="px-2 py-1 rounded bg-white border border-slate-300 text-[10px] font-mono text-slate-500 cursor-pointer"
                 >
                   ESC
                 </button>
               </div>
 
-              <div className="max-h-[65vh] overflow-y-auto p-4 space-y-5 text-xs">
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#007A78] mb-2 flex items-center justify-between">
-                    <span>Vouchers WiFi ({matchedTickets.length})</span>
-                    <button
+              <div className="max-h-[60vh] overflow-y-auto p-4 space-y-4 text-xs">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#008060] flex items-center justify-between">
+                  <span>Vouchers trouvés ({matchedTickets.length})</span>
+                  <button
+                    onClick={() => {
+                      setAdminTab('tickets');
+                      setCmdOpen(false);
+                    }}
+                    className="text-[#0066CC] hover:underline cursor-pointer"
+                  >
+                    Voir tous les vouchers &rarr;
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {matchedTickets.map((t) => (
+                    <div
+                      key={t.id}
                       onClick={() => {
+                        navigator.clipboard.writeText(t.code);
+                        showToast(`Code voucher ${t.code} copié !`, 'success');
                         setAdminTab('tickets');
                         setCmdOpen(false);
                       }}
-                      className="text-[#007A78] hover:underline cursor-pointer"
+                      className="p-3 rounded bg-[#F8FAFC] hover:bg-[#E6F4F3] border border-slate-200 flex items-center justify-between cursor-pointer transition"
                     >
-                      Ouvrir la liste complète &rarr;
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {matchedTickets.map((t) => (
-                      <div
-                        key={t.id}
-                        onClick={() => {
-                          navigator.clipboard.writeText(t.code);
-                          showToast(`Code voucher ${t.code} copié !`, 'success');
-                          setAdminTab('tickets');
-                          setCmdOpen(false);
-                        }}
-                        className="p-3 rounded bg-[#F8FAFC] hover:bg-[#E6F4F3] border border-slate-200 flex items-center justify-between cursor-pointer transition"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Ticket className="w-4 h-4 text-[#007A78] shrink-0" />
-                          <div>
-                            <div className="font-mono font-bold text-slate-800 text-sm">{t.code}</div>
-                            <div className="text-[11px] text-slate-500">
-                              {t.forfaitName} • {formatMoney(t.price)}
-                            </div>
-                          </div>
+                      <div>
+                        <div className="font-mono font-bold text-slate-800 text-sm">{t.code}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {t.forfaitName} • {formatMoney(t.price)}
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white border border-slate-200 text-[#007A78]">
-                          {t.status}
-                        </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    Accès Rapide aux Modules
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {quickNavActions.map((act) => (
-                      <button
-                        key={act.tab}
-                        onClick={() => {
-                          setAdminTab(act.tab);
-                          setCmdOpen(false);
-                        }}
-                        className="p-3 rounded bg-white hover:bg-[#F8FAFC] border border-slate-200 text-left flex items-center justify-between cursor-pointer transition"
-                      >
-                        <div>
-                          <div className="font-semibold text-slate-800">{act.label}</div>
-                          <div className="text-[11px] text-slate-500">{act.sub}</div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-slate-400" />
-                      </button>
-                    ))}
-                  </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white border border-slate-200 text-[#008060]">
+                        {t.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* TOP CORPORATE TEAL CONTROLLER BAR (#005A5B Flat Design, zero gradients) */}
-        <header className="h-14 shrink-0 px-4 sm:px-6 bg-[#005A5B] text-white flex items-center justify-between gap-4 z-30 keep-white">
-          <div className="flex items-center gap-6">
-            <div
-              onClick={() => setCurrentSpace('public')}
-              className="flex items-baseline gap-2 cursor-pointer"
-            >
-              <span className="text-xl font-bold tracking-tight text-white">Joowifi</span>
-              <span className="text-[11px] text-teal-200 font-normal hidden sm:inline">
-                SDN Cloud Controller
-              </span>
-            </div>
-
-            {/* Search Input inside Top Teal Bar */}
+        {/* =====================================================================
+            ROW 1 : TOP TEAL CONTROLLER BAR (#005A5B — Omada Network 6.3 Header)
+        ===================================================================== */}
+        <header className="h-13 shrink-0 px-4 bg-[#005A5B] text-white flex items-center justify-between gap-4 z-30 shadow-xs">
+          {/* Left: Brand + Site Context Selector (Like Omada Controller top-left dropdown) */}
+          <div className="flex items-center gap-4">
             <button
-              onClick={() => setCmdOpen(true)}
-              className="hidden md:flex items-center justify-between gap-3 px-3 py-1.5 rounded bg-[#004849] hover:bg-[#003E3F] border border-white/15 text-xs text-teal-100 w-72 lg:w-96 transition cursor-pointer"
+              onClick={() => setCurrentSpace('public')}
+              className="flex items-baseline gap-1.5 cursor-pointer pr-3 border-r border-white/20"
             >
-              <div className="flex items-center gap-2 truncate">
-                <Search className="w-3.5 h-3.5 text-teal-200 shrink-0" />
-                <span className="truncate">Rechercher un voucher (efdj, 3yn5...), site...</span>
-              </div>
-              <kbd className="px-1.5 py-0.5 rounded bg-[#005A5B] text-[10px] font-mono text-teal-100">
-                Ctrl+K
-              </kbd>
+              <span className="text-lg font-bold tracking-tight text-white">Joowifi</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#008060] text-white">
+                6.3
+              </span>
             </button>
+
+            {/* Site Context Pill */}
+            <div className="hidden sm:flex items-center gap-2 bg-[#004647] px-3 py-1 rounded border border-white/15 text-xs">
+              <span className="w-2 h-2 rounded-full bg-[#34D399]" />
+              <span className="text-teal-100 text-[11px]">Site :</span>
+              <select
+                value={selectedSiteFilter}
+                onChange={(e) => setSelectedSiteFilter(e.target.value)}
+                className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer text-xs"
+              >
+                <option value="all" className="bg-[#26292E] text-white">
+                  Vue Globale (Tous les sites — {zones.length})
+                </option>
+                {zones.map((z) => (
+                  <option key={z.id} value={z.id} className="bg-[#26292E] text-white">
+                    {z.name} ({z.city})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Fast-Poll Status */}
+          {/* Center: 6 Horizontal Pillar Buttons inside Top Header */}
+          <nav className="hidden xl:flex items-center gap-1 h-full">
+            {pillars.map((p) => {
+              const Icon = p.icon;
+              const isCurrentPillar = activePillar.id === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setAdminTab(p.tabs[0].id)}
+                  className={`h-full px-3.5 flex items-center gap-2 text-xs font-medium border-b-[3px] transition cursor-pointer ${
+                    isCurrentPillar
+                      ? 'border-[#34D399] bg-[#004849] text-white font-semibold'
+                      : 'border-transparent text-teal-100/85 hover:text-white hover:bg-[#004E4F]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{p.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Right: Search, Sync 10s, Currency, POS Button */}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setCmdOpen(true)}
+              className="flex items-center gap-2 px-2.5 py-1 rounded bg-[#004647] hover:bg-[#003B3C] border border-white/15 text-xs text-teal-100 cursor-pointer"
+              title="Rechercher un voucher (Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Rechercher...</span>
+              <kbd className="hidden md:inline text-[10px] font-mono bg-[#005A5B] px-1 rounded">
+                ⌘K
+              </kbd>
+            </button>
+
             <button
               onClick={() => {
                 forceHeartbeatSync();
-                showToast('Synchronisation Supabase & MikroTik effectuée.', 'success');
+                showToast('Synchronisation Supabase & MikroTik exécutée.', 'success');
               }}
-              className="hidden lg:flex items-center gap-2 px-3 py-1 rounded bg-[#004849] border border-white/15 text-xs font-mono text-teal-100 cursor-pointer hover:bg-[#003E3F]"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#004647] hover:bg-[#003B3C] border border-white/15 text-[11px] font-mono text-teal-100 cursor-pointer"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80]" />
-              <span>Sync 10s ({heartbeatSecondsRemaining}s) • {sessions.length} clients</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-[#34D399]" />
+              <span>Sync {heartbeatSecondsRemaining}s</span>
             </button>
 
-            {/* Currency Selector */}
-            <div className="flex items-center gap-1 bg-[#004849] px-2.5 py-1 rounded border border-white/15 text-xs">
-              <Globe className="w-3.5 h-3.5 text-teal-200" />
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as any)}
-                className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer text-xs"
-              >
-                <option value="XOF" className="bg-[#2B2E33] text-white">FCFA (XOF)</option>
-                <option value="GNF" className="bg-[#2B2E33] text-white">GNF</option>
-                <option value="EUR" className="bg-[#2B2E33] text-white">EUR (€)</option>
-                <option value="USD" className="bg-[#2B2E33] text-white">USD ($)</option>
-              </select>
-            </div>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="bg-[#004647] text-white text-xs font-semibold px-2 py-1 rounded border border-white/15 focus:outline-none cursor-pointer"
+            >
+              <option value="XOF" className="bg-[#26292E]">FCFA</option>
+              <option value="GNF" className="bg-[#26292E]">GNF</option>
+              <option value="EUR" className="bg-[#26292E]">EUR</option>
+              <option value="USD" className="bg-[#26292E]">USD</option>
+            </select>
 
-            {/* Direct POS Launch */}
             <button
               onClick={() => setCurrentSpace('pos')}
-              className="px-3 py-1.5 rounded bg-[#007A78] hover:bg-[#008F8C] border border-white/20 text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
+              className="px-3 py-1 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Caisse POS</span>
@@ -345,49 +464,158 @@ export default function App() {
 
             <button
               onClick={() => setCurrentSpace('public')}
-              title="Retour au portail public"
-              className="p-1.5 rounded hover:bg-[#004849] text-teal-100 cursor-pointer"
+              title="Retour au site vitrine"
+              className="p-1.5 rounded hover:bg-[#004647] text-teal-100 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </header>
 
+        {/* =====================================================================
+            MAIN BODY : SLIM 56px LEFT ICON RAIL + HORIZONTAL SUB-TAB BAR + WORKSPACE
+        ===================================================================== */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Desktop Left White Corporate Sidebar */}
-          <div className="hidden md:block h-full">
-            <Sidebar />
-          </div>
-
-          {/* Admin Main Scrollable Body on Light Grey (#F4F6F8) */}
-          <main className="flex-1 h-full overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8 bg-[#F4F6F8]">
-            <div className="max-w-7xl mx-auto">
-              {adminTab === 'dashboard' && <DashboardOverview />}
-              {adminTab === 'assistant' && <AssistantIA />}
-              {adminTab === 'tickets' && <TicketsManager />}
-              {adminTab === 'forfaits' && <ForfaitsManager />}
-              {adminTab === 'pos' && <POSCashier />}
-              {adminTab === 'staff' && <StaffManager />}
-              {adminTab === 'zones' && <ZonesManager />}
-              {adminTab === 'mikrotik' && <MikroTikManager />}
-              {adminTab === 'sante' && <NetworkHealth />}
-              {adminTab === 'sessions' && <ActiveSessions />}
-              {adminTab === 'connexions' && <ConnectionHistory />}
-              {adminTab === 'mac-bypass' && <MacBypassManager />}
-              {adminTab === 'installation' && <InstallationScript />}
-              {adminTab === 'comptabilite' && <AccountingView />}
-              {adminTab === 'portefeuille' && <WalletView />}
-              {adminTab === 'ventes' && <VendorSalesView />}
-              {adminTab === 'gains' && <MyEarningsView />}
-              {adminTab === 'abonnements' && <SubscriptionView />}
-              {adminTab === 'personnalisation' && <CaptivePortalEditor />}
-              {adminTab === 'marketplace' && <MarketplaceTemplates />}
-              {adminTab === 'marketplace-mes-templates' && <MyTemplates />}
-              {adminTab === 'notifications' && <TelegramAlerts />}
-              {adminTab === 'logs' && <AuditLogs />}
-              {adminTab === 'profil' && <ProfileSettings />}
+          {/* SLIM 56px LEFT ICON RAIL (Exactly like Omada Network 6.3 Monitor screenshot!) */}
+          <aside className="hidden md:flex w-14 shrink-0 bg-white border-r border-slate-200 flex-col items-center py-3 justify-between z-20">
+            <div className="flex flex-col items-center gap-2 w-full px-1.5">
+              {pillars.map((p) => {
+                const Icon = p.icon;
+                const isActive = activePillar.id === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setAdminTab(p.tabs[0].id)}
+                    title={p.label}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center transition cursor-pointer relative group ${
+                      isActive
+                        ? 'bg-[#008060] text-white shadow-xs'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-[#005A5B]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition absolute left-12 px-2.5 py-1 rounded bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg z-50">
+                      {p.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          </main>
+
+            <div className="flex flex-col items-center gap-2 w-full px-1.5">
+              <button
+                onClick={() => setAdminTab('installation')}
+                title="Script RouterOS (.rsc)"
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                  adminTab === 'installation'
+                    ? 'bg-[#008060] text-white'
+                    : 'bg-[#E6F4F3] text-[#005A5B] hover:bg-[#d0ebe9]'
+                }`}
+              >
+                <Terminal className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setAdminTab('profil')}
+                title="Paramètres Opérateur"
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                  adminTab === 'profil'
+                    ? 'bg-[#008060] text-white'
+                    : 'text-slate-500 hover:bg-slate-100'
+                }`}
+              >
+                <User className="w-4 h-4" />
+              </button>
+            </div>
+          </aside>
+
+          {/* RIGHT WORKSPACE COLUMN */}
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* HORIZONTAL SUB-NAVIGATION BAR (Clean White Strip with Module Sub-Tabs & Quick Actions) */}
+            <div className="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 h-12 shrink-0 flex items-center justify-between gap-4 overflow-x-auto">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-2 hidden sm:inline">
+                  {activePillar.label} :
+                </span>
+                {activePillar.tabs.map((tab) => {
+                  const TabIcon = tab.icon;
+                  const isTabActive = adminTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setAdminTab(tab.id)}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                        isTabActive
+                          ? 'bg-[#E6F4F3] text-[#005A5B] font-bold border border-[#99D5D3]'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <TabIcon className={`w-3.5 h-3.5 ${isTabActive ? 'text-[#008060]' : 'text-slate-400'}`} />
+                      <span>{tab.label}</span>
+                      {tab.badge && (
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+                            tab.badge.includes('SOS')
+                              ? 'bg-rose-600 text-white'
+                              : isTabActive
+                              ? 'bg-[#008060] text-white'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right Quick Shortcuts inside Sub-Nav Bar */}
+              <div className="hidden lg:flex items-center gap-2 shrink-0 text-xs">
+                <button
+                  onClick={() => setAdminTab('tickets')}
+                  className="px-2.5 py-1 rounded bg-[#F4F7FA] hover:bg-slate-200 border border-slate-200 text-slate-700 font-medium cursor-pointer"
+                >
+                  + Lot Vouchers
+                </button>
+                <button
+                  onClick={() => setAdminTab('installation')}
+                  className="px-2.5 py-1 rounded bg-[#F4F7FA] hover:bg-slate-200 border border-slate-200 text-[#005A5B] font-semibold cursor-pointer"
+                >
+                  Script MikroTik v5.1
+                </button>
+              </div>
+            </div>
+
+            {/* MAIN SCROLLABLE VIEWPORT */}
+            <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10 bg-[#F4F7FA]">
+              <div className="max-w-7xl mx-auto">
+                {adminTab === 'dashboard' && <DashboardOverview />}
+                {adminTab === 'assistant' && <AssistantIA />}
+                {adminTab === 'tickets' && <TicketsManager />}
+                {adminTab === 'forfaits' && <ForfaitsManager />}
+                {adminTab === 'pos' && <POSCashier />}
+                {adminTab === 'staff' && <StaffManager />}
+                {adminTab === 'zones' && <ZonesManager />}
+                {adminTab === 'mikrotik' && <MikroTikManager />}
+                {adminTab === 'sante' && <NetworkHealth />}
+                {adminTab === 'sessions' && <ActiveSessions />}
+                {adminTab === 'connexions' && <ConnectionHistory />}
+                {adminTab === 'mac-bypass' && <MacBypassManager />}
+                {adminTab === 'installation' && <InstallationScript />}
+                {adminTab === 'comptabilite' && <AccountingView />}
+                {adminTab === 'portefeuille' && <WalletView />}
+                {adminTab === 'ventes' && <VendorSalesView />}
+                {adminTab === 'gains' && <MyEarningsView />}
+                {adminTab === 'abonnements' && <SubscriptionView />}
+                {adminTab === 'personnalisation' && <CaptivePortalEditor />}
+                {adminTab === 'marketplace' && <MarketplaceTemplates />}
+                {adminTab === 'marketplace-mes-templates' && <MyTemplates />}
+                {adminTab === 'notifications' && <TelegramAlerts />}
+                {adminTab === 'logs' && <AuditLogs />}
+                {adminTab === 'profil' && <ProfileSettings />}
+              </div>
+            </main>
+          </div>
         </div>
 
         <BottomNav />
@@ -395,7 +623,7 @@ export default function App() {
     );
   }
 
-  // 3. ESPACE PUBLIC (SITE INSTITUTIONNEL B2B OMADA STYLE)
+  // 3. ESPACE PUBLIC (SITE VITRINE B2B JOOWIFI 6.3)
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#1E293B] font-sans">
       <ToastContainer />

@@ -385,7 +385,7 @@ export const TicketsManager: React.FC = () => {
     switch (status) {
       case 'stock':
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono tracking-wider">
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E6F4F3] text-[#008060] border border-[#99D5D3] font-mono tracking-wider">
             DISPONIBLE
           </span>
         );
@@ -397,7 +397,7 @@ export const TicketsManager: React.FC = () => {
         );
       case 'vendeur':
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 font-mono tracking-wider">
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3] font-mono tracking-wider">
             VENTE VENDEUR
           </span>
         );
@@ -416,7 +416,7 @@ export const TicketsManager: React.FC = () => {
       case 'expire':
       default:
         return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 font-mono tracking-wider">
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-400 border border-slate-300 font-mono tracking-wider">
             EXPIRÉ
           </span>
         );
@@ -428,20 +428,20 @@ export const TicketsManager: React.FC = () => {
       {/* =========================================================================
           1. EN-TÊTE & BARRE D'ACTIONS PRINCIPALES
       ========================================================================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="space-y-1">
           {/* Fil d'ariane */}
           <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono flex items-center gap-1.5">
             <span>Console</span>
             <span>/</span>
-            <span className="text-amber-500">Tickets</span>
+            <span className="text-[#007A78]">Tickets</span>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] text-[#007A78] flex items-center justify-center">
               <Ticket className="w-4 h-4" />
             </div>
-            <h1 className="text-2xl font-black text-white font-sans tracking-tight">
+            <h1 className="text-2xl font-black text-slate-800 font-sans tracking-tight">
               Tickets d'accès WiFi
             </h1>
           </div>
@@ -457,7 +457,7 @@ export const TicketsManager: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
-              className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
             >
               <Download className="w-3.5 h-3.5 text-slate-400" />
               <span>Exporter / Imprimer</span>
@@ -465,18 +465,18 @@ export const TicketsManager: React.FC = () => {
             </button>
 
             {exportDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-56 rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl py-1.5 text-xs z-50 divide-y divide-slate-800/80">
+              <div className="absolute right-0 mt-1.5 w-56 rounded-2xl bg-[#F8FAFC] border border-slate-200 shadow-2xl py-1.5 text-xs z-50 divide-y divide-slate-800/80">
                 <div className="py-1">
                   <button
                     onClick={() => handleExportCSV('full')}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-900 text-slate-200 flex items-center gap-2"
+                    className="w-full text-left px-3.5 py-2 hover:bg-white text-slate-700 flex items-center gap-2"
                   >
-                    <Download className="w-3.5 h-3.5 text-amber-400" />
+                    <Download className="w-3.5 h-3.5 text-[#007A78]" />
                     <span>Export CSV Complet</span>
                   </button>
                   <button
                     onClick={() => handleExportCSV('userman')}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-900 text-slate-200 flex items-center gap-2"
+                    className="w-full text-left px-3.5 py-2 hover:bg-white text-slate-700 flex items-center gap-2"
                   >
                     <FileText className="w-3.5 h-3.5 text-blue-400" />
                     <span>Format MikroTik User Manager</span>
@@ -489,9 +489,9 @@ export const TicketsManager: React.FC = () => {
                       setActiveTab('style');
                       window.print();
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-900 text-slate-200 flex items-center gap-2"
+                    className="w-full text-left px-3.5 py-2 hover:bg-white text-slate-700 flex items-center gap-2"
                   >
-                    <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                    <Printer className="w-3.5 h-3.5 text-[#008060]" />
                     <span>Imprimer Planche PDF A4</span>
                   </button>
                   <button
@@ -500,7 +500,7 @@ export const TicketsManager: React.FC = () => {
                       setSelectedTemplateGabarit('posThermal');
                       setActiveTab('style');
                     }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-slate-900 text-slate-200 flex items-center gap-2"
+                    className="w-full text-left px-3.5 py-2 hover:bg-white text-slate-700 flex items-center gap-2"
                   >
                     <Smartphone className="w-3.5 h-3.5 text-purple-400" />
                     <span>Impression Thermique POS</span>
@@ -513,7 +513,7 @@ export const TicketsManager: React.FC = () => {
           {/* Bouton secondaire discret : + Créer un Compte Client */}
           <button
             onClick={() => setClientAccountModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
           >
             <Plus className="w-3.5 h-3.5 text-slate-400" />
             <span>Créer un Compte Client</span>
@@ -522,7 +522,7 @@ export const TicketsManager: React.FC = () => {
           {/* Bouton principal : + Générer des Tickets (Lot) */}
           <button
             onClick={() => setGenerateModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+            className="px-4 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition cursor-pointer active:scale-95"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Générer des Tickets (Lot)</span>
@@ -533,11 +533,11 @@ export const TicketsManager: React.FC = () => {
       {/* =========================================================================
           2. NAVIGATION PAR ONGLETS (TAB NAVIGATION)
       ========================================================================= */}
-      <div className="flex items-center gap-6 border-b border-slate-800/80 text-xs font-bold">
+      <div className="flex items-center gap-6 border-b border-slate-200 text-xs font-bold">
         <button
           onClick={() => setActiveTab('list')}
           className={`pb-3 transition cursor-pointer flex items-center gap-2 relative ${
-            activeTab === 'list' ? 'text-amber-400 font-extrabold' : 'text-slate-400 hover:text-white'
+            activeTab === 'list' ? 'text-[#007A78] font-extrabold' : 'text-slate-400 hover:text-slate-800'
           }`}
         >
           <span>LISTE DES TICKETS</span>
@@ -550,8 +550,8 @@ export const TicketsManager: React.FC = () => {
           onClick={() => setActiveTab('batches')}
           className={`pb-3 transition cursor-pointer flex items-center gap-2 relative ${
             activeTab === 'batches'
-              ? 'text-amber-400 font-extrabold'
-              : 'text-slate-400 hover:text-white'
+              ? 'text-[#007A78] font-extrabold'
+              : 'text-slate-400 hover:text-slate-800'
           }`}
         >
           <span>GESTION DES LOTS</span>
@@ -564,8 +564,8 @@ export const TicketsManager: React.FC = () => {
           onClick={() => setActiveTab('style')}
           className={`pb-3 transition cursor-pointer flex items-center gap-2 relative ${
             activeTab === 'style'
-              ? 'text-amber-400 font-extrabold'
-              : 'text-slate-400 hover:text-white'
+              ? 'text-[#007A78] font-extrabold'
+              : 'text-slate-400 hover:text-slate-800'
           }`}
         >
           <span>IMPRESSION & STYLE</span>
@@ -588,7 +588,7 @@ export const TicketsManager: React.FC = () => {
               </span>
               <button
                 onClick={() => setShowOverviewRibbon(!showOverviewRibbon)}
-                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition"
+                className="text-xs text-slate-400 hover:text-slate-800 flex items-center gap-1 transition"
               >
                 <span>{showOverviewRibbon ? 'Masquer' : 'Afficher'}</span>
               </button>
@@ -597,73 +597,73 @@ export const TicketsManager: React.FC = () => {
             {showOverviewRibbon && (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
                 {/* Tickets Générés */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>Générés</span>
-                    <Ticket className="w-3.5 h-3.5 text-amber-500" />
+                    <Ticket className="w-3.5 h-3.5 text-[#007A78]" />
                   </div>
-                  <div className="text-xl font-black text-white font-mono tabular-nums">
+                  <div className="text-xl font-black text-slate-800 font-mono tabular-nums">
                     {totalTickets}
                   </div>
                 </div>
 
                 {/* En Stock */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>En Stock</span>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#008060]" />
                   </div>
-                  <div className="text-xl font-black text-emerald-400 font-mono tabular-nums">
+                  <div className="text-xl font-black text-[#008060] font-mono tabular-nums">
                     {inStockCount}
                   </div>
                 </div>
 
                 {/* Vente Vendeur */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>Vendeur</span>
-                    <Shield className="w-3.5 h-3.5 text-amber-400" />
+                    <Shield className="w-3.5 h-3.5 text-[#007A78]" />
                   </div>
-                  <div className="text-xl font-black text-white font-mono tabular-nums">
+                  <div className="text-xl font-black text-slate-800 font-mono tabular-nums">
                     {vendorCount}
                   </div>
                 </div>
 
                 {/* Vente Papier */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>Papier</span>
                     <Calendar className="w-3.5 h-3.5 text-purple-400" />
                   </div>
-                  <div className="text-xl font-black text-white font-mono tabular-nums">
+                  <div className="text-xl font-black text-slate-800 font-mono tabular-nums">
                     {paperCount}
                   </div>
                 </div>
 
                 {/* Vendus (tous canaux) */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>Vendus</span>
                     <Shield className="w-3.5 h-3.5 text-blue-400" />
                   </div>
-                  <div className="text-xl font-black text-white font-mono tabular-nums">
+                  <div className="text-xl font-black text-slate-800 font-mono tabular-nums">
                     {soldAllChannels}
                   </div>
                 </div>
 
                 {/* Actif */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>Actif</span>
-                    <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                    <Clock className="w-3.5 h-3.5 text-[#0066CC]" />
                   </div>
-                  <div className="text-xl font-black text-cyan-400 font-mono tabular-nums">
+                  <div className="text-xl font-black text-[#0066CC] font-mono tabular-nums">
                     {activeCount}
                   </div>
                 </div>
 
                 {/* Expiré */}
-                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-1">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <div className="flex items-center justify-between text-[10px] text-slate-400 uppercase font-semibold">
                     <span>Expiré</span>
                     <Clock className="w-3.5 h-3.5 text-slate-500" />
@@ -677,7 +677,7 @@ export const TicketsManager: React.FC = () => {
           </div>
 
           {/* 3.2 Barre d'outils de recherche & filtres rapides */}
-          <div className="p-4 rounded-3xl bg-slate-950/80 border border-white/[0.08] space-y-4">
+          <div className="p-4 rounded-3xl bg-[#F8FAFC] border border-slate-200 space-y-4">
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
               {/* Search input + button */}
               <div className="flex items-center gap-2 flex-1 max-w-md">
@@ -688,12 +688,12 @@ export const TicketsManager: React.FC = () => {
                     placeholder="Code ou numéro de téléphone..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-amber-500"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 text-xs focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <button
                   onClick={() => setActiveTab('list')}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs shadow-md transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shadow-md transition cursor-pointer"
                 >
                   Chercher
                 </button>
@@ -706,7 +706,7 @@ export const TicketsManager: React.FC = () => {
                   <select
                     value={forfaitFilter}
                     onChange={(e) => setForfaitFilter(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none"
                   >
                     <option value="all">Tous les forfaits</option>
                     {forfaits.map((f) => (
@@ -722,7 +722,7 @@ export const TicketsManager: React.FC = () => {
                   <select
                     value={itemsPerPage}
                     onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none"
+                    className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none"
                   >
                     <option value={20}>20 par page</option>
                     <option value={50}>50 par page</option>
@@ -750,8 +750,8 @@ export const TicketsManager: React.FC = () => {
                   onClick={() => setStatusFilter(btn.id)}
                   className={`px-3 py-1 rounded-lg font-bold text-[11px] transition cursor-pointer ${
                     statusFilter === btn.id
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm'
-                      : 'bg-slate-900 text-slate-400 hover:text-white'
+                      ? 'bg-[#008060] hover:bg-[#006B50] text-white shadow-sm'
+                      : 'bg-white text-slate-400 hover:text-slate-800'
                   }`}
                 >
                   {btn.label}
@@ -761,9 +761,9 @@ export const TicketsManager: React.FC = () => {
           </div>
 
           {/* 3.3 Tableau des Tickets */}
-          <div className="rounded-3xl bg-slate-950/80 border border-white/[0.08] overflow-hidden shadow-xl">
+          <div className="rounded-3xl bg-[#F8FAFC] border border-slate-200 overflow-hidden shadow-xl">
             {/* Header toolbar with selection */}
-            <div className="p-4 border-b border-slate-800/80 flex items-center justify-between text-xs">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -772,9 +772,9 @@ export const TicketsManager: React.FC = () => {
                     selectedTicketIds.length === filteredTickets.length
                   }
                   onChange={handleSelectAll}
-                  className="rounded border-slate-700 accent-amber-500 w-4 h-4 cursor-pointer"
+                  className="rounded border-slate-300 accent-amber-500 w-4 h-4 cursor-pointer"
                 />
-                <span className="font-semibold text-slate-300">
+                <span className="font-semibold text-slate-600">
                   Tout cocher ({filteredTickets.slice(0, itemsPerPage).length} affichés sur{' '}
                   {filteredTickets.length})
                 </span>
@@ -782,7 +782,7 @@ export const TicketsManager: React.FC = () => {
 
               {selectedTicketIds.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-amber-400 font-bold">
+                  <span className="text-[11px] text-[#007A78] font-bold">
                     {selectedTicketIds.length} sélectionné(s)
                   </span>
                   <button
@@ -801,16 +801,16 @@ export const TicketsManager: React.FC = () => {
             {/* Table */}
             {filteredTickets.length === 0 ? (
               <div className="p-16 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 mx-auto">
                   <Ticket className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-bold text-white">Aucun ticket trouvé</h3>
+                <h3 className="text-sm font-bold text-slate-800">Aucun ticket trouvé</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Commencez par générer des tickets d'accès pour les forfaits de votre choix.
                 </p>
                 <button
                   onClick={() => setGenerateModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs shadow-md transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shadow-md transition cursor-pointer"
                 >
                   + Générer des Tickets
                 </button>
@@ -819,7 +819,7 @@ export const TicketsManager: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800/80 bg-slate-900/40 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    <tr className="border-b border-slate-200 bg-white text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                       <th className="p-3.5 w-10"></th>
                       <th className="p-3.5">CODE TICKET</th>
                       <th className="p-3.5">FORFAIT</th>
@@ -839,8 +839,8 @@ export const TicketsManager: React.FC = () => {
                       return (
                         <tr
                           key={t.id}
-                          className={`hover:bg-slate-900/50 transition ${
-                            isSelected ? 'bg-amber-500/5' : ''
+                          className={`hover:bg-white transition ${
+                            isSelected ? 'bg-[#E6F4F3]' : ''
                           }`}
                         >
                           <td className="p-3.5">
@@ -848,14 +848,14 @@ export const TicketsManager: React.FC = () => {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleToggleSelect(t.id)}
-                              className="rounded border-slate-700 accent-amber-500 w-3.5 h-3.5 cursor-pointer"
+                              className="rounded border-slate-300 accent-amber-500 w-3.5 h-3.5 cursor-pointer"
                             />
                           </td>
-                          <td className="p-3.5 font-mono font-bold text-white text-xs tracking-wide">
+                          <td className="p-3.5 font-mono font-bold text-slate-800 text-xs tracking-wide">
                             {t.code}
                           </td>
-                          <td className="p-3.5 text-slate-300">{t.forfaitName}</td>
-                          <td className="p-3.5 font-mono font-bold text-emerald-400">
+                          <td className="p-3.5 text-slate-600">{t.forfaitName}</td>
+                          <td className="p-3.5 font-mono font-bold text-[#008060]">
                             {formatMoney(t.price)}
                           </td>
                           <td className="p-3.5 font-mono text-slate-400 text-[11px]">
@@ -878,7 +878,7 @@ export const TicketsManager: React.FC = () => {
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => openDetailModal(t)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
                                 title="Voir / Éditer"
                               >
                                 <Eye className="w-3.5 h-3.5" />
@@ -888,7 +888,7 @@ export const TicketsManager: React.FC = () => {
                                 className={`p-1.5 rounded-lg transition ${
                                   t.status === 'bloque'
                                     ? 'text-rose-400 hover:bg-rose-500/20'
-                                    : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'
+                                    : 'text-slate-400 hover:text-[#007A78] hover:bg-slate-100'
                                 }`}
                                 title={t.status === 'bloque' ? 'Débloquer' : 'Bloquer'}
                               >
@@ -923,10 +923,10 @@ export const TicketsManager: React.FC = () => {
       ========================================================================= */}
       {activeTab === 'batches' && (
         <div className="space-y-5">
-          <div className="p-6 rounded-3xl bg-slate-950/80 border border-white/[0.08] space-y-5 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+          <div className="p-6 rounded-3xl bg-[#F8FAFC] border border-slate-200 space-y-5 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
               <div>
-                <h3 className="text-base font-bold text-white">Historique des Lots Générés</h3>
+                <h3 className="text-base font-bold text-slate-800">Historique des Lots Générés</h3>
                 <p className="text-xs text-slate-400">
                   Consultez vos lots précédents, réimprimez ou téléchargez les exports CSV.
                 </p>
@@ -934,7 +934,7 @@ export const TicketsManager: React.FC = () => {
 
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-slate-400 font-semibold">Format CSV :</span>
-                <select className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs">
+                <select className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs">
                   <option>Complet</option>
                   <option>Simplifié</option>
                   <option>MikroTik User Manager</option>
@@ -956,14 +956,14 @@ export const TicketsManager: React.FC = () => {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-amber-400 text-xs">
+                        <span className="font-mono font-bold text-[#007A78] text-xs">
                           {b.batchId}
                         </span>
-                        <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 text-[10px] font-mono">
+                        <span className="px-2 py-0.5 rounded bg-white text-slate-600 text-[10px] font-mono">
                           {b.channel}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-300">
+                      <p className="text-xs text-slate-600">
                         Forfait : <strong>{b.forfaitName}</strong> ({formatMoney(b.price)}) ·{' '}
                         {b.count} tickets générés
                       </p>
@@ -975,9 +975,9 @@ export const TicketsManager: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleExportCSV('full')}
-                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition"
+                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition"
                       >
-                        <Download className="w-3.5 h-3.5 text-amber-400" />
+                        <Download className="w-3.5 h-3.5 text-[#007A78]" />
                         <span>CSV</span>
                       </button>
                       <button
@@ -985,9 +985,9 @@ export const TicketsManager: React.FC = () => {
                           setActiveTab('style');
                           window.print();
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition"
+                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition"
                       >
-                        <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                        <Printer className="w-3.5 h-3.5 text-[#008060]" />
                         <span>Imprimer</span>
                       </button>
                     </div>
@@ -1005,9 +1005,9 @@ export const TicketsManager: React.FC = () => {
       {activeTab === 'style' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Form: Personnalisation de la Fiche Ticket (7 cols) */}
-          <div className="lg:col-span-7 p-6 rounded-3xl bg-slate-950/80 border border-white/[0.08] space-y-5 shadow-xl">
-            <div className="space-y-1 border-b border-slate-800/80 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <div className="lg:col-span-7 p-6 rounded-3xl bg-[#F8FAFC] border border-slate-200 space-y-5 shadow-xl">
+            <div className="space-y-1 border-b border-slate-200 pb-3">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                 <span>Personnalisation de la Fiche Ticket (HTML/CSS)</span>
               </h3>
               <p className="text-xs text-slate-400">
@@ -1019,39 +1019,39 @@ export const TicketsManager: React.FC = () => {
             {/* Inputs: Nom Réseau, Téléphone, WhatsApp */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
                   Nom du réseau
                 </label>
                 <input
                   type="text"
                   value={ticketNetworkName}
                   onChange={(e) => setTicketNetworkName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
                     Téléphone support
                   </label>
                   <input
                     type="text"
                     value={ticketPhoneSupport}
                     onChange={(e) => setTicketPhoneSupport(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-1">
                     WhatsApp support
                   </label>
                   <input
                     type="text"
                     value={ticketWhatsappSupport}
                     onChange={(e) => setTicketWhatsappSupport(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -1060,10 +1060,10 @@ export const TicketsManager: React.FC = () => {
             {/* Modèles Prêts à l'emploi (4 cards) */}
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Modèles prêts à l'emploi
                 </span>
-                <span className="text-[10px] text-amber-400">Cliquez pour appliquer</span>
+                <span className="text-[10px] text-[#007A78]">Cliquez pour appliquer</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -1096,8 +1096,8 @@ export const TicketsManager: React.FC = () => {
                     }
                     className={`p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
                       selectedTemplateGabarit === tpl.id
-                        ? 'bg-amber-500/10 border-amber-500 text-white'
-                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                        ? 'bg-[#E6F4F3] border-amber-500 text-slate-800'
+                        : 'bg-white border-slate-200 text-slate-400 hover:text-slate-800'
                     }`}
                   >
                     <div className="text-xs font-bold">{tpl.label}</div>
@@ -1109,21 +1109,21 @@ export const TicketsManager: React.FC = () => {
 
             {/* Code HTML/CSS */}
             <div className="space-y-1 pt-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider block">
                 Code HTML/CSS du voucher
               </label>
               <textarea
                 rows={5}
                 value={customHtmlSnippet}
                 onChange={(e) => setCustomHtmlSnippet(e.target.value)}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-cyan-300 font-mono text-[11px] focus:outline-none focus:border-amber-500"
+                className="w-full p-3 rounded-xl bg-white border border-slate-200 text-[#0066CC] font-mono text-[11px] focus:outline-none focus:border-amber-500"
               />
             </div>
 
             <div className="flex items-center gap-2 pt-2">
               <button
                 onClick={() => window.print()}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5"
               >
                 <Printer className="w-4 h-4" />
                 <span>Lancer l'impression maintenant</span>
@@ -1132,11 +1132,11 @@ export const TicketsManager: React.FC = () => {
           </div>
 
           {/* Right Preview: Aperçu Live du Ticket Customisé (5 cols) */}
-          <div className="lg:col-span-5 p-6 rounded-3xl bg-slate-950/80 border border-white/[0.08] space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="lg:col-span-5 p-6 rounded-3xl bg-[#F8FAFC] border border-slate-200 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-bold text-white">Aperçu Live du Ticket Customisé</h3>
+                <Sparkles className="w-4 h-4 text-[#007A78]" />
+                <h3 className="text-sm font-bold text-slate-800">Aperçu Live du Ticket Customisé</h3>
               </div>
               <span className="text-[10px] text-slate-400 font-mono">RENDU HTML</span>
             </div>
@@ -1182,8 +1182,8 @@ export const TicketsManager: React.FC = () => {
             </div>
 
             {/* Note d'aide sous l'aperçu */}
-            <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <strong className="text-white block font-semibold">
+            <div className="p-3 rounded-2xl bg-white border border-slate-200 text-[11px] text-slate-400 space-y-1">
+              <strong className="text-slate-800 block font-semibold">
                 QR code : code seul pour l'instant
               </strong>
               <p className="leading-relaxed">
@@ -1201,12 +1201,12 @@ export const TicketsManager: React.FC = () => {
       ========================================================================= */}
       {generateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-slate-950 border border-white/[0.1] shadow-2xl overflow-hidden space-y-5 p-6">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-              <h3 className="text-base font-bold text-white">Générer des Tickets</h3>
+          <div className="w-full max-w-md rounded-3xl bg-[#F8FAFC] border border-slate-200 shadow-2xl overflow-hidden space-y-5 p-6">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="text-base font-bold text-slate-800">Générer des Tickets</h3>
               <button
                 onClick={() => setGenerateModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1215,13 +1215,13 @@ export const TicketsManager: React.FC = () => {
             <form onSubmit={handleGenerateBatchSubmit} className="space-y-4 text-xs">
               {/* Forfait Cible */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   POUR QUEL FORFAIT ?
                 </label>
                 <select
                   value={genForfaitId}
                   onChange={(e) => setGenForfaitId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500"
                 >
                   {forfaits.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -1233,7 +1233,7 @@ export const TicketsManager: React.FC = () => {
 
               {/* Type de code */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">TYPE DE CODE</label>
+                <label className="font-semibold text-slate-600 block mb-1">TYPE DE CODE</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['auto', 'prefix', 'free'] as const).map((t) => (
                     <button
@@ -1242,8 +1242,8 @@ export const TicketsManager: React.FC = () => {
                       onClick={() => setGenCodeType(t)}
                       className={`py-2 rounded-xl font-bold transition text-center cursor-pointer ${
                         genCodeType === t
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                          : 'bg-slate-900 text-slate-400 border border-slate-800'
+                          ? 'bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]'
+                          : 'bg-white text-slate-400 border border-slate-200'
                       }`}
                     >
                       {t === 'auto' ? 'Automatique' : t === 'prefix' ? 'Préfixe' : 'Libre'}
@@ -1254,12 +1254,12 @@ export const TicketsManager: React.FC = () => {
 
               {genCodeType === 'prefix' && (
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">PRÉFIXE DU CODE</label>
+                  <label className="font-semibold text-slate-600 block mb-1">PRÉFIXE DU CODE</label>
                   <input
                     type="text"
                     value={genPrefix}
                     onChange={(e) => setGenPrefix(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none"
                   />
                 </div>
               )}
@@ -1267,7 +1267,7 @@ export const TicketsManager: React.FC = () => {
               {/* Quantité & Longueur */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-600 block mb-1">
                     QUANTITÉ À GÉNÉRER
                   </label>
                   <input
@@ -1276,18 +1276,18 @@ export const TicketsManager: React.FC = () => {
                     max={1000}
                     value={genQuantity}
                     onChange={(e) => setGenQuantity(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-600 block mb-1">
                     LONGUEUR DU CODE
                   </label>
                   <select
                     value={genCodeLength}
                     onChange={(e) => setGenCodeLength(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none"
                   >
                     <option value={6}>6 caractères</option>
                     <option value={8}>8 caractères</option>
@@ -1298,7 +1298,7 @@ export const TicketsManager: React.FC = () => {
 
               {/* Casse des lettres */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   CASSE DES LETTRES (CODES GÉNÉRÉS)
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1309,8 +1309,8 @@ export const TicketsManager: React.FC = () => {
                       onClick={() => setGenCase(c)}
                       className={`py-2 rounded-xl font-bold transition text-center cursor-pointer ${
                         genCase === c
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                          : 'bg-slate-900 text-slate-400 border border-slate-800'
+                          ? 'bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]'
+                          : 'bg-white text-slate-400 border border-slate-200'
                       }`}
                     >
                       {c === 'upper' ? 'MAJUSCULES' : c === 'lower' ? 'MINUSCULES' : 'MIXTE'}
@@ -1321,7 +1321,7 @@ export const TicketsManager: React.FC = () => {
 
               {/* Prix personnalisé */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   PRIX DE VENTE PERSONNALISÉ (OPTIONNEL)
                 </label>
                 <input
@@ -1329,22 +1329,22 @@ export const TicketsManager: React.FC = () => {
                   placeholder="Laisser vide pour utiliser le prix du forfait"
                   value={genCustomPrice}
                   onChange={(e) => setGenCustomPrice(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none"
                 />
               </div>
 
               {/* Boutons Footer */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setGenerateModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 transition"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-850 text-slate-600 transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold transition shadow-md"
+                  className="px-5 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold transition shadow-md"
                 >
                   Générer
                 </button>
@@ -1359,12 +1359,12 @@ export const TicketsManager: React.FC = () => {
       ========================================================================= */}
       {clientAccountModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-slate-950 border border-white/[0.1] shadow-2xl overflow-hidden space-y-5 p-6">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-              <h3 className="text-base font-bold text-white">+ Créer un Compte Client</h3>
+          <div className="w-full max-w-md rounded-3xl bg-[#F8FAFC] border border-slate-200 shadow-2xl overflow-hidden space-y-5 p-6">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="text-base font-bold text-slate-800">+ Créer un Compte Client</h3>
               <button
                 onClick={() => setClientAccountModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1372,13 +1372,13 @@ export const TicketsManager: React.FC = () => {
 
             <form onSubmit={handleCreateClientSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   SÉLECTIONNER LE FORFAIT
                 </label>
                 <select
                   value={clientForfaitId}
                   onChange={(e) => setClientForfaitId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none"
                 >
                   {forfaits.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -1389,7 +1389,7 @@ export const TicketsManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   NOM D'UTILISATEUR (IDENTIFIANT)
                 </label>
                 <input
@@ -1398,12 +1398,12 @@ export const TicketsManager: React.FC = () => {
                   placeholder="De 3 à 12 caractères alphanumériques"
                   value={clientUsername}
                   onChange={(e) => setClientUsername(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none font-mono"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none font-mono"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   CASSE DU NOM D'UTILISATEUR
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1414,8 +1414,8 @@ export const TicketsManager: React.FC = () => {
                       onClick={() => setClientCase(c)}
                       className={`py-2 rounded-xl font-bold transition text-center cursor-pointer ${
                         clientCase === c
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                          : 'bg-slate-900 text-slate-400 border border-slate-800'
+                          ? 'bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]'
+                          : 'bg-white text-slate-400 border border-slate-200'
                       }`}
                     >
                       {c === 'upper' ? 'MAJUSCULES' : c === 'lower' ? 'MINUSCULES' : 'MIXTE'}
@@ -1431,9 +1431,9 @@ export const TicketsManager: React.FC = () => {
                     type="checkbox"
                     checked={clientEnablePassword}
                     onChange={(e) => setClientEnablePassword(e.target.checked)}
-                    className="rounded border-slate-700 accent-amber-500 w-4 h-4 cursor-pointer"
+                    className="rounded border-slate-300 accent-amber-500 w-4 h-4 cursor-pointer"
                   />
-                  <span className="text-slate-300">Activer un mot de passe pour ce compte</span>
+                  <span className="text-slate-600">Activer un mot de passe pour ce compte</span>
                 </label>
 
                 {clientEnablePassword && (
@@ -1442,13 +1442,13 @@ export const TicketsManager: React.FC = () => {
                     placeholder="Mot de passe personnalisé"
                     value={clientPassword}
                     onChange={(e) => setClientPassword(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none font-mono"
                   />
                 )}
               </div>
 
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">
+                <label className="font-semibold text-slate-600 block mb-1">
                   PRIX DE VENTE PERSONNALISÉ (OPTIONNEL)
                 </label>
                 <input
@@ -1456,21 +1456,21 @@ export const TicketsManager: React.FC = () => {
                   placeholder="Laisser vide pour utiliser le prix du forfait"
                   value={clientCustomPrice}
                   onChange={(e) => setClientCustomPrice(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setClientAccountModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 transition"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-850 text-slate-600 transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold transition shadow-md"
+                  className="px-5 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold transition shadow-md"
                 >
                   Créer le Compte
                 </button>
@@ -1485,18 +1485,18 @@ export const TicketsManager: React.FC = () => {
       ========================================================================= */}
       {detailModalOpen && selectedTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
-          <div className="w-full max-w-lg rounded-3xl bg-slate-950 border border-white/[0.1] shadow-2xl overflow-hidden space-y-5 p-6 my-8">
+          <div className="w-full max-w-lg rounded-3xl bg-[#F8FAFC] border border-slate-200 shadow-2xl overflow-hidden space-y-5 p-6 my-8">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
-                <Edit2 className="w-4 h-4 text-amber-500" />
-                <h3 className="text-base font-bold text-white">Détail du Ticket</h3>
+                <Edit2 className="w-4 h-4 text-[#007A78]" />
+                <h3 className="text-base font-bold text-slate-800">Détail du Ticket</h3>
               </div>
               <div className="flex items-center gap-2">
                 {renderStatusBadge(selectedTicket.status)}
                 <button
                   onClick={() => setDetailModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1504,12 +1504,12 @@ export const TicketsManager: React.FC = () => {
             </div>
 
             {/* Overview info block */}
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 grid grid-cols-2 gap-3 text-xs">
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 grid grid-cols-2 gap-3 text-xs">
               <div>
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">
                   Code Ticket
                 </span>
-                <span className="font-mono font-bold text-white text-sm">
+                <span className="font-mono font-bold text-slate-800 text-sm">
                   {selectedTicket.code}
                 </span>
               </div>
@@ -1517,7 +1517,7 @@ export const TicketsManager: React.FC = () => {
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">
                   Créé le
                 </span>
-                <span className="font-mono text-slate-300">
+                <span className="font-mono text-slate-600">
                   {selectedTicket.createdAt.slice(0, 16).replace('T', ' ')}
                 </span>
               </div>
@@ -1525,7 +1525,7 @@ export const TicketsManager: React.FC = () => {
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">
                   Activé le
                 </span>
-                <span className="font-mono text-slate-300">
+                <span className="font-mono text-slate-600">
                   {selectedTicket.activatedAt
                     ? selectedTicket.activatedAt.slice(0, 16).replace('T', ' ')
                     : 'Pas encore activé'}
@@ -1535,7 +1535,7 @@ export const TicketsManager: React.FC = () => {
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">
                   Dernière MAC
                 </span>
-                <span className="font-mono text-slate-300">
+                <span className="font-mono text-slate-600">
                   {selectedTicket.macAddress || '—'}
                 </span>
               </div>
@@ -1543,13 +1543,13 @@ export const TicketsManager: React.FC = () => {
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">
                   Expire le
                 </span>
-                <span className="font-mono text-slate-300">{detailExpiresAt || '—'}</span>
+                <span className="font-mono text-slate-600">{detailExpiresAt || '—'}</span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-500 uppercase font-semibold block">
                   Données consommées
                 </span>
-                <span className="font-mono text-slate-300">
+                <span className="font-mono text-slate-600">
                   {selectedTicket.dataConsumedMb ? `${selectedTicket.dataConsumedMb} Mo` : '—'}
                 </span>
               </div>
@@ -1559,11 +1559,11 @@ export const TicketsManager: React.FC = () => {
             <div className="space-y-4 text-xs">
               {/* Forfait */}
               <div>
-                <label className="font-semibold text-slate-300 block mb-1">FORFAIT</label>
+                <label className="font-semibold text-slate-600 block mb-1">FORFAIT</label>
                 <select
                   value={detailForfaitId}
                   onChange={(e) => setDetailForfaitId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 focus:outline-none"
                 >
                   {forfaits.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -1574,15 +1574,15 @@ export const TicketsManager: React.FC = () => {
               </div>
 
               {/* Échéance (Prolongation rapide) */}
-              <div className="space-y-1.5 p-3 rounded-2xl bg-slate-900/40 border border-slate-800">
-                <label className="font-semibold text-slate-300 block">
+              <div className="space-y-1.5 p-3 rounded-2xl bg-white border border-slate-200">
+                <label className="font-semibold text-slate-600 block">
                   ÉCHÉANCE{' '}
                   <span className="text-[10px] text-slate-500 font-normal">
                     (le tarif et le débit ne changent pas)
                   </span>
                 </label>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-xl border border-slate-800">
+                  <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-200">
                     <span className="text-slate-400 text-[11px]">Nb de jours:</span>
                     <input
                       type="number"
@@ -1590,7 +1590,7 @@ export const TicketsManager: React.FC = () => {
                       max={90}
                       value={detailDaysToAdd}
                       onChange={(e) => setDetailDaysToAdd(Number(e.target.value))}
-                      className="w-12 bg-transparent text-white font-mono text-center text-xs focus:outline-none"
+                      className="w-12 bg-transparent text-slate-800 font-mono text-center text-xs focus:outline-none"
                     />
                   </div>
                   <button
@@ -1599,7 +1599,7 @@ export const TicketsManager: React.FC = () => {
                       const newExp = new Date(Date.now() + detailDaysToAdd * 24 * 3600 * 1000);
                       setDetailExpiresAt(newExp.toISOString().slice(0, 16).replace('T', ' '));
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold"
+                    className="px-3 py-1.5 rounded-xl bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3] text-xs font-bold"
                   >
                     Accorder à partir de maintenant
                   </button>
@@ -1611,7 +1611,7 @@ export const TicketsManager: React.FC = () => {
                         const newExp = new Date(Date.now() + d * 24 * 3600 * 1000);
                         setDetailExpiresAt(newExp.toISOString().slice(0, 16).replace('T', ' '));
                       }}
-                      className="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-mono hover:text-white"
+                      className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-mono hover:text-slate-800"
                     >
                       {d}j
                     </button>
@@ -1622,7 +1622,7 @@ export const TicketsManager: React.FC = () => {
               {/* Code Ticket & Password */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">
+                  <label className="font-semibold text-slate-600 block mb-1">
                     CODE TICKET{' '}
                     <span className="text-[10px] text-slate-500 font-normal">
                       (modifiable en cours)
@@ -1632,17 +1632,17 @@ export const TicketsManager: React.FC = () => {
                     type="text"
                     value={detailCode}
                     onChange={(e) => setDetailCode(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 font-mono focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">MOT DE PASSE</label>
+                  <label className="font-semibold text-slate-600 block mb-1">MOT DE PASSE</label>
                   <input
                     type="text"
                     placeholder="Laisser vide = identique"
                     value={detailPassword}
                     onChange={(e) => setDetailPassword(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono placeholder-slate-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 font-mono placeholder-slate-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1650,31 +1650,31 @@ export const TicketsManager: React.FC = () => {
               {/* Prix de vente & Téléphone */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">PRIX DE VENTE</label>
+                  <label className="font-semibold text-slate-600 block mb-1">PRIX DE VENTE</label>
                   <input
                     type="number"
                     value={detailPrice}
                     onChange={(e) => setDetailPrice(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 font-mono focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-300 block mb-1">TÉLÉPHONE</label>
+                  <label className="font-semibold text-slate-600 block mb-1">TÉLÉPHONE</label>
                   <input
                     type="text"
                     placeholder="Ex: +225 0707..."
                     value={detailPhone}
                     onChange={(e) => setDetailPhone(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-white font-mono placeholder-slate-500 focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-800 font-mono placeholder-slate-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* File d'attente des forfaits (Profile Queue) */}
-              <div className="space-y-3 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+              <div className="space-y-3 p-4 rounded-2xl bg-white border border-slate-200">
                 <div className="space-y-0.5">
-                  <span className="font-bold text-white flex items-center gap-1.5 text-xs">
-                    <Layers className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                    <Layers className="w-3.5 h-3.5 text-[#007A78]" />
                     <span>FILE D'ATTENTE DES FORFAITS (PROFILE QUEUE)</span>
                   </span>
                   <p className="text-[10px] text-slate-400">
@@ -1692,11 +1692,11 @@ export const TicketsManager: React.FC = () => {
                     {detailQueuedForfaits.map((q) => (
                       <div
                         key={q.id}
-                        className="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-slate-800 text-[11px]"
+                        className="flex items-center justify-between p-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-[11px]"
                       >
-                        <span className="font-semibold text-white">{q.forfaitName}</span>
+                        <span className="font-semibold text-slate-800">{q.forfaitName}</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-emerald-400">{formatMoney(q.price)}</span>
+                          <span className="font-mono text-[#008060]">{formatMoney(q.price)}</span>
                           <button
                             type="button"
                             onClick={() => handleRemoveQueuedForfait(q.id)}
@@ -1710,11 +1710,11 @@ export const TicketsManager: React.FC = () => {
                   </div>
                 )}
 
-                <div className="pt-2 border-t border-slate-800 flex items-center gap-2">
+                <div className="pt-2 border-t border-slate-200 flex items-center gap-2">
                   <select
                     value={advanceForfaitId}
                     onChange={(e) => setAdvanceForfaitId(e.target.value)}
-                    className="flex-1 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-[11px] focus:outline-none"
+                    className="flex-1 px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-[11px] focus:outline-none"
                   >
                     {forfaits.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -1727,12 +1727,12 @@ export const TicketsManager: React.FC = () => {
                     placeholder="Prix perso"
                     value={advanceCustomPrice}
                     onChange={(e) => setAdvanceCustomPrice(e.target.value)}
-                    className="w-20 px-2 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-[11px] font-mono focus:outline-none"
+                    className="w-20 px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-[11px] font-mono focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleAddQueuedForfait}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-[11px] whitespace-nowrap shadow-sm"
+                    className="px-3 py-1.5 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-[11px] whitespace-nowrap shadow-sm"
                   >
                     + Ajouter
                   </button>
@@ -1741,13 +1741,13 @@ export const TicketsManager: React.FC = () => {
             </div>
 
             {/* Bottom Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => handleToggleBlock(selectedTicket)}
                 className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition ${
                   selectedTicket.status === 'bloque'
-                    ? 'border-emerald-500 text-emerald-400 hover:bg-emerald-500/10'
+                    ? 'border-emerald-500 text-[#008060] hover:bg-[#E6F4F3]'
                     : 'border-rose-500 text-rose-400 hover:bg-rose-500/10'
                 }`}
               >
@@ -1759,14 +1759,14 @@ export const TicketsManager: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setDetailModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 text-xs font-semibold transition"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-850 text-slate-600 text-xs font-semibold transition"
                 >
                   Fermer
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveDetail}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs shadow-md transition"
+                  className="px-5 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs shadow-md transition"
                 >
                   Enregistrer
                 </button>

@@ -216,29 +216,29 @@ export const MikroTikManager: React.FC = () => {
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <span>Console Joowifi</span>
           <span>/</span>
-          <span className="text-amber-400 font-semibold flex items-center gap-1">
+          <span className="text-[#007A78] font-semibold flex items-center gap-1">
             <RadioTower className="w-3.5 h-3.5" />
             MIKROTIK
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3] shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             CYCLE DE POLLING CLOUD : 45S
           </span>
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono bg-slate-900 border border-slate-800 text-slate-400">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono bg-white border border-slate-200 text-slate-400">
             <span>Pull dans :</span>
-            <span className="text-emerald-400 font-bold">{heartbeatSecondsRemaining}s</span>
+            <span className="text-[#008060] font-bold">{heartbeatSecondsRemaining}s</span>
           </div>
         </div>
       </div>
 
       {/* Main Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl glass-card border border-slate-800 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-950">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl glass-card border border-slate-200 bg-white">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78] shadow-lg shadow-amber-500/10">
               <RouterIcon className="w-6 h-6" />
             </div>
             <span>Routeurs MikroTik</span>
@@ -253,17 +253,17 @@ export const MikroTikManager: React.FC = () => {
           <button
             onClick={handleReconcileProfiles}
             disabled={isReconciling}
-            className="px-3.5 sm:px-4 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-slate-200 border border-slate-700/80 hover:border-slate-600 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm hover:text-white disabled:opacity-50"
+            className="px-3.5 sm:px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 hover:border-slate-600 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm hover:text-slate-800 disabled:opacity-50"
             title="Appliquer les profils de forfaits WiFi locaux sur les routeurs MikroTik"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isReconciling ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#007A78] ${isReconciling ? 'animate-spin' : ''}`} />
             <span>{isReconciling ? 'Synchronisation...' : 'Réconcilier les Profils'}</span>
           </button>
 
           {/* Add / Install Router Button */}
           <button
             onClick={() => setAdminTab('installation')}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
+            className="px-4 py-2.5 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>+ Installer un Routeur</span>
@@ -273,16 +273,16 @@ export const MikroTikManager: React.FC = () => {
 
       {/* Reconciliation Toast / Feedback banner */}
       {reconcileNotice && (
-        <div className="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-3 animate-fade-in shadow-lg">
+        <div className="p-4 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] text-[#005A5B] text-xs flex items-center justify-between gap-3 animate-fade-in shadow-lg">
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-[#008060] shrink-0" />
             <div>
-              <strong className="text-emerald-300">Synchronisation des Profils Réussie :</strong> {reconcileNotice}
+              <strong className="text-[#005A5B]">Synchronisation des Profils Réussie :</strong> {reconcileNotice}
             </div>
           </div>
           <button
             onClick={() => setReconcileNotice(null)}
-            className="text-emerald-400/80 hover:text-emerald-200 p-1 cursor-pointer"
+            className="text-[#008060]/80 hover:text-[#005A5B] p-1 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -292,7 +292,7 @@ export const MikroTikManager: React.FC = () => {
       {/* 4 Global KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Total Routeurs */}
-        <div className="p-4 rounded-2xl glass-card border border-slate-800 bg-slate-900/60 relative overflow-hidden">
+        <div className="p-4 rounded-2xl glass-card border border-slate-200 bg-white relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               Parc d'équipements
@@ -302,8 +302,8 @@ export const MikroTikManager: React.FC = () => {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-white">{totalRoutersCount}</span>
-            <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+            <span className="text-2xl font-black text-slate-800">{totalRoutersCount}</span>
+            <span className="text-xs font-semibold text-[#008060] flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               {onlineRoutersCount} en ligne
             </span>
@@ -314,17 +314,17 @@ export const MikroTikManager: React.FC = () => {
         </div>
 
         {/* KPI 2: Sessions Actives */}
-        <div className="p-4 rounded-2xl glass-card border border-slate-800 bg-slate-900/60 relative overflow-hidden">
+        <div className="p-4 rounded-2xl glass-card border border-slate-200 bg-white relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               Abonnés Connectés
             </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div className="w-7 h-7 rounded-lg bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#008060]">
               <Radio className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-400">{totalSubscribersConnected}</span>
+            <span className="text-2xl font-black text-[#008060]">{totalSubscribersConnected}</span>
             <span className="text-xs text-slate-400">utilisateurs</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
@@ -333,17 +333,17 @@ export const MikroTikManager: React.FC = () => {
         </div>
 
         {/* KPI 3: Bande Passante Cumulée */}
-        <div className="p-4 rounded-2xl glass-card border border-slate-800 bg-slate-900/60 relative overflow-hidden">
+        <div className="p-4 rounded-2xl glass-card border border-slate-200 bg-white relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               Débit Total Réseau
             </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <div className="w-7 h-7 rounded-lg bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78]">
               <Activity className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl sm:text-2xl font-black text-amber-400">↓ {totalTrafficDown}</span>
+            <span className="text-xl sm:text-2xl font-black text-[#007A78]">↓ {totalTrafficDown}</span>
             <span className="text-xs font-mono text-slate-400">Mbps</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
@@ -352,17 +352,17 @@ export const MikroTikManager: React.FC = () => {
         </div>
 
         {/* KPI 4: Profils Forfaits Synchronisés */}
-        <div className="p-4 rounded-2xl glass-card border border-slate-800 bg-slate-900/60 relative overflow-hidden">
+        <div className="p-4 rounded-2xl glass-card border border-slate-200 bg-white relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               Profils Hotspot
             </span>
-            <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+            <div className="w-7 h-7 rounded-lg bg-[#EFF6FF] border border-blue-200 flex items-center justify-center text-[#0066CC]">
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-cyan-300">{forfaits.length}</span>
+            <span className="text-2xl font-black text-[#0066CC]">{forfaits.length}</span>
             <span className="text-xs text-slate-400">offres actives</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">
@@ -372,18 +372,18 @@ export const MikroTikManager: React.FC = () => {
       </div>
 
       {/* Filters & Search Toolbar */}
-      <div className="p-4 sm:p-5 rounded-2xl glass-card border border-amber-500/25 bg-slate-900/70 space-y-3">
+      <div className="p-4 sm:p-5 rounded-2xl glass-card border border-[#99D5D3] bg-white space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="w-8 h-8 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78]">
               <Terminal className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs sm:text-sm font-bold text-white">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-800">
                   File d'Attente Cloud Pull (Instructions RouterOS `.rsc`)
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#E6F4F3] text-[#008060] border border-[#99D5D3]">
                   {heartbeatQueue.filter((c) => c.status === 'pending').length} en attente • Pull dans {heartbeatSecondsRemaining}s
                 </span>
               </div>
@@ -394,7 +394,7 @@ export const MikroTikManager: React.FC = () => {
           </div>
           <button
             onClick={forceHeartbeatSync}
-            className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer active:scale-95 shrink-0 shadow-lg shadow-amber-500/20"
+            className="px-3.5 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white font-extrabold text-xs flex items-center gap-1.5 transition cursor-pointer active:scale-95 shrink-0 shadow-lg shadow-amber-500/20"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Forcer Sync Heartbeat (45s)</span>
@@ -405,21 +405,21 @@ export const MikroTikManager: React.FC = () => {
           {heartbeatQueue.slice(0, 6).map((cmd) => (
             <div
               key={cmd.id}
-              className="p-2.5 rounded-xl bg-slate-950/90 border border-slate-800/90 flex flex-col justify-between gap-1.5 text-[11px] font-mono"
+              className="p-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200 flex flex-col justify-between gap-1.5 text-[11px] font-mono"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-amber-400 font-bold">{cmd.commandType} • {cmd.routerName}</span>
+                <span className="text-[#007A78] font-bold">{cmd.commandType} • {cmd.routerName}</span>
                 <span
                   className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
                     cmd.status === 'pending'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
-                      : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                      ? 'bg-[#E6F4F3] text-[#005A5B] border border-[#99D5D3] animate-pulse'
+                      : 'bg-[#E6F4F3] text-[#008060] border border-[#99D5D3]'
                   }`}
                 >
                   {cmd.status === 'pending' ? 'EN ATTENTE PULL' : cmd.syncedAt || 'EXÉCUTÉ'}
                 </span>
               </div>
-              <div className="text-cyan-300 truncate text-[10px]" title={cmd.routerOsCommand}>
+              <div className="text-[#0066CC] truncate text-[10px]" title={cmd.routerOsCommand}>
                 {cmd.routerOsCommand}
               </div>
             </div>
@@ -428,7 +428,7 @@ export const MikroTikManager: React.FC = () => {
       </div>
 
       {/* Filters & Search Toolbar Original */}
-      <div className="p-4 rounded-2xl glass-card border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+      <div className="p-4 rounded-2xl glass-card border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -436,7 +436,7 @@ export const MikroTikManager: React.FC = () => {
             placeholder="Rechercher par nom, modèle, IP, MAC, zone ou DNS MikroTik..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/60 text-xs"
+            className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 placeholder-slate-500 focus:outline-none focus:border-amber-500/60 text-xs"
           />
         </div>
 
@@ -447,7 +447,7 @@ export const MikroTikManager: React.FC = () => {
             <select
               value={selectedZoneFilter}
               onChange={(e) => setSelectedZoneFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-600 focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
             >
               <option value="all">Toutes les zones ({zones.length})</option>
               {zones.map((zone) => (
@@ -464,7 +464,7 @@ export const MikroTikManager: React.FC = () => {
             <select
               value={selectedStatusFilter}
               onChange={(e) => setSelectedStatusFilter(e.target.value as any)}
-              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-600 focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
             >
               <option value="all">Tous les statuts</option>
               <option value="online">🟢 En Ligne</option>
@@ -485,7 +485,7 @@ export const MikroTikManager: React.FC = () => {
           return (
             <div
               key={router.id}
-              className="p-5 sm:p-6 rounded-2xl glass-card border border-slate-800 hover:border-slate-700/90 transition-all duration-200 space-y-5 relative group"
+              className="p-5 sm:p-6 rounded-2xl glass-card border border-slate-200 hover:border-slate-300 transition-all duration-200 space-y-5 relative group"
             >
               {/* Header: Name, Model, Status, Version */}
               <div className="flex items-start justify-between gap-3">
@@ -500,32 +500,32 @@ export const MikroTikManager: React.FC = () => {
                           : 'bg-rose-500'
                       }`}
                     />
-                    <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
+                    <h3 className="text-base font-bold text-slate-800 group-hover:text-[#007A78] transition-colors">
                       {router.name}
                     </h3>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <span className="font-semibold text-slate-300">
+                    <span className="font-semibold text-slate-600">
                       {router.model || 'MikroTik RouterBOARD'}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1 text-slate-400">
-                      <MapPin className="w-3 h-3 text-amber-400" />
+                      <MapPin className="w-3 h-3 text-[#007A78]" />
                       {router.zoneName}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-1.5">
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-lg bg-slate-900 text-blue-300 border border-slate-800 font-bold">
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-lg bg-white text-blue-300 border border-slate-200 font-bold">
                     {router.routerOsVersion}
                   </span>
                   <span
                     className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
                       router.status === 'online'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        ? 'bg-[#E6F4F3] text-[#008060] border border-[#99D5D3]'
+                        : 'bg-[#E6F4F3] text-[#007A78] border border-[#99D5D3]'
                     }`}
                   >
                     {router.status === 'online' ? 'En ligne (Cloud Pull)' : 'Attention'}
@@ -534,23 +534,23 @@ export const MikroTikManager: React.FC = () => {
               </div>
 
               {/* Technical Identifiers Block */}
-              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-850 text-xs font-mono space-y-2">
+              <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-xs font-mono space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 text-[11px]">Passerelle & IP WAN :</span>
-                  <span className="text-slate-300 font-medium">{router.ipAddress}</span>
+                  <span className="text-slate-600 font-medium">{router.ipAddress}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 text-[11px]">Adresse MAC Matérielle :</span>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-300">{router.macAddress}</span>
+                    <span className="text-slate-600">{router.macAddress}</span>
                     <button
                       onClick={() => copyToClipboard(router.macAddress, `mac-${router.id}`)}
-                      className="text-slate-500 hover:text-slate-300 p-0.5 cursor-pointer"
+                      className="text-slate-500 hover:text-slate-600 p-0.5 cursor-pointer"
                       title="Copier l'adresse MAC"
                     >
                       {copiedToken === `mac-${router.id}` ? (
-                        <Check className="w-3 h-3 text-emerald-400" />
+                        <Check className="w-3 h-3 text-[#008060]" />
                       ) : (
                         <Copy className="w-3 h-3" />
                       )}
@@ -568,29 +568,29 @@ export const MikroTikManager: React.FC = () => {
                 )}
 
                 {/* Token Row */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-850">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                   <div className="flex items-center gap-1.5 text-slate-400">
-                    <Key className="w-3.5 h-3.5 text-amber-400" />
+                    <Key className="w-3.5 h-3.5 text-[#007A78]" />
                     <span className="text-[11px]">Jeton Unique :</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-amber-400 font-bold text-[11px]">
+                    <span className="text-[#007A78] font-bold text-[11px]">
                       {isRevealed ? router.installToken : 'JWT-••••-••••-••••'}
                     </span>
                     <button
                       onClick={() => toggleRevealToken(router.id)}
-                      className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer"
+                      className="text-slate-500 hover:text-slate-600 p-1 cursor-pointer"
                       title={isRevealed ? 'Masquer' : 'Afficher'}
                     >
                       {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                     </button>
                     <button
                       onClick={() => copyToClipboard(router.installToken, `tok-${router.id}`)}
-                      className="text-amber-400 hover:text-amber-300 p-1 cursor-pointer"
+                      className="text-[#007A78] hover:text-[#005A5B] p-1 cursor-pointer"
                       title="Copier le jeton"
                     >
                       {copiedToken === `tok-${router.id}` ? (
-                        <Check className="w-3 h-3 text-emerald-400" />
+                        <Check className="w-3 h-3 text-[#008060]" />
                       ) : (
                         <Copy className="w-3 h-3" />
                       )}
@@ -602,18 +602,18 @@ export const MikroTikManager: React.FC = () => {
               {/* Performance Gauges Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                 {/* Uptime */}
-                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div className="p-2.5 rounded-xl bg-white border border-slate-200">
                   <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 uppercase font-semibold">
                     <Clock className="w-3 h-3 text-slate-400" />
                     <span>Uptime</span>
                   </div>
-                  <span className="font-mono font-semibold text-slate-200 text-xs mt-1 block">
+                  <span className="font-mono font-semibold text-slate-700 text-xs mt-1 block">
                     {router.uptime}
                   </span>
                 </div>
 
                 {/* CPU Usage */}
-                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div className="p-2.5 rounded-xl bg-white border border-slate-200">
                   <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 uppercase font-semibold">
                     <Cpu className="w-3 h-3 text-slate-400" />
                     <span>CPU Usage</span>
@@ -623,8 +623,8 @@ export const MikroTikManager: React.FC = () => {
                       router.cpuUsage > 70
                         ? 'text-rose-400'
                         : router.cpuUsage > 40
-                        ? 'text-amber-400'
-                        : 'text-emerald-400'
+                        ? 'text-[#007A78]'
+                        : 'text-[#008060]'
                     }`}
                   >
                     {router.cpuUsage}%
@@ -632,7 +632,7 @@ export const MikroTikManager: React.FC = () => {
                 </div>
 
                 {/* Live Traffic */}
-                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div className="p-2.5 rounded-xl bg-white border border-slate-200">
                   <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 uppercase font-semibold">
                     <Activity className="w-3 h-3 text-slate-400" />
                     <span>Trafic Live</span>
@@ -643,19 +643,19 @@ export const MikroTikManager: React.FC = () => {
                 </div>
 
                 {/* Active Hotspot Users */}
-                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div className="p-2.5 rounded-xl bg-white border border-slate-200">
                   <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 uppercase font-semibold">
                     <Radio className="w-3 h-3 text-slate-400" />
                     <span>Abonnés</span>
                   </div>
-                  <span className="font-mono font-black text-emerald-400 text-xs mt-1 block">
+                  <span className="font-mono font-black text-[#008060] text-xs mt-1 block">
                     {router.totalSubscribers} actifs
                   </span>
                 </div>
               </div>
 
               {/* Hardware Health Sub-Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950/50 border border-slate-850 text-[11px] text-slate-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#F8FAFC] border border-slate-200 text-[11px] text-slate-400">
                 <div className="flex items-center gap-3">
                   {router.temperature && (
                     <span className="flex items-center gap-1">
@@ -665,13 +665,13 @@ export const MikroTikManager: React.FC = () => {
                   )}
                   {router.voltage && (
                     <span className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-amber-400" />
+                      <Zap className="w-3 h-3 text-[#007A78]" />
                       <span>{router.voltage}V</span>
                     </span>
                   )}
                   {router.diskFreeMb && (
                     <span className="flex items-center gap-1">
-                      <HardDrive className="w-3 h-3 text-cyan-400" />
+                      <HardDrive className="w-3 h-3 text-[#0066CC]" />
                       <span>{router.diskFreeMb} Mo libre</span>
                     </span>
                   )}
@@ -679,23 +679,23 @@ export const MikroTikManager: React.FC = () => {
 
                 <div className="text-[11px] text-slate-400">
                   Profils forfaits :{' '}
-                  <span className="text-emerald-400 font-semibold">
+                  <span className="text-[#008060] font-semibold">
                     {router.syncedProfilesCount || forfaits.length} synchronisés
                   </span>
                 </div>
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-800/80 text-xs">
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-200 text-xs">
                 <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   <span>Dernier contact :</span>
-                  <span className="text-slate-300 font-mono">
+                  <span className="text-slate-600 font-mono">
                     {new Date(router.lastHeartbeat).toLocaleTimeString('fr-FR')}
                   </span>
 
                   {currentPing !== null && (
-                    <span className="ml-2 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-mono font-bold border border-emerald-500/20 animate-fade-in">
+                    <span className="ml-2 px-2 py-0.5 rounded bg-[#E6F4F3] text-[#008060] text-[10px] font-mono font-bold border border-[#99D5D3] animate-fade-in">
                       Ping : {currentPing} ms OK
                     </span>
                   )}
@@ -706,17 +706,17 @@ export const MikroTikManager: React.FC = () => {
                   <button
                     onClick={() => handlePing(router.id)}
                     disabled={isPinging}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-medium transition cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 border border-slate-300 text-xs font-medium transition cursor-pointer flex items-center gap-1"
                     title="Tester la connexion RouterOS et mesurer la latence"
                   >
-                    <Activity className={`w-3.5 h-3.5 text-cyan-400 ${isPinging ? 'animate-spin' : ''}`} />
+                    <Activity className={`w-3.5 h-3.5 text-[#0066CC] ${isPinging ? 'animate-spin' : ''}`} />
                     <span>{isPinging ? 'Test...' : 'Ping'}</span>
                   </button>
 
                   {/* Details / Script Button */}
                   <button
                     onClick={() => setDetailsModalRouter(router)}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-medium transition cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 border border-slate-300 text-xs font-medium transition cursor-pointer flex items-center gap-1"
                     title="Voir les informations détaillées et les commandes"
                   >
                     <Info className="w-3.5 h-3.5 text-blue-400" />
@@ -726,17 +726,17 @@ export const MikroTikManager: React.FC = () => {
                   {/* Edit Button */}
                   <button
                     onClick={() => openEditModal(router)}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-medium transition cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 border border-slate-300 text-xs font-medium transition cursor-pointer flex items-center gap-1"
                     title="Modifier le nom ou la zone du routeur"
                   >
-                    <Edit2 className="w-3.5 h-3.5 text-amber-400" />
+                    <Edit2 className="w-3.5 h-3.5 text-[#007A78]" />
                     <span>Éditer</span>
                   </button>
 
                   {/* Reboot Button */}
                   <button
                     onClick={() => setRebootModalRouter(router)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-rose-950/70 text-slate-300 hover:text-rose-400 border border-slate-700/80 hover:border-rose-800/60 transition flex items-center gap-1.5 cursor-pointer text-xs font-medium"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-400 border border-slate-300 hover:border-rose-800/60 transition flex items-center gap-1.5 cursor-pointer text-xs font-medium"
                     title="Ordre de redémarrage RouterOS transmis au prochain heartbeat (45s)"
                   >
                     <Power className="w-3.5 h-3.5" />
@@ -750,9 +750,9 @@ export const MikroTikManager: React.FC = () => {
       </div>
 
       {filteredRouters.length === 0 && (
-        <div className="p-12 text-center rounded-2xl glass-card border border-slate-800 space-y-3">
+        <div className="p-12 text-center rounded-2xl glass-card border border-slate-200 space-y-3">
           <RouterIcon className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-base font-bold text-white">Aucun routeur trouvé</h3>
+          <h3 className="text-base font-bold text-slate-800">Aucun routeur trouvé</h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
             Aucun équipement ne correspond à vos filtres. Essayez de réinitialiser la recherche ou installez votre premier routeur MikroTik.
           </p>
@@ -762,7 +762,7 @@ export const MikroTikManager: React.FC = () => {
               setSelectedZoneFilter('all');
               setSelectedStatusFilter('all');
             }}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
           >
             Réinitialiser les filtres
           </button>
@@ -770,17 +770,17 @@ export const MikroTikManager: React.FC = () => {
       )}
 
       {/* Technical Architecture & RouterOS Security Banner */}
-      <div className="p-6 rounded-2xl glass-card border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950 space-y-4">
-        <div className="flex items-center gap-2.5 border-b border-slate-800 pb-3">
-          <ShieldCheck className="w-5 h-5 text-emerald-400" />
-          <h2 className="text-sm sm:text-base font-bold text-white">
+      <div className="p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-4">
+        <div className="flex items-center gap-2.5 border-b border-slate-200 pb-3">
+          <ShieldCheck className="w-5 h-5 text-[#008060]" />
+          <h2 className="text-sm sm:text-base font-bold text-slate-800">
             Architecture Réseau & Sécurité RouterOS Zero-Trust
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-2">
-            <div className="flex items-center gap-2 text-amber-400 font-bold">
+          <div className="p-4 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-2">
+            <div className="flex items-center gap-2 text-[#007A78] font-bold">
               <Zap className="w-4 h-4" />
               <span>Modèle Cloud Pull Sécurisé</span>
             </div>
@@ -789,8 +789,8 @@ export const MikroTikManager: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-2">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold">
+          <div className="p-4 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-2">
+            <div className="flex items-center gap-2 text-[#0066CC] font-bold">
               <Globe className="w-4 h-4" />
               <span>Compatible CGNAT & 4G LTE</span>
             </div>
@@ -799,8 +799,8 @@ export const MikroTikManager: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-850 space-y-2">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold">
+          <div className="p-4 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-2">
+            <div className="flex items-center gap-2 text-[#008060] font-bold">
               <CheckCircle2 className="w-4 h-4" />
               <span>Walled Garden & MAC Cookie</span>
             </div>
@@ -813,25 +813,25 @@ export const MikroTikManager: React.FC = () => {
 
       {/* MODAL 1: Confirm Reboot */}
       {rebootModalRouter && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md p-6 rounded-2xl glass-card border border-slate-800 bg-slate-900 space-y-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#F8FAFC] backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-5 shadow-2xl">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
                 <Power className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">Redémarrer le routeur ?</h3>
+                <h3 className="text-base font-bold text-slate-800">Redémarrer le routeur ?</h3>
                 <p className="text-xs text-slate-400">
-                  Équipement : <strong className="text-slate-200">{rebootModalRouter.name}</strong>
+                  Équipement : <strong className="text-slate-700">{rebootModalRouter.name}</strong>
                 </p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-xs text-slate-600 space-y-2">
               <p>
                 L'ordre de redémarrage RouterOS sera pris en compte au prochain cycle de pull asynchrone (dans les <strong>45 secondes</strong>).
               </p>
-              <p className="text-[11px] text-amber-400">
+              <p className="text-[11px] text-[#007A78]">
                 ⚠️ Les utilisateurs connectés perdront brièvement l'accès pendant les ~40 secondes du reboot matériel.
               </p>
             </div>
@@ -840,7 +840,7 @@ export const MikroTikManager: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setRebootModalRouter(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold cursor-pointer"
               >
                 Annuler
               </button>
@@ -860,18 +860,18 @@ export const MikroTikManager: React.FC = () => {
 
       {/* MODAL 2: Router Details & Commands */}
       {detailsModalRouter && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-xl p-6 rounded-2xl glass-card border border-slate-800 bg-slate-900 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#F8FAFC] backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-xl p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2.5">
-                <RouterIcon className="w-5 h-5 text-amber-400" />
-                <h3 className="text-base font-bold text-white">
+                <RouterIcon className="w-5 h-5 text-[#007A78]" />
+                <h3 className="text-base font-bold text-slate-800">
                   Fiche Technique & Intégration RouterOS
                 </h3>
               </div>
               <button
                 onClick={() => setDetailsModalRouter(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -880,25 +880,25 @@ export const MikroTikManager: React.FC = () => {
             <div className="space-y-4 text-xs">
               {/* Overview Cards */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-1">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Nom & Zone</span>
-                  <p className="font-bold text-white">{detailsModalRouter.name}</p>
-                  <p className="text-[11px] text-amber-400">{detailsModalRouter.zoneName}</p>
+                  <p className="font-bold text-slate-800">{detailsModalRouter.name}</p>
+                  <p className="text-[11px] text-[#007A78]">{detailsModalRouter.zoneName}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-1">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-1">
                   <span className="text-[10px] text-slate-500 uppercase font-semibold">Modèle & Version</span>
-                  <p className="font-bold text-white">{detailsModalRouter.model || 'MikroTik RouterBOARD'}</p>
+                  <p className="font-bold text-slate-800">{detailsModalRouter.model || 'MikroTik RouterBOARD'}</p>
                   <p className="text-[11px] text-blue-300 font-mono">{detailsModalRouter.routerOsVersion}</p>
                 </div>
               </div>
 
               {/* 1-Click Terminal Command for this router */}
               <div className="space-y-1.5">
-                <label className="text-slate-300 font-semibold block">
+                <label className="text-slate-600 font-semibold block">
                   Commande Terminal Quick-Install (Liée à ce routeur) :
                 </label>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2 font-mono text-[11px]">
-                  <span className="text-cyan-300 truncate">
+                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 flex items-center justify-between gap-2 font-mono text-[11px]">
+                  <span className="text-[#0066CC] truncate">
                     {`/tool fetch url="https://api.joowifi.app/install?token=${detailsModalRouter.installToken}" dst-path=joowifi.rsc; /import file=joowifi.rsc`}
                   </span>
                   <button
@@ -916,9 +916,9 @@ export const MikroTikManager: React.FC = () => {
               </div>
 
               {/* Regenerate Token Action */}
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-between gap-3">
                 <div>
-                  <span className="text-amber-400 font-bold block">Jeton d'authentification</span>
+                  <span className="text-[#007A78] font-bold block">Jeton d'authentification</span>
                   <span className="text-[11px] text-slate-400 font-mono">
                     {detailsModalRouter.installToken}
                   </span>
@@ -929,7 +929,7 @@ export const MikroTikManager: React.FC = () => {
                     const newToken = regenerateRouterToken(detailsModalRouter.id);
                     setDetailsModalRouter({ ...detailsModalRouter, installToken: newToken });
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="px-3 py-1.5 rounded-lg bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Régénérer</span>
@@ -937,38 +937,38 @@ export const MikroTikManager: React.FC = () => {
               </div>
 
               {/* Network Stats */}
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-850 space-y-2">
+              <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-slate-400">Adresse IP :</span>
-                  <span className="text-slate-200 font-mono">{detailsModalRouter.ipAddress}</span>
+                  <span className="text-slate-700 font-mono">{detailsModalRouter.ipAddress}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Adresse MAC :</span>
-                  <span className="text-slate-200 font-mono">{detailsModalRouter.macAddress}</span>
+                  <span className="text-slate-700 font-mono">{detailsModalRouter.macAddress}</span>
                 </div>
                 {detailsModalRouter.cloudDns && (
                   <div className="flex justify-between">
                     <span className="text-slate-400">MikroTik Cloud DNS :</span>
-                    <span className="text-slate-200 font-mono">{detailsModalRouter.cloudDns}</span>
+                    <span className="text-slate-700 font-mono">{detailsModalRouter.cloudDns}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-400">Dernier Heartbeat :</span>
-                  <span className="text-emerald-400 font-mono">
+                  <span className="text-[#008060] font-mono">
                     {new Date(detailsModalRouter.lastHeartbeat).toLocaleString('fr-FR')}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => {
                   setDetailsModalRouter(null);
                   setDeleteModalRouter(detailsModalRouter);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Désappairer</span>
@@ -977,7 +977,7 @@ export const MikroTikManager: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setDetailsModalRouter(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
               >
                 Fermer
               </button>
@@ -988,20 +988,20 @@ export const MikroTikManager: React.FC = () => {
 
       {/* MODAL 3: Edit Router */}
       {editModalRouter && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#F8FAFC] backdrop-blur-sm animate-fade-in">
           <form
             onSubmit={handleSaveEdit}
-            className="w-full max-w-md p-6 rounded-2xl glass-card border border-slate-800 bg-slate-900 space-y-4 shadow-2xl"
+            className="w-full max-w-md p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-4 shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
-                <Edit2 className="w-4 h-4 text-amber-400" />
-                <h3 className="text-base font-bold text-white">Modifier le Routeur</h3>
+                <Edit2 className="w-4 h-4 text-[#007A78]" />
+                <h3 className="text-base font-bold text-slate-800">Modifier le Routeur</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setEditModalRouter(null)}
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-slate-400 hover:text-slate-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1009,33 +1009,33 @@ export const MikroTikManager: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Nom de l'équipement :</label>
+                <label className="text-slate-600 font-semibold">Nom de l'équipement :</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Modèle matériel :</label>
+                <label className="text-slate-600 font-semibold">Modèle matériel :</label>
                 <input
                   type="text"
                   value={editModel}
                   onChange={(e) => setEditModel(e.target.value)}
                   placeholder="ex: MikroTik hEX S (RB760iGS)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Zone d'affectation :</label>
+                <label className="text-slate-600 font-semibold">Zone d'affectation :</label>
                 <select
                   value={editZoneId}
                   onChange={(e) => setEditZoneId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs cursor-pointer"
                 >
                   {zones.map((z) => (
                     <option key={z.id} value={z.id}>
@@ -1046,27 +1046,27 @@ export const MikroTikManager: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-300 font-semibold">Adresse IP locale / passerelle :</label>
+                <label className="text-slate-600 font-semibold">Adresse IP locale / passerelle :</label>
                 <input
                   type="text"
                   value={editIp}
                   onChange={(e) => setEditIp(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500 text-xs font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 text-xs font-mono"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setEditModalRouter(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition cursor-pointer shadow-lg shadow-amber-500/20"
+                className="px-4 py-2 rounded-xl bg-[#008060] hover:bg-[#006B50] text-white text-xs font-bold transition cursor-pointer shadow-lg shadow-amber-500/20"
               >
                 Enregistrer les modifications
               </button>
@@ -1077,16 +1077,16 @@ export const MikroTikManager: React.FC = () => {
 
       {/* MODAL 4: Delete Confirmation */}
       {deleteModalRouter && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md p-6 rounded-2xl glass-card border border-slate-800 bg-slate-900 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#F8FAFC] backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md p-6 rounded-2xl glass-card border border-slate-200 bg-white space-y-4 shadow-2xl">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
                 <Trash2 className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">Désappairer le Routeur ?</h3>
+                <h3 className="text-base font-bold text-slate-800">Désappairer le Routeur ?</h3>
                 <p className="text-xs text-slate-400">
-                  Voulez-vous supprimer <strong className="text-slate-200">{deleteModalRouter.name}</strong> de votre console ?
+                  Voulez-vous supprimer <strong className="text-slate-700">{deleteModalRouter.name}</strong> de votre console ?
                 </p>
               </div>
             </div>
@@ -1099,7 +1099,7 @@ export const MikroTikManager: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setDeleteModalRouter(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold cursor-pointer"
               >
                 Annuler
               </button>

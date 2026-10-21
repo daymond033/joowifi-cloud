@@ -53,14 +53,14 @@ export const FeaturesPage: React.FC = () => {
       ========================================================================= */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
         {/* Subtle semi-transparent pill badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-slate-400 text-xs font-medium shadow-sm backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-slate-400 text-xs font-medium shadow-sm backdrop-blur-md">
+          <Sparkles className="w-3.5 h-3.5 text-[#007A78]" />
           <span>Fonctionnalités</span>
         </div>
 
         {/* High contrast bold title */}
         <h1
-          className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white font-sans leading-tight"
+          className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-800 font-sans leading-tight"
           style={{ textWrap: 'balance' }}
         >
           Conçu pour piloter votre activité
@@ -79,18 +79,18 @@ export const FeaturesPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Bento Card 1: Tickets & Forfaits (Large - 7 cols) */}
-          <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-slate-950/80 border border-white/[0.08] hover:border-amber-500/40 transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+          <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
             <div className="space-y-4">
               {/* Icon badge with amber/orange gradient */}
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-[#99D5D3] flex items-center justify-center text-[#007A78] shadow-md">
                 <Ticket className="w-5 h-5" />
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
                 Tickets & Forfaits
               </h2>
 
-              <p className="text-sm text-slate-300 leading-relaxed max-w-xl">
+              <p className="text-sm text-slate-600 leading-relaxed max-w-xl">
                 Générez des tickets uniques par lots, définissez des limites de débit ou de volume,
                 et imprimez-les instantanément. Vos vendeurs les distribuent sur le terrain via
                 l'interface POS mobile.
@@ -99,27 +99,27 @@ export const FeaturesPage: React.FC = () => {
 
             {/* Feature tags at the bottom */}
             <div className="flex flex-wrap gap-2 pt-2">
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium">
+              <span className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-medium">
                 PDF imprimables
               </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium">
+              <span className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-medium">
                 POS vendeurs
               </span>
-              <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium">
+              <span className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-medium">
                 Limites de vitesse
               </span>
             </div>
           </div>
 
           {/* Bento Card 2: Interactive "S'adapte à votre métier" (5 cols) */}
-          <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-slate-950/80 border border-white/[0.08] hover:border-amber-500/40 transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+          <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
                 S'adapte à votre métier
               </h2>
 
               {/* Micro-tabs with commutable icons */}
-              <div className="flex items-center gap-2 p-1.5 bg-slate-900/90 border border-slate-800/80 rounded-xl w-fit">
+              <div className="flex items-center gap-2 p-1.5 bg-white border border-slate-200 rounded-xl w-fit">
                 {(['cyber', 'hotel', 'cafe'] as const).map((key) => {
                   const Icon = industryProfiles[key].icon;
                   const isActive = activeIndustry === key;
@@ -130,8 +130,8 @@ export const FeaturesPage: React.FC = () => {
                       title={industryProfiles[key].name}
                       className={`p-2.5 rounded-lg transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-md font-bold'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                          ? 'bg-[#008060] hover:bg-[#006B50] text-white shadow-md font-bold'
+                          : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -142,8 +142,8 @@ export const FeaturesPage: React.FC = () => {
 
               {/* Dynamic industry text */}
               <div className="space-y-2 pt-1 transition-all duration-200">
-                <h3 className="text-sm font-bold text-white">{currentProfile.name}</h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                <h3 className="text-sm font-bold text-slate-800">{currentProfile.name}</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   {currentProfile.description}
                 </p>
               </div>
@@ -156,18 +156,18 @@ export const FeaturesPage: React.FC = () => {
           </div>
 
           {/* Bento Card 3: Ventes & Comptabilité (6 cols) */}
-          <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-slate-950/80 border border-white/[0.08] hover:border-amber-500/40 transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+          <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
             <div className="space-y-4">
               {/* Icon badge */}
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-[#99D5D3] flex items-center justify-center text-[#007A78] shadow-md">
                 <BarChart3 className="w-5 h-5" />
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
                 Ventes & Comptabilité
               </h2>
 
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 Suivi financier complet via un portefeuille prépayé de type ledger. Tracez chaque
                 crédit, débit et commission vendeur automatiquement.
               </p>
@@ -175,25 +175,25 @@ export const FeaturesPage: React.FC = () => {
 
             {/* Highlighted local currencies text */}
             <div className="pt-2">
-              <span className="text-xs font-bold text-amber-400 font-mono tracking-wide">
+              <span className="text-xs font-bold text-[#007A78] font-mono tracking-wide">
                 Devises : FCFA / GNF / XOF
               </span>
             </div>
           </div>
 
           {/* Bento Card 4: Surveillance & Alertes (6 cols) */}
-          <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-slate-950/80 border border-white/[0.08] hover:border-amber-500/40 transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
+          <div className="lg:col-span-6 p-6 sm:p-8 rounded-3xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] transition duration-300 flex flex-col justify-between space-y-6 shadow-xl relative overflow-hidden group">
             <div className="space-y-4">
               {/* Icon badge in green/emerald */}
-              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-md">
+              <div className="w-11 h-11 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#008060] shadow-md">
                 <ShieldCheck className="w-5 h-5" />
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
                 Surveillance & Alertes
               </h2>
 
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 Visualisez l'état en ligne de vos équipements, la consommation CPU, RAM et le
                 nombre d'utilisateurs connectés. En cas de coupure réseau, soyez alerté
                 instantanément.
@@ -216,12 +216,12 @@ export const FeaturesPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Centered section header matching screenshots */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-400 text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[#007A78] text-xs font-semibold">
             <span>Architecture Cloud</span>
           </div>
 
           <h2
-            className="text-3xl sm:text-5xl font-black text-white font-sans tracking-tight"
+            className="text-3xl sm:text-5xl font-black text-slate-800 font-sans tracking-tight"
             style={{ textWrap: 'balance' }}
           >
             Connecté au cloud. Zéro configuration.
@@ -238,32 +238,32 @@ export const FeaturesPage: React.FC = () => {
           {/* Left: 2 Advantage Cards (6 cols) */}
           <div className="lg:col-span-6 space-y-5">
             {/* Card 1: Sécurité Maximale (Modèle Pull) */}
-            <div className="p-6 sm:p-7 rounded-2xl bg-slate-950/80 border border-white/[0.08] hover:border-amber-500/40 transition duration-300 space-y-3 shadow-lg">
+            <div className="p-6 sm:p-7 rounded-2xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] transition duration-300 space-y-3 shadow-lg">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#E6F4F3] text-[#007A78] flex items-center justify-center border border-[#99D5D3] shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800">
                   Sécurité Maximale (Modèle Pull)
                 </h3>
               </div>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 C'est votre routeur MikroTik qui initie la connexion vers le serveur. Zéro port
                 entrant à ouvrir, aucun VPN requis. Votre réseau reste protégé des attaques externes.
               </p>
             </div>
 
             {/* Card 2: Compatible tout FAI (CGNAT) */}
-            <div className="p-6 sm:p-7 rounded-2xl bg-slate-950/80 border border-white/[0.08] hover:border-amber-500/40 transition duration-300 space-y-3 shadow-lg">
+            <div className="p-6 sm:p-7 rounded-2xl bg-[#F8FAFC] border border-slate-200 hover:border-[#99D5D3] transition duration-300 space-y-3 shadow-lg">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#E6F4F3] text-[#007A78] flex items-center justify-center border border-[#99D5D3] shrink-0">
                   <RotateCcw className="w-5 h-5" />
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800">
                   Compatible tout FAI (CGNAT)
                 </h3>
               </div>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 Que vous soyez sur une ligne fixe, de l'ADSL ou un modem 4G, Joowifi fonctionne.
                 L'absence d'adresse IP publique ou fixe n'est plus un obstacle.
               </p>
@@ -275,14 +275,14 @@ export const FeaturesPage: React.FC = () => {
             {/* Step 01 */}
             <div className="flex items-start gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-slate-950 shrink-0 mt-1 shadow-sm shadow-amber-500/50" />
-                <div className="w-0.5 h-16 bg-slate-800 my-1" />
+                <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-[#F8FAFC] shrink-0 mt-1 shadow-sm shadow-amber-500/50" />
+                <div className="w-0.5 h-16 bg-slate-100 my-1" />
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-amber-500 block">
+                <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-[#007A78] block">
                   ÉTAPE 01
                 </span>
-                <h4 className="text-base font-bold text-white">Configurez vos offres</h4>
+                <h4 className="text-base font-bold text-slate-800">Configurez vos offres</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Créez vos forfaits (temps, vitesse, volume) sur votre console Joowifi.
                 </p>
@@ -292,14 +292,14 @@ export const FeaturesPage: React.FC = () => {
             {/* Step 02 */}
             <div className="flex items-start gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-slate-950 shrink-0 mt-1 shadow-sm shadow-amber-500/50" />
-                <div className="w-0.5 h-16 bg-slate-800 my-1" />
+                <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-[#F8FAFC] shrink-0 mt-1 shadow-sm shadow-amber-500/50" />
+                <div className="w-0.5 h-16 bg-slate-100 my-1" />
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-amber-500 block">
+                <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-[#007A78] block">
                   ÉTAPE 02
                 </span>
-                <h4 className="text-base font-bold text-white">Collez le script local</h4>
+                <h4 className="text-base font-bold text-slate-800">Collez le script local</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Copiez-collez l'installateur unique dans le terminal MikroTik en 1 clic.
                 </p>
@@ -309,13 +309,13 @@ export const FeaturesPage: React.FC = () => {
             {/* Step 03 */}
             <div className="flex items-start gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-slate-950 shrink-0 mt-1 shadow-sm shadow-amber-500/50" />
+                <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-[#F8FAFC] shrink-0 mt-1 shadow-sm shadow-amber-500/50" />
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-amber-500 block">
+                <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-[#007A78] block">
                   ÉTAPE 03
                 </span>
-                <h4 className="text-base font-bold text-white">Vos tickets se synchronisent</h4>
+                <h4 className="text-base font-bold text-slate-800">Vos tickets se synchronisent</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Les tickets générés descendent automatiquement sur le routeur.
                 </p>
@@ -330,16 +330,16 @@ export const FeaturesPage: React.FC = () => {
       ========================================================================= */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative">
         {/* Soft atmospheric ambient glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[300px] bg-amber-500/10 blur-[130px] rounded-full -z-10 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[300px] bg-[#E6F4F3] blur-[130px] rounded-full -z-10 pointer-events-none" />
 
         {/* Stylized Wifi Icon Badge */}
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/15">
+        <div className="w-12 h-12 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] text-[#007A78] flex items-center justify-center mx-auto shadow-lg shadow-amber-500/15">
           <Wifi className="w-6 h-6" />
         </div>
 
         {/* Headline */}
         <h2
-          className="text-3xl sm:text-5xl font-black text-white font-sans max-w-2xl mx-auto leading-tight"
+          className="text-3xl sm:text-5xl font-black text-slate-800 font-sans max-w-2xl mx-auto leading-tight"
           style={{ textWrap: 'balance' }}
         >
           Prêt à transformer votre WiFi en source de revenus ?
@@ -367,7 +367,7 @@ export const FeaturesPage: React.FC = () => {
               setPublicTab('contact');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-xs font-semibold transition cursor-pointer"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-800 border border-slate-200 text-xs font-semibold transition cursor-pointer"
           >
             Nous contacter
           </button>
