@@ -58,7 +58,7 @@ export const POSCashier: React.FC = () => {
 
   // Kiosk settings
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [nightMode, setNightMode] = useState(true);
+  const [nightMode, setNightMode] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Last sold ticket (preloaded with most recent ticket by this vendor or latest ticket)

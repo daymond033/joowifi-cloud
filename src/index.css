@@ -1,58 +1,28 @@
 @import "tailwindcss";
 
-:root,
-[data-jw-theme="emerald"] {
-  --jw-bg-primary: #040812;
-  --jw-bg-secondary: #091020;
-  --jw-card-bg: rgba(11, 20, 38, 0.76);
-  --jw-panel-bg: rgba(7, 13, 26, 0.88);
-  --jw-border: rgba(56, 189, 248, 0.14);
-  --jw-accent: #10b981;
-  --jw-accent-light: #34d399;
-  --jw-accent-secondary: #06b6d4;
-  --jw-accent-glow: rgba(16, 185, 129, 0.24);
-  --jw-text-main: #f8fafc;
-}
-
-[data-jw-theme="indigo"] {
-  --jw-bg-primary: #060714;
-  --jw-bg-secondary: #0d1026;
-  --jw-card-bg: rgba(16, 19, 44, 0.78);
-  --jw-panel-bg: rgba(10, 12, 30, 0.9);
-  --jw-border: rgba(129, 140, 248, 0.16);
-  --jw-accent: #6366f1;
-  --jw-accent-light: #818cf8;
-  --jw-accent-secondary: #06b6d4;
-  --jw-accent-glow: rgba(99, 102, 241, 0.26);
-  --jw-text-main: #f8fafc;
-}
-
-[data-jw-theme="sunset"] {
-  --jw-bg-primary: #080a12;
-  --jw-bg-secondary: #101524;
-  --jw-card-bg: rgba(17, 23, 39, 0.78);
-  --jw-panel-bg: rgba(11, 15, 25, 0.9);
-  --jw-border: rgba(244, 63, 94, 0.15);
-  --jw-accent: #f43f5e;
-  --jw-accent-light: #fb7185;
-  --jw-accent-secondary: #8b5cf6;
-  --jw-accent-glow: rgba(244, 63, 94, 0.24);
-  --jw-text-main: #f8fafc;
+:root {
+  --omada-teal-dark: #005a5b;
+  --omada-teal: #007a78;
+  --omada-teal-light: #e6f4f3;
+  --omada-mint-btn: #7bc4b2;
+  --omada-charcoal: #2b2e33;
+  --omada-bg-page: #f4f6f8;
+  --omada-bg-card: #ffffff;
+  --omada-border: #e2e8f0;
+  --omada-text-main: #1e293b;
+  --omada-text-muted: #64748b;
 }
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: var(--jw-bg-primary);
-    color: var(--jw-text-main);
-    background-image:
-      radial-gradient(at 0% 0%, var(--jw-accent-glow) 0px, transparent 45%),
-      radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.12) 0px, transparent 45%);
-    background-attachment: fixed;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f4f6f8;
+    color: #1e293b;
+    background-image: none;
   }
 
   code, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', Consolas, monospace;
   }
 
   .tabular-nums {
@@ -60,127 +30,178 @@
   }
 }
 
-/* Global Dynamic Accent Remapping: dissociates all 22 views from legacy orange/amber into Joowifi Cyber-Emerald / Indigo */
-[data-jw-theme="emerald"] .text-amber-400,
-[data-jw-theme="emerald"] .text-amber-500 {
-  color: #34d399 !important;
-}
-[data-jw-theme="emerald"] .bg-amber-500 {
-  background-color: #10b981 !important;
-}
-[data-jw-theme="emerald"] .hover\:bg-amber-400:hover {
-  background-color: #34d399 !important;
-}
-[data-jw-theme="emerald"] .bg-amber-500\/10,
-[data-jw-theme="emerald"] .bg-amber-500\/15,
-[data-jw-theme="emerald"] .bg-amber-500\/20 {
-  background-color: rgba(16, 185, 129, 0.14) !important;
-}
-[data-jw-theme="emerald"] .border-amber-500,
-[data-jw-theme="emerald"] .border-amber-500\/20,
-[data-jw-theme="emerald"] .border-amber-500\/25,
-[data-jw-theme="emerald"] .border-amber-500\/30,
-[data-jw-theme="emerald"] .border-amber-500\/40 {
-  border-color: rgba(16, 185, 129, 0.35) !important;
-}
-[data-jw-theme="emerald"] .from-amber-500 {
-  --tw-gradient-from: #10b981 !important;
-}
-[data-jw-theme="emerald"] .to-orange-600,
-[data-jw-theme="emerald"] .to-amber-600 {
-  --tw-gradient-to: #0891b2 !important;
-}
+/* ============================================================================
+   CORPORATE B2B LIGHT MODE & FLAT DESIGN SYSTEM (OMADA BY TP-LINK INSPIRED)
+   Convertit l'ensemble des surfaces de l'application en design plat, blanc,
+   épuré et institutionnel avec la couleur signature Vert Canard (#005A5B / #007A78)
+============================================================================ */
 
-[data-jw-theme="indigo"] .text-amber-400,
-[data-jw-theme="indigo"] .text-amber-500 {
-  color: #818cf8 !important;
-}
-[data-jw-theme="indigo"] .bg-amber-500 {
-  background-color: #6366f1 !important;
-}
-[data-jw-theme="indigo"] .hover\:bg-amber-400:hover {
-  background-color: #818cf8 !important;
-}
-[data-jw-theme="indigo"] .bg-amber-500\/10,
-[data-jw-theme="indigo"] .bg-amber-500\/15,
-[data-jw-theme="indigo"] .bg-amber-500\/20 {
-  background-color: rgba(99, 102, 241, 0.15) !important;
-}
-[data-jw-theme="indigo"] .border-amber-500,
-[data-jw-theme="indigo"] .border-amber-500\/20,
-[data-jw-theme="indigo"] .border-amber-500\/25,
-[data-jw-theme="indigo"] .border-amber-500\/30,
-[data-jw-theme="indigo"] .border-amber-500\/40 {
-  border-color: rgba(99, 102, 241, 0.38) !important;
-}
-[data-jw-theme="indigo"] .from-amber-500 {
-  --tw-gradient-from: #6366f1 !important;
-}
-[data-jw-theme="indigo"] .to-orange-600,
-[data-jw-theme="indigo"] .to-amber-600 {
-  --tw-gradient-to: #06b6d4 !important;
-}
-
-/* Bento & Aurora Glassmorphism Surfaces */
 .glass-panel {
-  background: var(--jw-panel-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--jw-border);
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: #e2e8f0 !important;
 }
 
-.glass-card {
-  background: var(--jw-card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--jw-border);
-  box-shadow: 0 18px 40px -15px rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.glass-card:hover {
-  border-color: rgba(52, 211, 153, 0.26);
-}
-
+.glass-card,
 .bento-card {
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.85) 0%, rgba(8, 14, 28, 0.92) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1.25rem;
-  box-shadow: 0 20px 45px -18px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  color: #1e293b !important;
 }
 
 .glass-dropdown {
-  background: rgba(8, 13, 26, 0.96);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12) !important;
+  color: #1e293b !important;
 }
 
-@keyframes pulse-flow {
-  0% { transform: translateX(-100%); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: translateX(200%); opacity: 0; }
+/* Remapping legacy dark classes inside sub-views to Clean Corporate Light Mode */
+main .bg-slate-950,
+main .bg-slate-950\/60,
+main .bg-slate-950\/70,
+main .bg-slate-950\/75,
+main .bg-slate-950\/80,
+main .bg-slate-950\/90,
+main .bg-\[\#0B0F19\] {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
 }
 
-.animate-data-flow {
-  animation: pulse-flow 2.4s infinite linear;
+main .bg-slate-900,
+main .bg-slate-900\/60,
+main .bg-slate-900\/70,
+main .bg-slate-900\/80,
+main .bg-slate-900\/90 {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
 }
 
-/* Custom subtle scrollbar */
+main .bg-slate-800,
+main .bg-slate-800\/60,
+main .bg-slate-800\/80,
+main .bg-slate-800\/90 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+/* Keep terminal / code <pre> blocks in clean high-contrast slate */
+main pre.bg-slate-950,
+main .code-terminal-dark {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Typography contrast in light mode inside main workspace */
+main .text-white:not(.btn-teal-flat):not(.keep-white) {
+  color: #0f172a !important;
+}
+
+main .text-slate-100,
+main .text-slate-200 {
+  color: #1e293b !important;
+}
+
+main .text-slate-300 {
+  color: #334155 !important;
+}
+
+main .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Borders in light mode */
+main .border-slate-800,
+main .border-slate-800\/80,
+main .border-slate-800\/90,
+main .border-slate-850,
+main .border-slate-700,
+main .border-white\/5,
+main .border-white\/10,
+main .border-white\/15 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Flat Teal Accent Remapping (Replaces all orange/amber/neon gradients with solid Omada Teal) */
+.bg-amber-500,
+.bg-orange-500,
+.bg-emerald-500,
+.bg-gradient-to-r.from-amber-500,
+.bg-gradient-to-r.from-emerald-500,
+.bg-gradient-to-br.from-amber-500 {
+  background-image: none !important;
+  background-color: #007a78 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.hover\:bg-amber-400:hover,
+.hover\:bg-emerald-400:hover,
+.hover\:from-amber-400:hover,
+.hover\:from-emerald-400:hover {
+  background-image: none !important;
+  background-color: #005a5b !important;
+  color: #ffffff !important;
+}
+
+main .text-amber-400,
+main .text-amber-500,
+main .text-emerald-400,
+main .text-emerald-300,
+main .text-cyan-400,
+main .text-cyan-300 {
+  color: #007a78 !important;
+}
+
+main .bg-amber-500\/10,
+main .bg-amber-500\/15,
+main .bg-amber-500\/20,
+main .bg-emerald-500\/10,
+main .bg-emerald-500\/15,
+main .bg-emerald-500\/20,
+main .bg-cyan-500\/10,
+main .bg-cyan-500\/15 {
+  background-color: #e6f4f3 !important;
+}
+
+main .border-amber-500,
+main .border-amber-500\/20,
+main .border-amber-500\/25,
+main .border-amber-500\/30,
+main .border-emerald-500\/25,
+main .border-emerald-500\/30,
+main .border-emerald-500\/40,
+main .border-cyan-500\/25,
+main .border-cyan-500\/30 {
+  border-color: #99d5d3 !important;
+}
+
+/* Keep explicit white text on solid teal / dark banners */
+.keep-white,
+.keep-white * {
+  color: #ffffff;
+}
+
+/* Subtle corporate scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(6, 10, 20, 0.6);
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(52, 211, 153, 0.25);
-  border-radius: 9999px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(52, 211, 153, 0.45);
+  background: #94a3b8;
 }
 
 /* Print thermal ticket styles */

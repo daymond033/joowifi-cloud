@@ -7,19 +7,13 @@ import {
   Info,
   X,
   Search,
-  Sparkles,
   Smartphone,
-  RefreshCw,
-  Globe,
-  Palette,
   Ticket,
-  Users,
-  Router as RouterIcon,
-  Terminal,
   ArrowRight,
-  Radio,
   ShieldCheck,
   Command,
+  Globe,
+  LogOut,
 } from 'lucide-react';
 
 // Common Components
@@ -76,26 +70,24 @@ const ToastContainer: React.FC = () => {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-xl text-xs font-medium transition-all ${
+          className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-lg border shadow-lg bg-white text-xs font-medium ${
             t.type === 'success'
-              ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200'
+              ? 'border-[#007A78] text-slate-800'
               : t.type === 'error'
-              ? 'bg-rose-950/90 border-rose-500/40 text-rose-200'
-              : t.type === 'warning'
-              ? 'bg-amber-950/90 border-amber-500/40 text-amber-200'
-              : 'bg-slate-900/95 border-cyan-500/40 text-cyan-200'
+              ? 'border-rose-500 text-rose-800'
+              : 'border-slate-300 text-slate-800'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            {t.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-            {t.type === 'error' && <XCircle className="w-4 h-4 text-rose-400 shrink-0" />}
-            {t.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
-            {t.type === 'info' && <Info className="w-4 h-4 text-cyan-400 shrink-0" />}
+            {t.type === 'success' && <CheckCircle2 className="w-4 h-4 text-[#007A78] shrink-0" />}
+            {t.type === 'error' && <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+            {t.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />}
+            {t.type === 'info' && <Info className="w-4 h-4 text-[#007A78] shrink-0" />}
             <span>{t.message}</span>
           </div>
           <button
             onClick={() => dismissToast(t.id)}
-            className="text-slate-400 hover:text-white cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -124,27 +116,7 @@ export default function App() {
     showToast,
   } = useApp();
 
-  // Signature Joowifi Aurora OS Theme State ('emerald' | 'indigo' | 'sunset')
-  const [uiTheme, setUiTheme] = useState<'emerald' | 'indigo' | 'sunset'>(() => {
-    try {
-      const saved = localStorage.getItem('joowifi_ui_theme');
-      if (saved === 'emerald' || saved === 'indigo' || saved === 'sunset') return saved;
-    } catch {
-      // ignore
-    }
-    return 'emerald';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-jw-theme', uiTheme);
-    try {
-      localStorage.setItem('joowifi_ui_theme', uiTheme);
-    } catch {
-      // ignore
-    }
-  }, [uiTheme]);
-
-  // Global Command Palette (Ctrl+K / Cmd+K)
+  // Global Search / Command Palette (Ctrl+K)
   const [cmdOpen, setCmdOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
 
@@ -163,7 +135,7 @@ export default function App() {
 
   const matchedTickets = useMemo(() => {
     const q = cmdQuery.trim().toLowerCase();
-    if (!q) return tickets.slice(0, 4);
+    if (!q) return tickets.slice(0, 6);
     return tickets
       .filter(
         (t) =>
@@ -171,89 +143,82 @@ export default function App() {
           (t.forfaitName || '').toLowerCase().includes(q) ||
           (t.sellerName || '').toLowerCase().includes(q)
       )
-      .slice(0, 6);
+      .slice(0, 8);
   }, [cmdQuery, tickets]);
 
-  const matchedStaff = useMemo(() => {
-    const q = cmdQuery.trim().toLowerCase();
-    if (!q) return staff.slice(0, 3);
-    return staff
-      .filter((s) => s.name.toLowerCase().includes(q) || s.phone.toLowerCase().includes(q))
-      .slice(0, 4);
-  }, [cmdQuery, staff]);
-
   const quickNavActions: { label: string; sub: string; tab: AdminTab }[] = [
-    { label: 'Centre de Pilotage Bento', sub: 'Vue temps réel & Topologie Réseau', tab: 'dashboard' },
-    { label: 'Générateur & Stock de Tickets', sub: `${tickets.length} vouchers synchronisés Supabase`, tab: 'tickets' },
-    { label: 'Moteur MikroTik Engine v5.1 (.rsc)', sub: 'Script Fast-Poll 10s & Heartbeat 45s', tab: 'installation' },
-    { label: 'Équipe Vendeurs & Crédits POS', sub: `${staff.length} vendeurs actifs sur le terrain`, tab: 'staff' },
-    { label: ' Parc Routeurs MikroTik', sub: `${routers.length} équipements supervisés`, tab: 'mikrotik' },
-    { label: 'Studio Portail Captif Live', sub: 'Personnalisation login.html & Mobile Money', tab: 'personnalisation' },
+    { label: 'Vue d’ensemble SDN', sub: 'Supervision globale des sites et routeurs', tab: 'dashboard' },
+    { label: 'Gestionnaire de Vouchers', sub: `${tickets.length} tickets synchronisés Supabase`, tab: 'tickets' },
+    { label: 'Assistant Script MikroTik (.rsc)', sub: 'Déploiement Fast-Poll 10s & Heartbeat 45s', tab: 'installation' },
+    { label: 'Équipe Vendeurs POS', sub: `${staff.length} agents enregistrés`, tab: 'staff' },
+    { label: 'Contrôleurs MikroTik', sub: `${routers.length} équipements supervisés`, tab: 'mikrotik' },
+    { label: 'Studio Portail Captif', sub: 'Configuration login.html & Mobile Money', tab: 'personnalisation' },
   ];
 
-  // 1. ESPACE VENDEUR (POS KIOSQUE PWA MOBILE)
+  // 1. ESPACE VENDEUR (POS KIOSQUE PWA EN MODE CLAIR INSTITUTIONNEL)
   if (currentSpace === 'pos') {
     return (
-      <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
+      <div className="min-h-screen bg-[#F4F6F8] text-[#1E293B] flex flex-col font-sans">
         <ToastContainer />
         <PWAInstallBanner />
         <OfflineBanner />
-        <POSCashier />
+        <main className="flex-1">
+          <POSCashier />
+        </main>
         <BottomNav />
       </div>
     );
   }
 
-  // 2. ESPACE ADMINISTRATEUR (JOOWIFI AURORA FABRIC OS v6.0)
+  // 2. ESPACE ADMINISTRATEUR (OMADA CLOUD SDN CONTROLLER STYLE — CLEAN LIGHT & FLAT TEAL)
   if (currentSpace === 'admin') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950">
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#F4F6F8] text-[#1E293B] font-sans">
         <ToastContainer />
         <PWAInstallBanner />
         <OfflineBanner />
         <AuthModal />
 
-        {/* Command Palette Modal (Ctrl+K) */}
+        {/* Modal de Recherche Globale (Ctrl+K) */}
         {cmdOpen && (
           <div
-            className="fixed inset-0 z-[75] bg-slate-950/80 backdrop-blur-md flex items-start justify-center pt-16 px-4"
+            className="fixed inset-0 z-[75] bg-slate-900/40 flex items-start justify-center pt-16 px-4"
             onClick={() => setCmdOpen(false)}
           >
             <div
-              className="w-full max-w-2xl rounded-2xl glass-dropdown border border-emerald-500/30 shadow-2xl overflow-hidden"
+              className="w-full max-w-2xl rounded-lg bg-white border border-slate-200 shadow-2xl overflow-hidden text-slate-800"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-white/10 flex items-center gap-3">
-                <Search className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="p-4 border-b border-slate-200 flex items-center gap-3 bg-[#F8FAFC]">
+                <Search className="w-5 h-5 text-[#007A78] shrink-0" />
                 <input
                   type="text"
                   autoFocus
                   value={cmdQuery}
                   onChange={(e) => setCmdQuery(e.target.value)}
-                  placeholder="Rechercher un code ticket (ex: efdj, 3yn5), un vendeur (Mamadou), ou un module..."
-                  className="w-full bg-transparent text-white text-sm focus:outline-none placeholder:text-slate-500"
+                  placeholder="Rechercher un code voucher (ex: efdj, 3yn5), un vendeur ou un équipement..."
+                  className="w-full bg-transparent text-slate-800 text-sm focus:outline-none placeholder:text-slate-400"
                 />
                 <button
                   onClick={() => setCmdOpen(false)}
-                  className="px-2 py-1 rounded-lg bg-slate-900 border border-white/10 text-[10px] font-mono text-slate-400 hover:text-white cursor-pointer"
+                  className="px-2 py-1 rounded bg-white border border-slate-300 text-[10px] font-mono text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   ESC
                 </button>
               </div>
 
               <div className="max-h-[65vh] overflow-y-auto p-4 space-y-5 text-xs">
-                {/* Tickets Results */}
                 <div>
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 mb-2 flex items-center justify-between">
-                    <span>Tickets WiFi trouvés ({matchedTickets.length})</span>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#007A78] mb-2 flex items-center justify-between">
+                    <span>Vouchers WiFi ({matchedTickets.length})</span>
                     <button
                       onClick={() => {
                         setAdminTab('tickets');
                         setCmdOpen(false);
                       }}
-                      className="text-cyan-400 hover:underline cursor-pointer"
+                      className="text-[#007A78] hover:underline cursor-pointer"
                     >
-                      Voir tout le stock &rarr;
+                      Ouvrir la liste complète &rarr;
                     </button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -262,28 +227,22 @@ export default function App() {
                         key={t.id}
                         onClick={() => {
                           navigator.clipboard.writeText(t.code);
-                          showToast(`Code ticket ${t.code} copié dans le presse-papier !`, 'success');
+                          showToast(`Code voucher ${t.code} copié !`, 'success');
                           setAdminTab('tickets');
                           setCmdOpen(false);
                         }}
-                        className="p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800/90 border border-white/10 hover:border-emerald-500/40 flex items-center justify-between cursor-pointer transition"
+                        className="p-3 rounded bg-[#F8FAFC] hover:bg-[#E6F4F3] border border-slate-200 flex items-center justify-between cursor-pointer transition"
                       >
                         <div className="flex items-center gap-2.5">
-                          <Ticket className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <Ticket className="w-4 h-4 text-[#007A78] shrink-0" />
                           <div>
-                            <div className="font-mono font-bold text-white text-sm">{t.code}</div>
-                            <div className="text-[11px] text-slate-400">
+                            <div className="font-mono font-bold text-slate-800 text-sm">{t.code}</div>
+                            <div className="text-[11px] text-slate-500">
                               {t.forfaitName} • {formatMoney(t.price)}
                             </div>
                           </div>
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            t.status === 'actif'
-                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                          }`}
-                        >
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white border border-slate-200 text-[#007A78]">
                           {t.status}
                         </span>
                       </div>
@@ -291,36 +250,9 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Staff Vendors Results */}
-                {matchedStaff.length > 0 && (
-                  <div>
-                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400 mb-2">
-                      Vendeurs POS ({matchedStaff.length})
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {matchedStaff.map((s) => (
-                        <div
-                          key={s.id}
-                          onClick={() => {
-                            setAdminTab('staff');
-                            setCmdOpen(false);
-                          }}
-                          className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 cursor-pointer transition"
-                        >
-                          <div className="font-bold text-white truncate">{s.name}</div>
-                          <div className="text-[11px] text-emerald-400 font-mono">
-                            CA : {formatMoney(s.todaySales)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Quick Navigation Modules */}
                 <div>
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">
-                    Navigation Rapide Console
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Accès Rapide aux Modules
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {quickNavActions.map((act) => (
@@ -330,13 +262,13 @@ export default function App() {
                           setAdminTab(act.tab);
                           setCmdOpen(false);
                         }}
-                        className="p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-white/5 hover:border-cyan-500/30 text-left flex items-center justify-between cursor-pointer transition"
+                        className="p-3 rounded bg-white hover:bg-[#F8FAFC] border border-slate-200 text-left flex items-center justify-between cursor-pointer transition"
                       >
                         <div>
-                          <div className="font-bold text-slate-100">{act.label}</div>
-                          <div className="text-[11px] text-slate-400">{act.sub}</div>
+                          <div className="font-semibold text-slate-800">{act.label}</div>
+                          <div className="text-[11px] text-slate-500">{act.sub}</div>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-slate-500" />
+                        <ArrowRight className="w-4 h-4 text-slate-400" />
                       </button>
                     ))}
                   </div>
@@ -346,166 +278,133 @@ export default function App() {
           </div>
         )}
 
+        {/* TOP CORPORATE TEAL CONTROLLER BAR (#005A5B Flat Design, zero gradients) */}
+        <header className="h-14 shrink-0 px-4 sm:px-6 bg-[#005A5B] text-white flex items-center justify-between gap-4 z-30 keep-white">
+          <div className="flex items-center gap-6">
+            <div
+              onClick={() => setCurrentSpace('public')}
+              className="flex items-baseline gap-2 cursor-pointer"
+            >
+              <span className="text-xl font-bold tracking-tight text-white">Joowifi</span>
+              <span className="text-[11px] text-teal-200 font-normal hidden sm:inline">
+                SDN Cloud Controller
+              </span>
+            </div>
+
+            {/* Search Input inside Top Teal Bar */}
+            <button
+              onClick={() => setCmdOpen(true)}
+              className="hidden md:flex items-center justify-between gap-3 px-3 py-1.5 rounded bg-[#004849] hover:bg-[#003E3F] border border-white/15 text-xs text-teal-100 w-72 lg:w-96 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Search className="w-3.5 h-3.5 text-teal-200 shrink-0" />
+                <span className="truncate">Rechercher un voucher (efdj, 3yn5...), site...</span>
+              </div>
+              <kbd className="px-1.5 py-0.5 rounded bg-[#005A5B] text-[10px] font-mono text-teal-100">
+                Ctrl+K
+              </kbd>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Fast-Poll Status */}
+            <button
+              onClick={() => {
+                forceHeartbeatSync();
+                showToast('Synchronisation Supabase & MikroTik effectuée.', 'success');
+              }}
+              className="hidden lg:flex items-center gap-2 px-3 py-1 rounded bg-[#004849] border border-white/15 text-xs font-mono text-teal-100 cursor-pointer hover:bg-[#003E3F]"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#4ADE80]" />
+              <span>Sync 10s ({heartbeatSecondsRemaining}s) • {sessions.length} clients</span>
+            </button>
+
+            {/* Currency Selector */}
+            <div className="flex items-center gap-1 bg-[#004849] px-2.5 py-1 rounded border border-white/15 text-xs">
+              <Globe className="w-3.5 h-3.5 text-teal-200" />
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as any)}
+                className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer text-xs"
+              >
+                <option value="XOF" className="bg-[#2B2E33] text-white">FCFA (XOF)</option>
+                <option value="GNF" className="bg-[#2B2E33] text-white">GNF</option>
+                <option value="EUR" className="bg-[#2B2E33] text-white">EUR (€)</option>
+                <option value="USD" className="bg-[#2B2E33] text-white">USD ($)</option>
+              </select>
+            </div>
+
+            {/* Direct POS Launch */}
+            <button
+              onClick={() => setCurrentSpace('pos')}
+              className="px-3 py-1.5 rounded bg-[#007A78] hover:bg-[#008F8C] border border-white/20 text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Caisse POS</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentSpace('public')}
+              title="Retour au portail public"
+              className="p-1.5 rounded hover:bg-[#004849] text-teal-100 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
         <div className="flex-1 flex overflow-hidden">
-          {/* Desktop Left Fabric Dock Sidebar */}
+          {/* Desktop Left White Corporate Sidebar */}
           <div className="hidden md:block h-full">
             <Sidebar />
           </div>
 
-          {/* Right Workspace Column: Top Command Header + Scrollable Bento Main */}
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
-            {/* NEW SIGNATURE TOP COMMAND HEADER (Dissociates completely from hotpro.app) */}
-            <header className="h-16 shrink-0 px-4 sm:px-6 lg:px-8 glass-panel border-b border-white/10 flex items-center justify-between gap-4 z-30">
-              {/* Left: Global Search / Command Bar Trigger */}
-              <button
-                onClick={() => setCmdOpen(true)}
-                className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-950/80 hover:bg-slate-900 border border-white/10 hover:border-emerald-500/40 text-xs text-slate-400 w-full max-w-md transition cursor-pointer group"
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <Search className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="truncate">
-                    Rechercher un ticket (efdj, 3yn5...), un vendeur ou un routeur...
-                  </span>
-                </div>
-                <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 border border-white/10 font-mono text-[10px] text-slate-300 shrink-0">
-                  <Command className="w-2.5 h-2.5" /> K
-                </kbd>
-              </button>
-
-              {/* Right: Live Network Fabric Status + Theme Switcher + Currency + POS Button */}
-              <div className="flex items-center gap-2.5 shrink-0">
-                {/* Live Supabase & MikroTik FastPoll Status Pill */}
-                <button
-                  onClick={() => {
-                    forceHeartbeatSync();
-                    showToast('Synchronisation Cloud Pull & Supabase 12 tables forcée !', 'success');
-                  }}
-                  title="Cliquez pour forcer la synchronisation immédiate avec Supabase et MikroTik"
-                  className="hidden xl:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-xs transition cursor-pointer"
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                  </span>
-                  <span className="font-semibold text-emerald-300">
-                    Fabric Sync
-                  </span>
-                  <span className="text-[11px] font-mono text-slate-300 border-l border-white/10 pl-2">
-                    {heartbeatSecondsRemaining}s • {sessions.length} actifs
-                  </span>
-                </button>
-
-                {/* Signature Theme Switcher (Emerald / Indigo / Sunset) */}
-                <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl bg-slate-950/90 border border-white/10">
-                  <button
-                    onClick={() => setUiTheme('emerald')}
-                    title="Thème Cyber-Émeraude & Cyan (Signature Joowifi)"
-                    className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                      uiTheme === 'emerald'
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-emerald-300" />
-                    <span className="hidden lg:inline">Émeraude</span>
-                  </button>
-                  <button
-                    onClick={() => setUiTheme('indigo')}
-                    title="Thème Royal Indigo & Cyan (FinTech)"
-                    className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                      uiTheme === 'indigo'
-                        ? 'bg-indigo-500 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-indigo-300" />
-                    <span className="hidden lg:inline">Indigo</span>
-                  </button>
-                  <button
-                    onClick={() => setUiTheme('sunset')}
-                    title="Thème Rubis & Violet Néon"
-                    className={`px-2 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                      uiTheme === 'sunset'
-                        ? 'bg-rose-500 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-rose-300" />
-                    <span className="hidden lg:inline">Rubis</span>
-                  </button>
-                </div>
-
-                {/* Currency Selector */}
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as any)}
-                  className="px-2.5 py-1.5 rounded-xl bg-slate-950 border border-white/10 text-xs font-mono font-bold text-cyan-300 focus:outline-none cursor-pointer"
-                >
-                  <option value="XOF">XOF (FCFA)</option>
-                  <option value="GNF">GNF (FG)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="USD">USD ($)</option>
-                </select>
-
-                {/* Launch POS Kiosk Button */}
-                <button
-                  onClick={() => setCurrentSpace('pos')}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/15 transition cursor-pointer"
-                >
-                  <Smartphone className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span className="hidden sm:inline">Caisse POS</span>
-                </button>
-              </div>
-            </header>
-
-            {/* Admin Main Scrollable Body */}
-            <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
-              <div className="max-w-7xl mx-auto">
-                {adminTab === 'dashboard' && <DashboardOverview />}
-                {adminTab === 'assistant' && <AssistantIA />}
-                {adminTab === 'tickets' && <TicketsManager />}
-                {adminTab === 'forfaits' && <ForfaitsManager />}
-                {adminTab === 'pos' && <POSCashier />}
-                {adminTab === 'staff' && <StaffManager />}
-                {adminTab === 'zones' && <ZonesManager />}
-                {adminTab === 'mikrotik' && <MikroTikManager />}
-                {adminTab === 'sante' && <NetworkHealth />}
-                {adminTab === 'sessions' && <ActiveSessions />}
-                {adminTab === 'connexions' && <ConnectionHistory />}
-                {adminTab === 'mac-bypass' && <MacBypassManager />}
-                {adminTab === 'installation' && <InstallationScript />}
-                {adminTab === 'comptabilite' && <AccountingView />}
-                {adminTab === 'portefeuille' && <WalletView />}
-                {adminTab === 'ventes' && <VendorSalesView />}
-                {adminTab === 'gains' && <MyEarningsView />}
-                {adminTab === 'abonnements' && <SubscriptionView />}
-                {adminTab === 'personnalisation' && <CaptivePortalEditor />}
-                {adminTab === 'marketplace' && <MarketplaceTemplates />}
-                {adminTab === 'marketplace-mes-templates' && <MyTemplates />}
-                {adminTab === 'notifications' && <TelegramAlerts />}
-                {adminTab === 'logs' && <AuditLogs />}
-                {adminTab === 'profil' && <ProfileSettings />}
-              </div>
-            </main>
-          </div>
+          {/* Admin Main Scrollable Body on Light Grey (#F4F6F8) */}
+          <main className="flex-1 h-full overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8 bg-[#F4F6F8]">
+            <div className="max-w-7xl mx-auto">
+              {adminTab === 'dashboard' && <DashboardOverview />}
+              {adminTab === 'assistant' && <AssistantIA />}
+              {adminTab === 'tickets' && <TicketsManager />}
+              {adminTab === 'forfaits' && <ForfaitsManager />}
+              {adminTab === 'pos' && <POSCashier />}
+              {adminTab === 'staff' && <StaffManager />}
+              {adminTab === 'zones' && <ZonesManager />}
+              {adminTab === 'mikrotik' && <MikroTikManager />}
+              {adminTab === 'sante' && <NetworkHealth />}
+              {adminTab === 'sessions' && <ActiveSessions />}
+              {adminTab === 'connexions' && <ConnectionHistory />}
+              {adminTab === 'mac-bypass' && <MacBypassManager />}
+              {adminTab === 'installation' && <InstallationScript />}
+              {adminTab === 'comptabilite' && <AccountingView />}
+              {adminTab === 'portefeuille' && <WalletView />}
+              {adminTab === 'ventes' && <VendorSalesView />}
+              {adminTab === 'gains' && <MyEarningsView />}
+              {adminTab === 'abonnements' && <SubscriptionView />}
+              {adminTab === 'personnalisation' && <CaptivePortalEditor />}
+              {adminTab === 'marketplace' && <MarketplaceTemplates />}
+              {adminTab === 'marketplace-mes-templates' && <MyTemplates />}
+              {adminTab === 'notifications' && <TelegramAlerts />}
+              {adminTab === 'logs' && <AuditLogs />}
+              {adminTab === 'profil' && <ProfileSettings />}
+            </div>
+          </main>
         </div>
 
-        {/* Mobile bottom navigation */}
         <BottomNav />
       </div>
     );
   }
 
-  // 3. ESPACE PUBLIC (SITE VITRINE TELECOM CLOUD)
+  // 3. ESPACE PUBLIC (SITE INSTITUTIONNEL B2B OMADA STYLE)
   return (
-    <div className="min-h-screen flex flex-col text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-white text-[#1E293B] font-sans">
       <ToastContainer />
       <PWAInstallBanner />
       <OfflineBanner />
       <AuthModal />
       <Navbar />
 
-      <main className="flex-1">
+      <main className="flex-1 bg-white">
         {publicTab === 'home' && <LandingPage />}
         {publicTab === 'features' && <FeaturesPage />}
         {publicTab === 'pricing' && <PricingPage />}

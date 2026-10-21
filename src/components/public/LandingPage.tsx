@@ -1,405 +1,647 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import confetti from 'canvas-confetti';
 import {
   Wifi,
   ShieldCheck,
-  Zap,
-  TrendingUp,
   Smartphone,
   Server,
-  ArrowRight,
-  Activity,
-  Calculator,
   Cpu,
   Radio,
-  CheckCircle2,
-  Layers,
   Globe,
-  Terminal,
-  Laptop,
-  Lock,
+  Eye,
+  EyeOff,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Building2,
+  GraduationCap,
+  Hotel,
+  ShoppingBag,
+  Check,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
-  const { setCurrentSpace, setPublicTab, openAuthModal, heartbeatSecondsRemaining } = useApp();
+  const { setCurrentSpace, setAdminTab, login } = useApp();
 
-  // Interactive SDN Topology Packet Simulation on Hero
-  const [simStep, setSimStep] = useState<number>(0);
-  const [lastSimCode, setLastSimCode] = useState<string>('JW-8492');
-  const [simLogs, setSimLogs] = useState([
-    { ts: '19:42:10', node: 'POS Kiosque', msg: 'Vente Pass Hebdo (2 500 FCFA) -> Code efdj' },
-    { ts: '19:42:12', node: 'Supabase DB', msg: 'Insertion table public.tickets (router_synced=false)' },
-    { ts: '19:42:18', node: 'MikroTik CHR', msg: 'Fast-Poll 10s -> /ip hotspot user add name="efdj" OK' },
-  ]);
+  // Split-Layout Cloud Portal Slide State (0 = Light Hardware Stack like image_4390fb, 1 = Dark Teal PtMP Bridge like image_439119)
+  const [portalSlide, setPortalSlide] = useState<0 | 1>(0);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPass, setLoginPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [emailErr, setEmailErr] = useState(false);
 
-  const triggerTopologySimulation = () => {
-    const newCode = `JW-${Math.floor(1000 + Math.random() * 8999)}`;
-    setLastSimCode(newCode);
-    setSimStep(1);
-    setTimeout(() => setSimStep(2), 450);
-    setTimeout(() => setSimStep(3), 900);
-    setTimeout(() => {
-      setSimStep(0);
-      const now = new Date().toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-      setSimLogs((prev) => [
-        {
-          ts: now,
-          node: 'MikroTik v7',
-          msg: `Fast-Poll 10s -> Ticket ${newCode} injecté dans Hotspot > Users !`,
-        },
-        prev[0],
-        prev[1],
-      ]);
-      confetti({ particleCount: 35, spread: 55, origin: { x: 0.7, y: 0.4 } });
-    }, 1400);
+  const handleDirectPortalLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail.trim()) {
+      setEmailErr(true);
+      return;
+    }
+    login(loginEmail.trim(), 'admin', 'Opérateur Joowifi SDN');
   };
 
-  // Advanced ISP ROI & Net Profit Calculator (includes Starlink/ISP cost & vendor commission)
-  const [dailyVouchers, setDailyVouchers] = useState<number>(75);
-  const [avgVoucherPrice, setAvgVoucherPrice] = useState<number>(500);
-  const [ispMonthlyCost, setIspMonthlyCost] = useState<number>(35000);
-  const [vendorCommissionPct, setVendorCommissionPct] = useState<number>(10);
-
-  const grossMonthly = dailyVouchers * avgVoucherPrice * 30;
-  const vendorCommissionTotal = Math.round((grossMonthly * vendorCommissionPct) / 100);
-  const netMonthlyProfit = Math.max(0, grossMonthly - ispMonthlyCost - vendorCommissionTotal);
-  const breakEvenDays = Math.max(
-    1,
-    Math.ceil(ispMonthlyCost / Math.max(1, dailyVouchers * avgVoucherPrice * (1 - vendorCommissionPct / 100)))
-  );
+  // B2B ROI Calculator
+  const [dailyVouchers, setDailyVouchers] = useState<number>(80);
+  const [voucherPrice, setVoucherPrice] = useState<number>(500);
+  const [ispCost, setIspCost] = useState<number>(35000);
+  const grossMonthly = dailyVouchers * voucherPrice * 30;
+  const netMonthly = Math.max(0, Math.round(grossMonthly * 0.9 - ispCost));
 
   return (
-    <div className="space-y-24 pb-24 overflow-hidden">
+    <div className="bg-white text-[#1E293B] select-none">
       {/* =========================================================================
-          1. HERO SECTION — ARCHITECTURE SDN MIKROTIK & TOPOLOGIE INTERACTIVE
+          1. HERO CORPORATE B2B (Exact match to Screenshot 1: image_4390bc.jpg)
       ========================================================================= */}
-      <section className="relative pt-10 sm:pt-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Left 7 Columns: Value Proposition */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
-              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>CONTRÔLEUR CLOUD SDN MIKROTIK • ROUTEROS v6 & v7</span>
-            </div>
+      <section className="relative w-full min-h-[520px] sm:min-h-[560px] flex items-center justify-center overflow-hidden bg-[#1E293B]">
+        {/* Background Enterprise Office Photography with Corporate Dark-Warm Filter */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-55"
+          style={{
+            backgroundImage:
+              'url("https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80")',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/35 to-black/60" />
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.08]">
-              L'OS Cloud qui pilote vos{' '}
-              <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                Hotspots MikroTik
-              </span>{' '}
-              en temps réel.
-            </h1>
+        {/* Centered Crisp White Corporate Typography */}
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center text-white space-y-5 py-16 keep-white">
+          <h1 className="text-3xl sm:text-5xl lg:text-[52px] font-normal tracking-tight leading-[1.18] text-white">
+            Joowifi - La Solution SDN Parfaite pour
+            <br />
+            les PME et Opérateurs WiFi
+          </h1>
 
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-              Déployez votre infrastructure WiFi commerciale en 60 secondes avec notre moteur{' '}
-              <strong className="text-white">Fast-Poll 10s Zero-Port</strong>. Synchronisation directe avec{' '}
-              <strong className="text-emerald-300">Supabase (12 tables)</strong>, terminal Caisse POS PWA pour vos vendeurs et portail captif Mobile Money intégré.
-            </p>
+          <p className="text-lg sm:text-2xl font-normal text-white/95 tracking-wide">
+            Bureaux &nbsp;|&nbsp; Écoles &nbsp;|&nbsp; Restaurants &nbsp;|&nbsp; Hôtels &nbsp;|&nbsp; et Plus
+          </p>
 
-            {/* Primary CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 pt-2">
-              <button
-                onClick={() => setCurrentSpace('admin')}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-black text-sm flex items-center gap-2 shadow-xl shadow-emerald-500/20 transition cursor-pointer"
-              >
-                <span>Ouvrir la Console SDN</span>
-                <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-              </button>
+          <p className="text-sm sm:text-base font-normal text-gray-200">
+            Passerelles MikroTik, Switches, Points d'Accès, Caisse POS et Contrôleurs Cloud
+          </p>
 
-              <button
-                onClick={() => setCurrentSpace('pos')}
-                className="px-5 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 border border-white/15 text-white font-bold text-sm flex items-center gap-2 transition cursor-pointer"
-              >
-                <Smartphone className="w-4 h-4 text-cyan-400" />
-                <span>Tester la Caisse POS Vendeur</span>
-              </button>
-            </div>
+          <div className="pt-3 flex flex-wrap items-center justify-center gap-4">
+            <button
+              onClick={() => setCurrentSpace('admin')}
+              className="px-7 py-3 rounded bg-[#007A78] hover:bg-[#005A5B] text-white font-semibold text-sm transition cursor-pointer keep-white"
+            >
+              Accéder au Contrôleur Cloud
+            </button>
+            <button
+              onClick={() => setCurrentSpace('pos')}
+              className="px-7 py-3 rounded bg-white hover:bg-gray-100 text-[#005A5B] font-semibold text-sm transition cursor-pointer"
+            >
+              Ouvrir le Terminal POS
+            </button>
+          </div>
+        </div>
 
-            {/* Key Architecture Badges */}
-            <div className="grid grid-cols-3 gap-3 pt-4 max-w-xl">
-              <div className="p-3 rounded-2xl bg-slate-950/70 border border-white/10">
-                <div className="text-lg sm:text-xl font-black text-emerald-400 font-mono">10 sec</div>
-                <div className="text-[11px] text-slate-400">Fast-Poll Ticket Sync</div>
+        {/* Bottom-Left Floating White SDN Architecture Card (Exact match to image_4390bc.jpg) */}
+        <div
+          onClick={() => setCurrentSpace('admin')}
+          className="hidden md:flex absolute left-8 bottom-6 z-20 w-72 h-40 bg-white rounded-xl shadow-2xl border border-slate-200 p-3 flex-col justify-between cursor-pointer group hover:scale-[1.02] transition"
+        >
+          <div className="flex items-center justify-between text-[10px] text-slate-600 font-semibold">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#007A78]" /> Passerelle MikroTik
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#007A78]" /> Contrôleur Cloud
+            </span>
+          </div>
+
+          {/* Isometric Building & Nodes Diagram + Play Button */}
+          <div className="relative flex-1 flex items-center justify-center my-1 bg-[#F4F7F9] rounded-lg border border-slate-200 overflow-hidden">
+            <div className="grid grid-cols-3 gap-3 items-center w-full px-3 text-[9px] text-slate-600 font-medium text-center">
+              <div>
+                <div className="w-6 h-6 mx-auto rounded-full bg-[#007A78]/15 border border-[#007A78] flex items-center justify-center text-[#007A78] mb-0.5">
+                  <Wifi className="w-3 h-3" />
+                </div>
+                <span>Points d'Accès</span>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-950/70 border border-white/10">
-                <div className="text-lg sm:text-xl font-black text-cyan-400 font-mono">0 Port</div>
-                <div className="text-[11px] text-slate-400">Compatible Starlink / 4G</div>
+              <div>
+                <div className="w-11 h-8 rounded-lg bg-[#FF0000] group-hover:bg-red-700 text-white flex items-center justify-center mx-auto shadow-md transition keep-white">
+                  <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                </div>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-950/70 border border-white/10">
-                <div className="text-lg sm:text-xl font-black text-white font-mono">12 Tables</div>
-                <div className="text-[11px] text-slate-400">PostgreSQL Temps Réel</div>
+              <div>
+                <div className="w-6 h-6 mx-auto rounded-full bg-[#007A78]/15 border border-[#007A78] flex items-center justify-center text-[#007A78] mb-0.5">
+                  <Server className="w-3 h-3" />
+                </div>
+                <span>Cloud SDN</span>
               </div>
             </div>
           </div>
 
-          {/* Right 5 Columns: Interactive SDN Network Fabric Visualizer */}
-          <div className="lg:col-span-5">
-            <div className="p-6 rounded-3xl bento-card border border-emerald-500/30 space-y-5 relative">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-black text-xs">
-                    SDN
-                  </div>
-                  <div>
-                    <div className="text-xs font-extrabold text-white">
-                      Topologie Joowifi Engine v5.1
-                    </div>
-                    <div className="text-[10px] text-emerald-400 font-mono">
-                      Pull HTTPS • Cycle {heartbeatSecondsRemaining}s
-                    </div>
-                  </div>
-                </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                  ONLINE
+          <div className="flex items-center justify-between text-[10px] text-slate-500">
+            <span>Architecture Zero-Port (Fast-Poll 10s)</span>
+            <span className="text-[#007A78] font-bold">Voir le direct &rarr;</span>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          2. PORTAIL CLOUD ID EN « SPLIT LAYOUT » (Exact match to Screenshots 3 & 4:
+             image_4390fb.jpg & image_439119.jpg)
+      ========================================================================= */}
+      <section
+        className="relative w-full py-16 sm:py-20 border-b border-slate-200 transition-colors duration-500"
+        style={{
+          background:
+            portalSlide === 0
+              ? 'linear-gradient(180deg, #F5F7FA 0%, #E6EAEF 80%, #C7CFD9 100%)'
+              : 'linear-gradient(180deg, #163030 0%, #244847 68%, #DCE4E3 100%)',
+        }}
+      >
+        {/* Left & Right Slide Switcher Arrows */}
+        <button
+          type="button"
+          onClick={() => setPortalSlide(portalSlide === 0 ? 1 : 0)}
+          className={`hidden lg:flex absolute left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full transition cursor-pointer ${
+            portalSlide === 0 ? 'text-slate-400 hover:text-slate-700' : 'text-white/60 hover:text-white'
+          }`}
+          title="Diapositive précédente"
+        >
+          <ChevronLeft className="w-8 h-8 stroke-[1.5]" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPortalSlide(portalSlide === 0 ? 1 : 0)}
+          className={`hidden lg:flex absolute right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full transition cursor-pointer ${
+            portalSlide === 0 ? 'text-slate-400 hover:text-slate-700' : 'text-white/60 hover:text-white'
+          }`}
+          title="Diapositive suivante"
+        >
+          <ChevronRight className="w-8 h-8 stroke-[1.5]" />
+        </button>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* LEFT 7 COLUMNS: PRODUCT VISUAL & SITUATION SHOWCASE */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex flex-col">
+                <span
+                  className={`text-3xl font-bold tracking-tight leading-none ${
+                    portalSlide === 0 ? 'text-[#2B2E33]' : 'text-white keep-white'
+                  }`}
+                >
+                  Joowifi
+                </span>
+                <span
+                  className={`text-[11px] font-semibold tracking-wide text-right mt-0.5 ${
+                    portalSlide === 0 ? 'text-slate-600' : 'text-teal-200 keep-white'
+                  }`}
+                >
+                  by Ivoire Réseaux
                 </span>
               </div>
 
-              {/* 3 Interactive Topology Nodes */}
-              <div className="space-y-2.5">
-                <div
-                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
-                    simStep === 1
-                      ? 'bg-emerald-950/70 border-emerald-400 scale-[1.02]'
-                      : 'bg-slate-950/80 border-white/10'
+              {/* Slide Dots */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPortalSlide(0)}
+                  className={`px-3 py-1 rounded text-xs font-medium cursor-pointer transition ${
+                    portalSlide === 0
+                      ? 'bg-[#007A78] text-white keep-white'
+                      : 'bg-white/20 text-white hover:bg-white/30 keep-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="w-5 h-5 text-cyan-400" />
-                    <div>
-                      <div className="text-xs font-bold text-white">1. Caisse POS Vendeur (PWA)</div>
-                      <div className="text-[10px] text-slate-400">Émission voucher {lastSimCode}</div>
+                  1. Passerelles Fusion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPortalSlide(1)}
+                  className={`px-3 py-1 rounded text-xs font-medium cursor-pointer transition ${
+                    portalSlide === 1
+                      ? 'bg-[#007A78] text-white keep-white'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                  }`}
+                >
+                  2. Ponts Longue Portée PtMP
+                </button>
+              </div>
+            </div>
+
+            {portalSlide === 0 ? (
+              /* SLIDE 1 : FUSION GATEWAYS (Matches image_4390fb.jpg) */
+              <div className="space-y-4">
+                <h2 className="text-3xl sm:text-4xl font-semibold text-[#1E293B] leading-tight">
+                  <span className="text-[#007A78]">Passerelles Fusion</span> Au Cœur de
+                  <br />
+                  l'Entreprise Connectée
+                </h2>
+                <p className="text-sm text-slate-600">
+                  Déployez rapidement. Évoluez simplement. Profitez d'une gestion Cloud sans ouverture de port.
+                </p>
+
+                {/* Clean Industrial Hardware Stack Illustration */}
+                <div className="pt-4 flex flex-col sm:flex-row items-end gap-4">
+                  {/* Cylindrical Controller */}
+                  <div className="w-28 h-52 rounded-t-xl bg-gradient-to-r from-slate-300 via-slate-100 to-slate-300 border border-slate-400/70 shadow-md flex flex-col items-center justify-center p-3 shrink-0">
+                    <div className="w-8 h-28 rounded bg-[#111827] border border-slate-600 p-1.5 flex flex-col items-center justify-between">
+                      <span className="w-4 h-4 rounded-xs bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold keep-white">
+                        99
+                      </span>
+                      <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                      <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                      <Cpu className="w-3.5 h-3.5 text-slate-400" />
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-cyan-300 font-bold">Instant</span>
+
+                  {/* Stacked Rack Gateways */}
+                  <div className="flex-1 space-y-2.5 w-full">
+                    <div className="w-48 ml-auto h-11 rounded-lg bg-[#181C20] border border-slate-500 px-3 flex items-center justify-between shadow keep-white">
+                      <span className="text-[10px] font-mono text-emerald-400">Santé 99%</span>
+                      <div className="flex items-end gap-0.5 h-4">
+                        {[45, 80, 60, 95, 70, 85, 75, 95].map((h, i) => (
+                          <span
+                            key={i}
+                            className="w-1 bg-emerald-400"
+                            style={{ height: `${h}%` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="w-60 ml-auto h-12 rounded-lg bg-[#181C20] border border-slate-500 px-4 flex items-center justify-between shadow keep-white">
+                      <span className="text-[10px] font-mono text-cyan-300">Fast-Poll 10s</span>
+                      <span className="text-[10px] font-mono text-emerald-400">Supabase 12/12</span>
+                    </div>
+
+                    <div className="w-72 ml-auto h-12 rounded-lg bg-[#181C20] border border-slate-500 px-4 flex items-center justify-between shadow keep-white">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold">
+                          WAN
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded bg-sky-500 text-white text-[9px] font-bold">
+                          WIFI
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded bg-teal-500 text-white text-[9px] font-bold">
+                          POS
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-300">MikroTik v7.24</span>
+                    </div>
+
+                    <div className="w-full h-14 rounded bg-gradient-to-b from-slate-200 to-slate-300 border border-slate-400 px-4 flex items-center justify-between shadow-md">
+                      <div className="px-2.5 py-1 rounded bg-[#111827] text-emerald-400 font-mono text-[10px] keep-white">
+                        PASSERELLE RACK PRO
+                      </div>
+                      <div className="grid grid-cols-6 gap-1">
+                        {[1, 2, 3, 4, 5, 6].map((p) => (
+                          <span key={p} className="w-3 h-2.5 bg-slate-700 rounded-xs" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div
-                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
-                    simStep === 2
-                      ? 'bg-emerald-950/70 border-emerald-400 scale-[1.02]'
-                      : 'bg-slate-950/80 border-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Server className="w-5 h-5 text-emerald-400" />
-                    <div>
-                      <div className="text-xs font-bold text-white">2. Base Cloud Supabase</div>
-                      <div className="text-[10px] text-slate-400">File d'attente router_synced</div>
-                    </div>
+                <div className="mt-4 inline-block p-3.5 rounded-lg bg-slate-700/80 text-white max-w-xs keep-white">
+                  <div className="text-xs font-normal leading-snug">
+                    Gestion Unifiée Réseau, Caisse POS & Surveillance en Un Seul Système
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold">PostgreSQL</span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSpace('admin')}
+                    className="text-[11px] text-[#4ADE80] hover:underline font-medium mt-1 inline-block cursor-pointer"
+                  >
+                    &#9656; Passerelles Joowifi Fusion
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* SLIDE 2 : LONG-RANGE PTMP & MULTI-ZONE TRANSMISSION (Matches image_439119.jpg) */
+              <div className="space-y-4 text-white keep-white">
+                <h2 className="text-3xl sm:text-4xl font-semibold leading-tight text-white">
+                  Transmission Wi-Fi Longue Portée PtMP & PtP,
+                  <br />
+                  Parfaite pour la Supervision et Plus
+                </h2>
+                <p className="text-sm text-teal-100/90">
+                  Solution Professionnelle de Ponts Sans Fil Extérieurs et Hotspots Multi-Sites
+                </p>
+
+                <div className="pt-4 grid grid-cols-3 gap-4 items-center">
+                  <div className="p-4 rounded-lg bg-white/10 border border-white/20 text-center space-y-1.5">
+                    <div className="w-8 h-8 mx-auto rounded-full bg-[#005A5B] border border-teal-300 flex items-center justify-center">
+                      <Radio className="w-4 h-4 text-teal-200" />
+                    </div>
+                    <div className="text-xs font-semibold">Marché Adjamé</div>
+                    <div className="text-[10px] text-teal-200 font-mono">Pont 5 GHz Actif</div>
+                  </div>
+
+                  <div className="p-5 rounded-lg bg-white/15 border-2 border-teal-300 text-center space-y-2 shadow-lg">
+                    <div className="w-10 h-10 mx-auto rounded-full bg-[#007A78] flex items-center justify-center">
+                      <Server className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-xs font-bold">Station Centrale</div>
+                    <div className="text-[10px] text-teal-200 font-mono">Sync Cloud 10s</div>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-white/10 border border-white/20 text-center space-y-1.5">
+                    <div className="w-8 h-8 mx-auto rounded-full bg-[#005A5B] border border-teal-300 flex items-center justify-center">
+                      <Wifi className="w-4 h-4 text-teal-200" />
+                    </div>
+                    <div className="text-xs font-semibold">Campus Cocody</div>
+                    <div className="text-[10px] text-teal-200 font-mono">Kiosque POS Actif</div>
+                  </div>
                 </div>
 
-                <div
-                  className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
-                    simStep === 3
-                      ? 'bg-emerald-950/70 border-emerald-400 scale-[1.02]'
-                      : 'bg-slate-950/80 border-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Cpu className="w-5 h-5 text-purple-400" />
-                    <div>
-                      <div className="text-xs font-bold text-white">3. Routeur MikroTik (WinBox)</div>
-                      <div className="text-[10px] text-slate-400">/ip hotspot user add {lastSimCode}</div>
-                    </div>
+                <div className="mt-4 inline-block p-3.5 rounded-lg bg-slate-900/65 text-white max-w-xs border border-white/15">
+                  <div className="text-xs font-normal leading-snug">
+                    Transmission Wi-Fi Longue Portée PtMP & PtP pour Multi-Zones
                   </div>
-                  <span className="text-[10px] font-mono text-purple-300 font-bold">&lt; 10s</span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSpace('admin')}
+                    className="text-[11px] text-[#4ADE80] hover:underline font-medium mt-1 inline-block cursor-pointer"
+                  >
+                    &#9656; Ponts Joowifi PtP & PtMP
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT 5 COLUMNS: PURE WHITE MINIMALIST LOGIN CARD (Matches image_4390fb & image_439119) */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end">
+            <div className="w-full max-w-[400px] bg-white rounded-lg shadow-xl border border-slate-200 px-8 py-10 text-slate-800">
+              <div className="text-center mb-7">
+                <div className="inline-flex flex-col items-center">
+                  <span className="text-3xl font-bold tracking-tight text-[#005A5B] leading-none">
+                    Joowifi
+                  </span>
+                  <span className="text-[10px] font-semibold text-[#005A5B] tracking-wide self-end mt-0.5">
+                    by Ivoire Réseaux
+                  </span>
                 </div>
               </div>
 
-              {/* Live Telemetry Stream */}
-              <div className="p-3 rounded-2xl bg-slate-950 border border-white/10 font-mono text-[10px] space-y-1.5">
-                {simLogs.map((l, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-slate-300">
-                    <span className="text-slate-500">[{l.ts}]</span>
-                    <span className="text-emerald-400 font-bold">{l.node}:</span>
-                    <span className="truncate">{l.msg}</span>
-                  </div>
-                ))}
+              <div className="mb-6">
+                <h3 className="text-xl font-normal text-slate-800">Se connecter</h3>
+                <p className="text-xs text-slate-500 mt-1.5">
+                  Vous n'avez pas de compte ?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSpace('admin')}
+                    className="text-[#2563EB] hover:underline cursor-pointer"
+                  >
+                    S'inscrire
+                  </button>
+                </p>
               </div>
 
-              <button
-                onClick={triggerTopologySimulation}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-lg shadow-emerald-500/20"
-              >
-                <Zap className="w-4 h-4 stroke-[2.5]" />
-                <span>SIMULER UN FLUX POS &rarr; SUPABASE &rarr; MIKROTIK</span>
-              </button>
+              <form onSubmit={handleDirectPortalLogin} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-600 mb-1.5">
+                    Identifiant Joowifi (ID partenaire)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={loginEmail}
+                    onChange={(e) => {
+                      setLoginEmail(e.target.value);
+                      setEmailErr(false);
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded bg-[#F5F7F9] border text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white transition ${
+                      emailErr
+                        ? 'border-rose-500 focus:border-rose-500'
+                        : 'border-slate-200 focus:border-[#007A78]'
+                    }`}
+                  />
+                  {emailErr && (
+                    <p className="text-[11px] text-rose-600 mt-1">Ce champ est requis.</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 mb-1.5">Mot de passe</label>
+                  <div className="relative">
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      placeholder="Mot de passe"
+                      value={loginPass}
+                      onChange={(e) => setLoginPass(e.target.value)}
+                      className="w-full pl-3.5 pr-10 py-2.5 rounded bg-[#F5F7F9] border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#007A78] transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPass(!showPass)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showPass ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSpace('admin')}
+                    className="text-[11px] text-[#2563EB] hover:underline cursor-pointer"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded bg-[#7BC4B2] hover:bg-[#007A78] text-white font-semibold text-xs transition cursor-pointer keep-white"
+                >
+                  Se connecter
+                </button>
+              </form>
+
+              {/* Direct B2B Quick Launchers */}
+              <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setCurrentSpace('admin')}
+                  className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#005A5B] font-semibold text-[11px] transition cursor-pointer"
+                >
+                  Console SDN &rarr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentSpace('pos')}
+                  className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#005A5B] font-semibold text-[11px] transition cursor-pointer"
+                >
+                  Caisse POS &rarr;
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          2. BENTO GRID : LES 6 INNOVATIONS EXCLUSIVES JOOWIFI FABRIC OS
+          3. SECTION INSTITUTIONNELLE B2B SUR FOND BLANC PUR (#FFFFFF)
       ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 bg-white">
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400">
-            INGÉNIERIE RÉSEAU & FINTECH
+          <span className="text-xs font-bold uppercase tracking-widest text-[#007A78]">
+            ARCHITECTURE MATÉRIELLE & LOGICIELLE UNIFIÉE
           </span>
-          <h2 className="text-3xl sm:text-4xl font-black text-white">
-            Une architecture Bento pensée pour les opérateurs WiFi exigeants
+          <h2 className="text-3xl sm:text-4xl font-semibold text-[#1E293B]">
+            Une Plateforme SDN Conçue pour la Continuité de Service
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
-            Chaque brique de Joowifi Cloud résout un problème réel de terrain : CGNAT Starlink, coupures de courant, fraude vendeur et saturation DHCP.
+          <p className="text-sm text-slate-600">
+            Gérez vos routeurs MikroTik RouterOS (physiques ou virtuels CHR), vos stocks de vouchers et vos équipes de vendeurs depuis une interface institutionnelle claire.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="p-6 rounded-3xl bento-card border border-white/10 space-y-3">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Terminal className="w-5 h-5" />
+        {/* 4 Clean White Corporate Pillars */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-6 bg-white rounded-lg border border-slate-200 space-y-3 hover:border-[#007A78] transition">
+            <div className="w-10 h-10 rounded bg-[#E6F4F3] text-[#007A78] flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-extrabold text-white">
-              Double Canal : Fast-Poll 10s + Heartbeat 45s
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Vos clients n'attendent plus devant le kiosque : dès qu'un vendeur encaisse sur son smartphone, le code voucher est injecté dans <code className="text-emerald-300">IP &rarr; Hotspot &rarr; Users</code> en moins de 10 secondes.
+            <h3 className="text-base font-bold text-[#1E293B]">Bureaux & PME</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Segmentation du trafic invité, exclusion FastTrack automatique et garantie de bande passante par profil utilisateur.
             </p>
           </div>
 
-          <div className="p-6 rounded-3xl bento-card border border-white/10 space-y-3">
-            <div className="w-11 h-11 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="p-6 bg-white rounded-lg border border-slate-200 space-y-3 hover:border-[#007A78] transition">
+            <div className="w-10 h-10 rounded bg-[#E6F4F3] text-[#007A78] flex items-center justify-center">
+              <GraduationCap className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-extrabold text-white">
-              Réconciliation d'Inventaire & Auto-Guérison
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Grâce à l'accusé de réception <code className="text-cyan-300">router_synced</code> et au gardien autonome <code className="text-cyan-300">jw_guardian</code>, même un routeur neuf ou réinitialisé récupère automatiquement tout son stock de tickets.
+            <h3 className="text-base font-bold text-[#1E293B]">Écoles & Campus</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Reconnexion transparente par Cookie MAC 30 jours et baux DHCP courts (1h) pour supporter des centaines d'étudiants.
             </p>
           </div>
 
-          <div className="p-6 rounded-3xl bento-card border border-white/10 space-y-3">
-            <div className="w-11 h-11 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
-              <Lock className="w-5 h-5" />
+          <div className="p-6 bg-white rounded-lg border border-slate-200 space-y-3 hover:border-[#007A78] transition">
+            <div className="w-10 h-10 rounded bg-[#E6F4F3] text-[#007A78] flex items-center justify-center">
+              <Hotel className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-extrabold text-white">
-              Bypass FastTrack, Bail DHCP 1h & Cookie MAC
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Notre script place automatiquement la règle d'exclusion FastTrack en position 0 pour faire respecter vos débits (10M/3M) et fixe les baux DHCP à 1h pour éviter la saturation des 253 IP.
+            <h3 className="text-base font-bold text-[#1E293B]">Hôtels & Résidences</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Portail captif personnalisable aux couleurs de l'établissement et Bypass MAC permanent pour téléviseurs et caméras IP.
+            </p>
+          </div>
+
+          <div className="p-6 bg-white rounded-lg border border-slate-200 space-y-3 hover:border-[#007A78] transition">
+            <div className="w-10 h-10 rounded bg-[#E6F4F3] text-[#007A78] flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold text-[#1E293B]">Marchés & Galeries</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Terminal Caisse POS sur smartphone pour vos revendeurs avec livraison des codes sur le routeur MikroTik en moins de 10 secondes.
             </p>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          3. CALCULATEUR DE RENTABILITÉ NETTE FAI / STARLINK (EXCLUSIF JOOWIFI)
+          4. SIMULATEUR DE RENTABILITÉ B2B SUR FOND CLAIR (#F4F6F8)
       ========================================================================= */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-6 sm:p-10 rounded-3xl bento-card border border-emerald-500/30 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-bold">
-              <Calculator className="w-3.5 h-3.5" />
-              <span>SIMULATEUR DE RENTABILITÉ NETTE OPÉRATEUR</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">
-              Calculez votre Bénéfice Net après abonnement FAI & commissions vendeurs
-            </h2>
+      <section className="w-full bg-[#F4F6F8] border-t border-slate-200 py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg border border-slate-200 p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center shadow-xs">
+            <div className="lg:col-span-7 space-y-5">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#007A78]">
+                OUTIL D'AIDE À LA DÉCISION B2B
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-semibold text-[#1E293B]">
+                Estimez le Rendement Net de Votre Déploiement SDN
+              </h2>
 
-            <div className="space-y-4 text-xs">
+              <div className="space-y-4 text-xs">
+                <div>
+                  <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
+                    <span>Volume quotidien de vouchers émis :</span>
+                    <span className="text-[#007A78] font-mono font-bold">{dailyVouchers} tickets / jour</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={15}
+                    max={300}
+                    step={5}
+                    value={dailyVouchers}
+                    onChange={(e) => setDailyVouchers(Number(e.target.value))}
+                    className="w-full accent-[#007A78] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
+                    <span>Tarif unitaire moyen :</span>
+                    <span className="text-[#007A78] font-mono font-bold">{voucherPrice.toLocaleString('fr-FR')} FCFA</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[200, 500, 1000, 2500].map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setVoucherPrice(p)}
+                        className={`px-4 py-1.5 rounded text-xs font-semibold transition cursor-pointer ${
+                          voucherPrice === p
+                            ? 'bg-[#007A78] text-white keep-white'
+                            : 'bg-[#F4F6F8] text-slate-700 border border-slate-300 hover:bg-slate-200'
+                        }`}
+                      >
+                        {p} FCFA
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
+                    <span>Charge mensuelle liaison FAI / Starlink :</span>
+                    <span className="text-slate-700 font-mono font-bold">{ispCost.toLocaleString('fr-FR')} FCFA / mois</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={15000}
+                    max={100000}
+                    step={5000}
+                    value={ispCost}
+                    onChange={(e) => setIspCost(Number(e.target.value))}
+                    className="w-full accent-[#007A78] cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 p-6 rounded-lg bg-[#F8FAFC] border border-slate-200 space-y-4">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Résultat d'Exploitation Estimé (30 Jours)
+              </div>
               <div>
-                <div className="flex justify-between font-bold text-slate-200 mb-1.5">
-                  <span>Tickets vendus par jour :</span>
-                  <span className="text-emerald-400 font-mono">{dailyVouchers} tickets / jour</span>
+                <div className="text-3xl font-bold text-[#005A5B] font-mono tabular-nums">
+                  {netMonthly.toLocaleString('fr-FR')} FCFA
                 </div>
-                <input
-                  type="range"
-                  min={15}
-                  max={300}
-                  step={5}
-                  value={dailyVouchers}
-                  onChange={(e) => setDailyVouchers(Number(e.target.value))}
-                  className="w-full accent-emerald-400 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between font-bold text-slate-200 mb-1.5">
-                  <span>Prix moyen du ticket :</span>
-                  <span className="text-cyan-400 font-mono">{avgVoucherPrice.toLocaleString('fr-FR')} FCFA</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {[200, 500, 1000, 2500].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setAvgVoucherPrice(p)}
-                      className={`px-3.5 py-1.5 rounded-xl font-mono font-bold transition cursor-pointer ${
-                        avgVoucherPrice === p
-                          ? 'bg-emerald-500 text-slate-950'
-                          : 'bg-slate-900 text-slate-300 border border-white/10'
-                      }`}
-                    >
-                      {p} FCFA
-                    </button>
-                  ))}
+                <div className="text-[11px] text-slate-500 mt-1">
+                  Excédent net mensuel (après déduction FAI et commission revendeur 10%)
                 </div>
               </div>
 
-              <div>
-                <div className="flex justify-between font-bold text-slate-200 mb-1.5">
-                  <span>Coût mensuel connexion FAI / Starlink :</span>
-                  <span className="text-slate-300 font-mono">{ispMonthlyCost.toLocaleString('fr-FR')} FCFA / mois</span>
+              <div className="space-y-2 pt-3 border-t border-slate-200 text-xs">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Check className="w-4 h-4 text-[#007A78]" />
+                  <span>Recette brute : <strong>{grossMonthly.toLocaleString('fr-FR')} FCFA</strong></span>
                 </div>
-                <input
-                  type="range"
-                  min={15000}
-                  max={100000}
-                  step={5000}
-                  value={ispMonthlyCost}
-                  onChange={(e) => setIspMonthlyCost(Number(e.target.value))}
-                  className="w-full accent-cyan-400 cursor-pointer"
-                />
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Check className="w-4 h-4 text-[#007A78]" />
+                  <span>Synchronisation Supabase (12 tables) incluse</span>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="lg:col-span-5 p-6 rounded-2xl bg-slate-950/90 border border-emerald-500/30 space-y-4">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Projection Mensuelle Nette (30 jours)
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentSpace('admin');
+                  setAdminTab('installation');
+                }}
+                className="w-full py-2.5 rounded bg-[#007A78] hover:bg-[#005A5B] text-white font-semibold text-xs transition cursor-pointer keep-white"
+              >
+                Configurer mon routeur MikroTik &rarr;
+              </button>
             </div>
-            <div>
-              <div className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tabular-nums">
-                {netMonthlyProfit.toLocaleString('fr-FR')} FCFA
-              </div>
-              <div className="text-[11px] text-slate-400 mt-1">
-                Bénéfice net dans votre poche (après FAI & commissions {vendorCommissionPct}%)
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-3 border-t border-white/10 text-xs font-mono">
-              <div className="flex justify-between text-slate-300">
-                <span>Chiffre d'affaires brut :</span>
-                <span>{grossMonthly.toLocaleString('fr-FR')} FCFA</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Commissions vendeurs ({vendorCommissionPct}%) :</span>
-                <span>- {vendorCommissionTotal.toLocaleString('fr-FR')} FCFA</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Facture FAI / Starlink :</span>
-                <span>- {ispMonthlyCost.toLocaleString('fr-FR')} FCFA</span>
-              </div>
-              <div className="flex justify-between text-cyan-300 font-bold pt-1">
-                <span>Seuil de rentabilité atteint en :</span>
-                <span>{breakEvenDays} jour(s) / mois</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setCurrentSpace('admin')}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 text-slate-950 font-black text-xs cursor-pointer"
-            >
-              Déployer mon premier routeur maintenant &rarr;
-            </button>
           </div>
         </div>
       </section>
