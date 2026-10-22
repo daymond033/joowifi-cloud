@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
 import {
@@ -40,6 +40,16 @@ export const InstallationScript: React.FC = () => {
   const [selectedZoneId, setSelectedZoneId] = useState(zones[0]?.id || 'zone-1');
   const [token, setToken] = useState(routers[0]?.installToken || 'JWT-AF6L-JG37-7K23');
   const [showToken, setShowToken] = useState(true);
+
+  useEffect(() => {
+    if (routers.length > 0) {
+      setSelectedExistingRouterId(routers[0].id);
+      setRouterName(routers[0].name);
+      setRouterModel(routers[0].model || 'MikroTik RouterOS v7');
+      setSelectedZoneId(routers[0].zoneId);
+      setToken(routers[0].installToken);
+    }
+  }, [routers]);
 
   // Copy feedback states
   const [copiedAutoCmd, setCopiedAutoCmd] = useState(false);

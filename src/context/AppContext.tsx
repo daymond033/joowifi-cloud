@@ -288,7 +288,14 @@ interface AppContextType {
   authMode: 'login' | 'register';
   openAuthModal: (mode?: 'login' | 'register') => void;
   closeAuthModal: () => void;
-  login: (email: string, role?: 'admin' | 'staff', name?: string, staffId?: string) => void;
+  login: (
+    email: string,
+    role?: 'admin' | 'staff',
+    name?: string,
+    staffId?: string,
+    tenantId?: string,
+    isNewAccount?: boolean
+  ) => void;
   logout: () => void;
 }
 
@@ -433,7 +440,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
   ]);
 
-  const OP_ID = '11111111-1111-1111-1111-111111111111';
+  const [activeTenantId, setActiveTenantIdState] = useState<string>(() => getActiveTenantId());
+  const OP_ID = activeTenantId;
 
   const syncOperatorToSupabase = () => {
     if (!isSupabaseConfigured()) return;
@@ -468,6 +476,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncZonesToSupabase = (items: ZoneItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((z) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       name: z.name,
       city: z.city || 'Abidjan',
@@ -486,6 +495,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncRoutersToSupabase = (items: RouterItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((r) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       zone_id: r.zoneName || r.zoneId || 'Zone Principale',
       name: r.name,
@@ -512,6 +522,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncForfaitsToSupabase = (items: ForfaitItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((f) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       name: f.name,
       duration_hours: Math.max(1, Math.round(Number(f.durationHours || 1))),
@@ -532,6 +543,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncTicketsToSupabase = (items: TicketItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((t) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       zone_id: t.zoneName || 'Zone Principale',
       forfait_id: t.forfaitName || t.forfaitId,
@@ -546,7 +558,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       customer_phone: t.customerPhone || null,
       mac_address: t.macAddress || null,
     }));
-    void supabaseInsert('tickets', rows, 'operator_id,code');
+    void supabaseInsert('tickets', rows, 'tenant_id,code');
 
     const queuedRows: Record<string, unknown>[] = [];
     items.forEach((t) => {
@@ -571,9 +583,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncStaffToSupabase = (items: StaffItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((s) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       zone_id: s.zoneName || s.zoneId || 'Kiosque Principal Joowifi',
       name: s.name,
+      email: s.email || null,
       phone: s.phone,
       pin_hash: '1234',
       commission_rate: Number(s.commissionRate || 10),
@@ -590,6 +604,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncMacBypassesToSupabase = (items: MacBypassItem[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((m) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       router_id: m.routerName || m.routerId || 'all',
       mac_address: m.macAddress,
@@ -609,6 +624,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncTransactionsToSupabase = (items: WalletTransaction[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((tx) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       type: tx.type || 'credit',
       amount_xof: Math.max(1, Math.round(Number(tx.amount || 100))),
@@ -623,6 +639,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncSessionsToSupabase = (items: ConnectedSession[]) => {
     if (!isSupabaseConfigured() || items.length === 0) return;
     const rows = items.map((s) => ({
+      tenant_id: OP_ID,
       operator_id: OP_ID,
       router_id: s.routerName || s.routerId || 'MK-ADJAME-CORE-01',
       username: s.username,
@@ -707,14 +724,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
   ]);
 
-  // Auth State (Persisted in localStorage with RBAC)
-  const [user, setUser] = useState<UserSession | null>(() =>
-    safeGetStorage<UserSession | null>('joowifi_auth_user', {
+  // Auth State (Persisted in localStorage with RBAC + Multi-Tenant ID)
+  const [user, setUser] = useState<UserSession | null>(() => {
+    const saved = safeGetStorage<UserSession | null>('joowifi_auth_user', null);
+    if (saved && saved.email) {
+      return {
+        ...saved,
+        tenantId: saved.tenantId || getActiveTenantId(),
+      };
+    }
+    return {
       name: operatorProfile.name,
       email: operatorProfile.email,
       role: 'admin',
-    })
-  );
+      tenantId: DEFAULT_MAIN_TENANT_ID,
+    };
+  });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
@@ -776,22 +801,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [tickets]);
 
   useEffect(() => {
-    const loadCloudTickets = async () => {
-      if (!isSupabaseConfigured()) return;
+    const loadTenantWorkspace = async (targetTenant: string) => {
+      if (!isSupabaseConfigured() || !targetTenant) return;
       try {
         await supabaseDelete(
           'tickets',
-          'code=in.(r7gt,mj79,6hgj,JW-8492-710,JW-9143-228,JW-3310-904,JW-4781-620,JW-5592-113,JW-6820-441,JW-7904-882,JW-1129-330,JW-2048-512,JW-9901-774)'
+          'code=in.(r7gt,mj79,6hgj,JW-8492-710,JW-9143-228,JW-3310-904,JW-4781-620,JW-5592-113,JW-6820-441,JW-7904-882,JW-1129-330,JW-2048-512,JW-9901-774)',
+          targetTenant
         );
-        const rows = await supabaseSelect<Record<string, any>>(
+
+        // 1. Charger les tickets appartenant strictement à ce tenant_id
+        const tRows = await supabaseSelect<Record<string, any>>(
           'tickets',
-          'select=*&order=created_at.desc&limit=500'
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&order=created_at.desc&limit=500`,
+          targetTenant
         );
-        if (Array.isArray(rows)) {
-          const validRows = rows.filter(
-            (r) => r && r.code && !LEGACY_DEMO_CODES.has(String(r.code))
+        if (Array.isArray(tRows)) {
+          const validRows = tRows.filter(
+            (r) =>
+              r &&
+              r.code &&
+              !LEGACY_DEMO_CODES.has(String(r.code)) &&
+              String(r.tenant_id || r.operator_id || '') === targetTenant
           );
-          const mapped: TicketItem[] = validRows.map((r, idx) => ({
+          const mappedTickets: TicketItem[] = validRows.map((r, idx) => ({
             id: String(r.id || `t-db-${idx}-${r.code}`),
             code: String(r.code),
             pin: String(r.pin || r.code),
@@ -810,14 +843,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             zoneName: String(r.zone_id || 'Zone Principale'),
             batchId: r.batch_id ? String(r.batch_id) : undefined,
           }));
-          setTickets(mapped);
-          safeSetStorage('joowifi_tickets', mapped);
+          setTickets(mappedTickets);
+          safeSetStorage('joowifi_tickets', mappedTickets);
+        }
+
+        // 2. Charger les routeurs de ce tenant_id
+        const rRows = await supabaseSelect<Record<string, any>>(
+          'routers',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
+          targetTenant
+        );
+        if (Array.isArray(rRows) && rRows.length > 0) {
+          const mappedRouters: RouterItem[] = rRows.map((r) => ({
+            id: String(r.id),
+            name: String(r.name || 'Routeur MikroTik'),
+            model: String(r.model || 'MikroTik RouterOS'),
+            zoneId: String(r.zone_id || 'zone-1'),
+            zoneName: String(r.zone_id || 'Zone Principale'),
+            ipAddress: String(r.ip_address || '10.5.50.1'),
+            macAddress: String(r.mac_address || '48:A9:8A:00:00:01'),
+            routerOsVersion: String(r.routeros_version || 'v7.23.8'),
+            status: (r.status as any) || 'online',
+            lastHeartbeat: String(r.last_heartbeat_at || new Date().toISOString()),
+            uptime: String(r.uptime || '01j 00h 00m'),
+            cpuUsage: Number(r.cpu_usage || 15),
+            ramUsage: Number(r.ram_usage || 32),
+            trafficDownMbps: Number(r.traffic_down_mbps || 12),
+            trafficUpMbps: Number(r.traffic_up_mbps || 4),
+            totalSubscribers: Number(r.total_subscribers || 0),
+            installToken: String(r.install_token),
+          }));
+          setRouters(mappedRouters);
+          safeSetStorage('joowifi_routers', mappedRouters);
+        }
+
+        // 3. Charger les vendeurs POS de ce tenant_id
+        const sRows = await supabaseSelect<Record<string, any>>(
+          'staff_vendors',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
+          targetTenant
+        );
+        if (Array.isArray(sRows) && sRows.length > 0) {
+          const mappedStaff: StaffItem[] = sRows.map((s) => ({
+            id: String(s.id),
+            name: String(s.name),
+            email: s.email ? String(s.email) : undefined,
+            password: s.pin_hash ? String(s.pin_hash) : '1234',
+            phone: String(s.phone || '+225'),
+            zoneId: String(s.zone_id || 'zone-1'),
+            zoneName: String(s.zone_id || 'Zone Principale'),
+            commissionRate: Number(s.commission_rate || 10),
+            balanceCredit: Number(s.balance_credit_xof || 0),
+            dailyGoal: Number(s.daily_goal_xof || 15000),
+            todaySales: Number(s.today_sales_xof || 0),
+            totalSales: Number(s.total_sales_xof || 0),
+            active: Boolean(s.active ?? true),
+            lastActive: 'Synchronisé',
+          }));
+          setStaff(mappedStaff);
+          safeSetStorage('joowifi_staff', mappedStaff);
         }
       } catch {
         // Ignore network errors
       }
     };
-    void loadCloudTickets();
+    void loadTenantWorkspace(OP_ID);
   }, []);
 
   useEffect(() => {
@@ -1828,18 +1918,114 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     email: string,
     role: 'admin' | 'staff' = 'admin',
     name: string = operatorProfile.name,
-    staffId?: string
+    staffId?: string,
+    customTenantId?: string,
+    isNewAccount?: boolean
   ) => {
-    const newSession: UserSession = { email, role, name, staffId };
+    const resolvedTenant = (customTenantId || getActiveTenantId()).trim();
+    setActiveTenantId(resolvedTenant);
+    setActiveTenantIdState(resolvedTenant);
+
+    const newSession: UserSession = {
+      email,
+      role,
+      name,
+      staffId,
+      tenantId: resolvedTenant,
+    };
     setUser(newSession);
     safeSetStorage('joowifi_auth_user', newSession);
     setIsAuthModalOpen(false);
+
+    // Si c'est un tout nouveau compte Opérateur (Tenant), initialiser un espace 100% isolé et vierge
+    if (isNewAccount && resolvedTenant !== DEFAULT_MAIN_TENANT_ID) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const rand4 = () =>
+        Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      const uniqueToken = `JWT-${rand4()}-${rand4()}-${rand4()}`;
+
+      const initZone: ZoneItem = {
+        id: `zone-${Date.now()}`,
+        name: 'Zone Principale WiFi',
+        city: 'Abidjan',
+        country: "Côte d'Ivoire",
+        routerCount: 1,
+        activeTicketsCount: 0,
+        monthlyRevenue: 0,
+        status: 'active',
+        siteType: 'commerce',
+        todaySales: 0,
+      };
+
+      const initRouter: RouterItem = {
+        id: `router-${Date.now()}`,
+        name: 'MK-MAIN-ROUTER-01',
+        model: 'MikroTik RouterOS v7',
+        zoneId: initZone.id,
+        zoneName: initZone.name,
+        ipAddress: '10.5.50.1',
+        macAddress: '48:A9:8A:00:00:01',
+        routerOsVersion: 'v7.23.8',
+        status: 'online',
+        lastHeartbeat: new Date().toISOString(),
+        uptime: '00j 01h 00m',
+        cpuUsage: 12,
+        ramUsage: 28,
+        trafficDownMbps: 0,
+        trafficUpMbps: 0,
+        totalSubscribers: 0,
+        installToken: uniqueToken,
+      };
+
+      setZones([initZone]);
+      setRouters([initRouter]);
+      setTickets([]);
+      setStaff([]);
+      setMacBypasses([]);
+      setSessions([]);
+      safeSetStorage('joowifi_zones', [initZone]);
+      safeSetStorage('joowifi_routers', [initRouter]);
+      safeSetStorage('joowifi_tickets', []);
+      safeSetStorage('joowifi_staff', []);
+      safeSetStorage('joowifi_mac_bypass', []);
+    } else {
+      // Charger uniquement les données Cloud appartenant à ce tenant_id
+      void (async () => {
+        const tRows = await supabaseSelect<Record<string, any>>(
+          'tickets',
+          `select=*&tenant_id=eq.${encodeURIComponent(resolvedTenant)}&order=created_at.desc&limit=500`,
+          resolvedTenant
+        );
+        if (Array.isArray(tRows)) {
+          setTickets(
+            tRows
+              .filter((r) => r && r.code && !LEGACY_DEMO_CODES.has(String(r.code)))
+              .map((r, idx) => ({
+                id: String(r.id || `t-${idx}-${r.code}`),
+                code: String(r.code),
+                pin: String(r.pin || r.code),
+                password: String(r.password || r.code),
+                forfaitId: String(r.forfait_id || 'Pass WiFi'),
+                forfaitName: String(r.forfait_id || 'Pass WiFi'),
+                price: Number(r.price_xof || 0),
+                duration: String(r.duration_label || '24h'),
+                status: (r.status as any) || 'stock',
+                createdAt: String(r.created_at || new Date().toISOString()),
+                sellerId: r.seller_id ? String(r.seller_id) : undefined,
+                sellerName: r.seller_id ? String(r.seller_id) : undefined,
+                zoneName: String(r.zone_id || 'Zone Principale'),
+              }))
+          );
+        }
+      })();
+    }
+
     if (role === 'staff') {
       setCurrentSpace('pos');
       notify(`Bienvenue sur votre Caisse POS, ${name} !`, 'success');
     } else {
       setCurrentSpace('admin');
-      notify(`Connecté à la Console Cloud Joowifi (${name}).`, 'success');
+      notify(`Espace Opérateur isolé ouvert (${name}).`, 'success');
     }
   };
 

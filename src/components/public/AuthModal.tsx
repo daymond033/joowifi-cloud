@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { supabaseSelect, supabaseInsert } from '../../lib/supabase';
+import { supabaseSelect, supabaseInsert, DEFAULT_MAIN_TENANT_ID } from '../../lib/supabase';
 import {
   X,
   Eye,
@@ -94,6 +94,7 @@ export const AuthModal: React.FC = () => {
                 active: Boolean(foundDb.active ?? true),
                 lastActive: 'En ligne',
                 password: String(foundDb.pin_hash || '1234'),
+                tenantId: String(foundDb.tenant_id || foundDb.operator_id || DEFAULT_MAIN_TENANT_ID),
               };
             }
           }
@@ -120,19 +121,29 @@ export const AuthModal: React.FC = () => {
           return;
         }
 
-        login(cleanEmail, 'staff', matchedVendor.name, matchedVendor.id);
+        const vendorTenantId = String(
+          (matchedVendor as any).tenantId || DEFAULT_MAIN_TENANT_ID
+        );
+        login(cleanEmail, 'staff', matchedVendor.name, matchedVendor.id, vendorTenantId, false);
         setLoading(false);
         return;
       }
 
-      // 2. INSCRIPTION OU CONNEXION ADMINISTRATEUR (Accès total Console Cloud)
+      // 2. INSCRIPTION OU CONNEXION ADMINISTRATEUR MULTI-TENANT (Chaque Opérateur = 1 Tenant isolé)
       if (mode === 'register') {
         const opName = name.trim() || 'Opérateur Joowifi';
         const opCompany = company.trim() || 'Réseau Hotspot WiFi';
+        const newTenantId =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `tenant-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
         await supabaseInsert(
           'operators',
           [
             {
+              id: newTenantId,
+              tenant_id: newTenantId,
               name: opName,
               company: opCompany,
               email: cleanEmail,
@@ -144,7 +155,8 @@ export const AuthModal: React.FC = () => {
               plan_id: 'starter',
             },
           ],
-          'email'
+          'email',
+          newTenantId
         );
         updateOperatorProfile({
           name: opName,
@@ -152,16 +164,28 @@ export const AuthModal: React.FC = () => {
           email: cleanEmail,
           phone: phone.trim(),
         });
-        login(cleanEmail, 'admin', opName);
-        notify('Compte Administrateur créé avec 14 jours d’essai gratuit !', 'success');
+        login(cleanEmail, 'admin', opName, undefined, newTenantId, true);
+        notify('Votre espace de travail Multi-Tenant isolé a été créé avec succès !', 'success');
       } else {
         const dbOps = await supabaseSelect<Record<string, any>>(
           'operators',
           `select=*&email=ilike.${encodeURIComponent(cleanEmail)}&limit=1`
         );
         const foundOp = Array.isArray(dbOps) && dbOps.length > 0 ? dbOps[0] : null;
+        const resolvedTenantId = foundOp
+          ? String(foundOp.tenant_id || foundOp.id)
+          : cleanEmail === 'admin@joowifi.ci' || cleanEmail === 'joostudio.pro@gmail.com'
+          ? DEFAULT_MAIN_TENANT_ID
+          : `tenant-${cleanEmail.replace(/[^a-z0-9]/g, '-')}`;
         const adminName = foundOp?.name ? String(foundOp.name) : name.trim() || 'Administrateur Cloud';
-        login(cleanEmail, 'admin', adminName);
+        login(
+          cleanEmail,
+          'admin',
+          adminName,
+          undefined,
+          resolvedTenantId,
+          !foundOp && resolvedTenantId !== DEFAULT_MAIN_TENANT_ID
+        );
       }
     } catch {
       login(cleanEmail, selectedRole, name || cleanEmail);
