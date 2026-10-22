@@ -174,8 +174,6 @@ export const AuthModal: React.FC = () => {
         const foundOp = Array.isArray(dbOps) && dbOps.length > 0 ? dbOps[0] : null;
         const resolvedTenantId = foundOp
           ? String(foundOp.tenant_id || foundOp.id)
-          : cleanEmail === 'admin@joowifi.ci' || cleanEmail === 'joostudio.pro@gmail.com'
-          ? DEFAULT_MAIN_TENANT_ID
           : `tenant-${cleanEmail.replace(/[^a-z0-9]/g, '-')}`;
         const adminName = foundOp?.name ? String(foundOp.name) : name.trim() || 'Administrateur Cloud';
         login(

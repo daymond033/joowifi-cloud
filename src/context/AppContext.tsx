@@ -386,24 +386,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const OP_ID = activeTenantId;
 
   const syncOperatorToSupabase = () => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured() || !OP_ID || !user?.email) return;
     void supabaseInsert(
       'operators',
       [
         {
           id: OP_ID,
-          name: operatorProfile.name || 'Kouamé Konan',
-          company: operatorProfile.company || 'Ivoire Hotspot Réseaux',
-          email: operatorProfile.email || 'admin@joowifi.ci',
-          password_hash: '$2b$12$JoowifiDemoHash2026Abidjan',
-          phone: operatorProfile.phone || '+225 07 08 09 10 11',
+          tenant_id: OP_ID,
+          name: operatorProfile.name || user.name || 'Opérateur',
+          company: operatorProfile.company || 'Réseau WiFi',
+          email: user.email,
+          password_hash: 'authenticated',
+          phone: operatorProfile.phone || '+225',
           city: operatorProfile.city || 'Abidjan',
           country: operatorProfile.country || "Côte d'Ivoire",
           currency: currency || 'XOF',
-          plan_id: currentPlanId || 'pro',
+          plan_id: currentPlanId || 'starter',
           wallet_balance_xof: Math.max(0, Math.round(Number(walletBalance || 0))),
           gains_balance_xof: Math.max(0, Math.round(Number(gainsBalance || 0))),
-          default_isp_monthly_cost: Math.round(Number(operatorProfile.defaultIspCost || 50000)),
+          default_isp_monthly_cost: Math.round(Number(operatorProfile.defaultIspMonthlyCost || 0)),
           two_factor_enabled: Boolean(operatorProfile.twoFactorEnabled),
           telegram_bot_token: telegramConfig.botToken || null,
           telegram_chat_id: telegramConfig.chatId || null,
@@ -411,7 +412,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           telegram_triggers: telegramConfig.triggers || {},
         },
       ],
-      'email'
+      'email',
+      OP_ID
     );
   };
 
@@ -936,7 +938,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAuditLogs((prev) => [newLog, ...prev]);
     if (isSupabaseConfigured()) {
       void supabaseInsert('audit_logs', {
-        operator_id: '11111111-1111-1111-1111-111111111111',
+        operator_id: OP_ID,
         user_email: newLog.user,
         action,
         target,

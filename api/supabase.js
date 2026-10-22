@@ -1,10 +1,8 @@
 // ============================================================================
 // JOOWIFI CLOUD — BACKEND API MULTI-TENANT & RELAIS RLS SUPABASE (/api/supabase)
-// 1. Extrait et vérifie l'identifiant du locataire (tenant_id / créateur)
-// 2. Injecte automatiquement `tenant_id` et `operator_id` dans toute création
-//    (ticket, routeur, vendeur POS, zone, forfait, bypass MAC, transaction)
-// 3. Transmet l'en-tête HTTP `x-tenant-id` à PostgreSQL pour appliquer les
-//    politiques Row Level Security (RLS) via `public.current_tenant_id()`
+// 1. Supporte l'action administrative `PURGE_ALL_TEST_DATA` pour vider les 12 tables
+// 2. Extrait et vérifie l'identifiant du locataire (tenant_id / créateur)
+// 3. Injecte automatiquement `tenant_id` et `operator_id` dans toute création
 // ============================================================================
 
 const TENANT_SCOPED_TABLES = new Set([
@@ -20,6 +18,21 @@ const TENANT_SCOPED_TABLES = new Set([
   'active_sessions',
   'audit_logs',
 ]);
+
+const ALL_TABLES_TO_PURGE = [
+  'active_sessions',
+  'ticket_queued_forfaits',
+  'tickets',
+  'heartbeat_commands',
+  'mac_bypasses',
+  'wallet_transactions',
+  'audit_logs',
+  'staff_vendors',
+  'forfaits',
+  'routers',
+  'zones',
+  'operators',
+];
 
 function injectTenantIntoPayload(table, payload, tenantId) {
   if (!tenantId || !payload) return payload;
@@ -58,7 +71,6 @@ function appendTenantFilterToQuery(table, query, tenantId, method) {
   if (!tenantId || method === 'POST') return cleanQuery;
 
   if (TENANT_SCOPED_TABLES.has(table)) {
-    // Si la requête ne filtre pas déjà explicitement par tenant_id, on l'impose
     if (!cleanQuery.includes('tenant_id=')) {
       const filter = `tenant_id=eq.${encodeURIComponent(tenantId)}`;
       return cleanQuery ? `${cleanQuery}&${filter}` : filter;
@@ -89,13 +101,41 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
+
+    // Action spéciale de purge complète des 12 tables de la base Supabase
+    if (body.action === 'PURGE_ALL_TEST_DATA') {
+      const baseHeaders = {
+        'Content-Type': 'application/json',
+        apikey: supabaseKey,
+      };
+      if (supabaseKey.startsWith('eyJ')) {
+        baseHeaders.Authorization = `Bearer ${supabaseKey}`;
+      }
+
+      // 1. Tenter via la fonction RPC purge_all_test_data() si déjà installée
+      await fetch(`${supabaseUrl}/rest/v1/rpc/purge_all_test_data`, {
+        method: 'POST',
+        headers: baseHeaders,
+        body: JSON.stringify({}),
+      }).catch(() => {});
+
+      // 2. Exécuter en parallèle un DELETE sur chacune des 12 tables (via filtre id non nul)
+      for (const tbl of ALL_TABLES_TO_PURGE) {
+        await fetch(`${supabaseUrl}/rest/v1/${tbl}?id=not.is.null`, {
+          method: 'DELETE',
+          headers: baseHeaders,
+        }).catch(() => {});
+      }
+
+      return res.status(200).json({ ok: true, purgedTables: ALL_TABLES_TO_PURGE });
+    }
+
     const { table, method = 'GET', query = '', payload, prefer } = body;
 
     if (!table) {
       return res.status(400).json({ error: 'Paramètre table manquant' });
     }
 
-    // Résolution de l'ID du créateur / locataire (tenant_id)
     const headerTenant = req.headers['x-tenant-id'];
     const tenantId = String(
       headerTenant ||
@@ -115,7 +155,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // En-têtes transmis à PostgreSQL / PostgREST (inclut x-tenant-id pour les politiques RLS)
     const headers = {
       'Content-Type': 'application/json',
       apikey: supabaseKey,
@@ -133,7 +172,6 @@ export default async function handler(req, res) {
       headers.Prefer = prefer;
     }
 
-    // Injection automatique du tenant_id dans le payload et le filtre de requête
     const scopedQuery = appendTenantFilterToQuery(table, query, tenantId, method);
     const scopedPayload =
       payload !== undefined && (method === 'POST' || method === 'PATCH')

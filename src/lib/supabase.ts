@@ -10,7 +10,7 @@ const SUPABASE_URL: string =
 
 const SUPABASE_ANON_KEY: string = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const DEFAULT_MAIN_TENANT_ID = '11111111-1111-1111-1111-111111111111';
+export const DEFAULT_MAIN_TENANT_ID = '';
 
 const TENANT_SCOPED_TABLES = new Set([
   'zones',
@@ -175,7 +175,10 @@ export async function supabaseSelect<T>(
   query = 'select=*',
   customTenantId?: string
 ): Promise<T[] | null> {
-  const tenantId = customTenantId || getActiveTenantId();
+  const tenantId = (customTenantId || getActiveTenantId()).trim();
+  if (TENANT_SCOPED_TABLES.has(table) && !tenantId) {
+    return [];
+  }
   const scopedQuery = appendTenantFilter(table, query, tenantId);
 
   if (SUPABASE_ANON_KEY) {
@@ -200,7 +203,10 @@ export async function supabaseInsert<T>(
   upsertConflictCols?: string,
   customTenantId?: string
 ): Promise<T[] | null> {
-  const tenantId = customTenantId || getActiveTenantId();
+  const tenantId = (customTenantId || getActiveTenantId()).trim();
+  if (TENANT_SCOPED_TABLES.has(table) && !tenantId) {
+    return [];
+  }
   const enriched = enrichPayloadWithTenant(table, payload, tenantId);
   const cleanPayload = deduplicateBatch(enriched, upsertConflictCols);
   if (Array.isArray(cleanPayload) && cleanPayload.length === 0) return [];
