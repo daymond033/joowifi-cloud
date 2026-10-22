@@ -1,7 +1,10 @@
 // ============================================================================
-// JOOWIFI CLOUD — SERVEUR BOOTSTRAP DYNAMIQUE MIKROTIK ROUTEROS v5.0 (.RSC)
+// JOOWIFI CLOUD — SERVEUR BOOTSTRAP MIKROTIK ROUTEROS v6.3 MULTI-TENANT (.RSC)
 // URL : https://joowifi-cloud.vercel.app/api/v1/mikrotik/install?token=JWT-...
-// Génère à la volée le script d'installation complet + tous les tickets Supabase
+// Sécurité Multi-Tenant :
+// Résout d'abord le `tenant_id` et le `router_id` associés au `token` unique du
+// routeur, et n'injecte QUE les tickets et adresses MAC Bypass appartenant à
+// cet opérateur spécifique.
 // ============================================================================
 
 export default async function handler(req, res) {
@@ -10,8 +13,14 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
   const query = req.query || {};
-  const token = String(query.token || 'JWT-AF6L-JG37-7K23').trim();
+  const token = String(query.token || '').trim();
   const hostUrl = 'https://joowifi-cloud.vercel.app';
+
+  if (!token) {
+    return res
+      .status(401)
+      .send('# [JOOWIFI] ERREUR : Token unique du routeur requis (?token=JWT-...)\n');
+  }
 
   const supabaseUrl =
     process.env.VITE_SUPABASE_URL ||
@@ -25,280 +34,158 @@ export default async function handler(req, res) {
 
   if (supabaseKey) {
     try {
-      const headers = {
+      const baseHeaders = {
         'Content-Type': 'application/json',
         apikey: supabaseKey,
       };
       if (supabaseKey.startsWith('eyJ')) {
-        headers.Authorization = `Bearer ${supabaseKey}`;
+        baseHeaders.Authorization = `Bearer ${supabaseKey}`;
       }
 
-      // 1. Récupérer tous les tickets existants dans Supabase pour les injecter dès l'installation
-      const ticketsRes = await fetch(
-        `${supabaseUrl}/rest/v1/tickets?select=code,password,forfait_id,price_xof,duration_label,status&limit=500`,
-        { method: 'GET', headers }
+      // 1. Identifier le routeur et son `tenant_id` propriétaire à partir du `token` unique
+      const routerRes = await fetch(
+        `${supabaseUrl}/rest/v1/routers?install_token=eq.${encodeURIComponent(token)}&select=id,tenant_id,operator_id&limit=1`,
+        { method: 'GET', headers: baseHeaders }
       );
-      if (ticketsRes.ok) {
-        const tickets = await ticketsRes.json();
-        if (Array.isArray(tickets) && tickets.length > 0) {
-          const lines = tickets
-            .filter((t) => t && t.code && t.status !== 'expire' && t.status !== 'bloque')
-            .map((t) => {
-              const code = String(t.code).replace(/"/g, '');
-              const pwd = String(t.password || t.code).replace(/"/g, '');
-              const durRaw = String(t.duration_label || '24h').replace(/"/g, '');
-              const dur = durRaw.replace('j', 'd');
-              const prof =
-                String(t.forfait_id || '').toLowerCase().includes('vip')
-                  ? 'joowifi-vip'
-                  : 'joowifi-standard';
-              const comment = `JW:${String(t.forfait_id || 'Pass WiFi').replace(/"/g, '')} (${t.price_xof || 0}F)`;
-              return `:do { /ip hotspot user add name="${code}" password="${pwd}" profile="${prof}" limit-uptime="${dur}" comment="${comment}" } on-error={}`;
-            });
-          dynamicTicketsBlock = lines.join('\n');
+
+      let routerId = null;
+      let tenantId = null;
+      if (routerRes.ok) {
+        const routers = await routerRes.json();
+        if (Array.isArray(routers) && routers.length > 0) {
+          routerId = String(routers[0].id || '');
+          tenantId = String(routers[0].tenant_id || routers[0].operator_id || '');
         }
       }
 
-      // 2. Récupérer les adresses MAC Bypass
-      const macRes = await fetch(
-        `${supabaseUrl}/rest/v1/mac_bypasses?select=mac_address,binding_type,label,status&limit=200`,
-        { method: 'GET', headers }
-      );
-      if (macRes.ok) {
-        const macs = await macRes.json();
-        if (Array.isArray(macs) && macs.length > 0) {
-          const mLines = macs
-            .filter((m) => m && m.mac_address && m.status === 'active')
-            .map((m) => {
-              const mac = String(m.mac_address).replace(/"/g, '');
-              const btype = m.binding_type === 'blocked' ? 'blocked' : 'bypassed';
-              const lbl = String(m.label || 'Equipement').replace(/"/g, '');
-              return `:do { /ip hotspot ip-binding add mac-address="${mac}" type=${btype} comment="JW:${lbl}" } on-error={}`;
-            });
-          dynamicBypassesBlock = mLines.join('\n');
+      // Si le token correspond bien à un Opérateur / Tenant, on charge UNIQUEMENT ses données !
+      if (tenantId) {
+        const tenantHeaders = {
+          ...baseHeaders,
+          'x-tenant-id': tenantId,
+        };
+
+        // 2. Récupérer uniquement les tickets appartenant à CE tenant (et ce routeur ou 'all')
+        const ticketsRes = await fetch(
+          `${supabaseUrl}/rest/v1/tickets?tenant_id=eq.${encodeURIComponent(tenantId)}&select=code,password,forfait_id,price_xof,duration_label,status,router_id&limit=500`,
+          { method: 'GET', headers: tenantHeaders }
+        );
+        if (ticketsRes.ok) {
+          const tickets = await ticketsRes.json();
+          if (Array.isArray(tickets) && tickets.length > 0) {
+            const lines = tickets
+              .filter(
+                (t) =>
+                  t &&
+                  t.code &&
+                  t.status !== 'expire' &&
+                  t.status !== 'bloque' &&
+                  (!t.router_id || t.router_id === 'all' || t.router_id === routerId)
+              )
+              .map((t) => {
+                const code = String(t.code).replace(/"/g, '');
+                const pwd = String(t.password || t.code).replace(/"/g, '');
+                const durRaw = String(t.duration_label || '24h').replace(/"/g, '');
+                const dur = durRaw.replace('j', 'd');
+                const prof =
+                  String(t.forfait_id || '').toLowerCase().includes('vip')
+                    ? 'joowifi-vip'
+                    : 'joowifi-standard';
+                const comment = `JW:${String(t.forfait_id || 'Pass WiFi').replace(/"/g, '')} (${t.price_xof || 0}F)`;
+                return `:do { /ip hotspot user add name="${code}" password="${pwd}" profile="${prof}" limit-uptime="${dur}" comment="${comment}" } on-error={}`;
+              });
+            dynamicTicketsBlock = lines.join('\n');
+          }
+        }
+
+        // 3. Récupérer uniquement les adresses MAC Bypass appartenant à CE tenant
+        const macRes = await fetch(
+          `${supabaseUrl}/rest/v1/mac_bypasses?tenant_id=eq.${encodeURIComponent(tenantId)}&select=mac_address,binding_type,label,status,router_id&limit=200`,
+          { method: 'GET', headers: tenantHeaders }
+        );
+        if (macRes.ok) {
+          const macs = await macRes.json();
+          if (Array.isArray(macs) && macs.length > 0) {
+            const lines = macs
+              .filter(
+                (m) =>
+                  m &&
+                  m.mac_address &&
+                  m.status !== 'disabled' &&
+                  (!m.router_id || m.router_id === 'all' || m.router_id === routerId)
+              )
+              .map((m) => {
+                const mac = String(m.mac_address).replace(/"/g, '');
+                const bType = String(m.binding_type || 'bypassed').replace(/"/g, '');
+                const lbl = String(m.label || 'VIP').replace(/"/g, '');
+                return `:do { /ip hotspot ip-binding add mac-address="${mac}" type=${bType} comment="JW:${lbl}" } on-error={}`;
+              });
+            dynamicBypassesBlock = lines.join('\n');
+          }
         }
       }
-    } catch (e) {
-      // Continue with base bootstrap script if fetch fails
+    } catch {
+      // Fallback silencieux sur le script de base
     }
   }
 
   const rscScript = `# ============================================================================
-# JOOWIFI CLOUD ENGINE v5.0 — BOOTSTRAP AUTOMATIQUE ROUTEROS (v6.49+ & v7.x)
-# Jeton Equipement : ${token}
-# Architecture     : Cloud Pull HTTPS Sortant (Zero-Port / Compatible CGNAT)
-# Fuseau Horaire   : Africa/Abidjan (GMT+0)
+# JOOWIFI CLOUD ENGINE v6.3 — AUTO-INSTALLER MULTI-TENANT (Token: ${token})
 # ============================================================================
-# NOTE ROUTEROS v7 : Si la creation des schedulers renvoie "not allowed by device-mode",
-# executez dans New Terminal : /system/device-mode/update mode=enterprise puis redemarrez.
+:log info "[JOOWIFI] Demarrage de l'installation Joowifi Cloud (${token})..."
 
-# 1. NETTOYAGE DEFENSIF DES ANCIENNES TACHES JOOWIFI (EVITE LES DOUBLONS)
-:do { /system scheduler remove [find where name="joowifi-heartbeat-timer"] } on-error={}
-:do { /system scheduler remove [find where name="jw_heartbeat_sch"] } on-error={}
-:do { /system scheduler remove [find where name="jw_fastpoll_sch"] } on-error={}
-:do { /system scheduler remove [find where name="jw_log_watcher_sch"] } on-error={}
-:do { /system scheduler remove [find where comment="JOOWIFI"] } on-error={}
-:do { /system script remove [find where name="joowifi-heartbeat"] } on-error={}
-:do { /system script remove [find where name="jw_heartbeat"] } on-error={}
-:do { /system script remove [find where name="jw_fastpoll"] } on-error={}
-:do { /system script remove [find where name="jw_log_watcher"] } on-error={}
-:do { /ip hotspot walled-garden remove [find where comment~"^Joowifi" or comment="JOOWIFI"] } on-error={}
-:do { /ip firewall filter remove [find where comment="JOOWIFI_FASTTRACK_BYPASS"] } on-error={}
+:do { /ip dns set allow-remote-requests=yes servers=8.8.8.8,1.1.1.1 } on-error={}
+:do { /system ntp client set enabled=yes servers=pool.ntp.org,time.google.com } on-error={}
 
-# 2. ACTIVATION AUTOMATIQUE DU CLIENT DHCP SUR ETHER1 (INDISPENSABLE SUR CHR / VIRTUALBOX)
-:do {
-  :if ([:len [/ip dhcp-client find where interface="ether1"]] = 0) do={
-    /ip dhcp-client add interface=ether1 disabled=no use-peer-dns=yes add-default-route=yes
-  } else={
-    /ip dhcp-client set [find where interface="ether1"] disabled=no
-  }
-} on-error={}
-
-# 3. DNS HAUTE DISPONIBILITE & SYNCHRONISATION NTP (COMPATIBLE v6 & v7 VIA :PARSE)
-/ip dns set servers=8.8.8.8,1.1.1.1 allow-remote-requests=yes cache-size=4096KiB
-/system clock set time-zone-name=Africa/Abidjan
-:do { /system ntp client set enabled=yes } on-error={}
-:local rosVer [/system resource get version]
-:local rosMajor [:pick $rosVer 0 1]
-:if ($rosMajor = "7") do={
-  :do {
-    :local ntpV7 [:parse "/system ntp client servers remove [find]; /system ntp client servers add address=africa.pool.ntp.org; /system ntp client servers add address=162.159.200.1"]
-    $ntpV7
-  } on-error={}
-} else={
-  :do {
-    :local ntpV6 [:parse "/system ntp client set primary-ntp=162.159.200.1 secondary-ntp=216.239.35.0"]
-    $ntpV6
-  } on-error={}
+:local hsNet [/ip dhcp-server network find where address="10.5.50.0/24"]
+:if ([:len $hsNet] > 0) do={
+    /ip dhcp-server network set $hsNet dns-server=8.8.8.8,1.1.1.1
 }
 
-# 4. PROTECTION DES LIMITES DE DEBIT HOTSPOT CONTRE LE FASTTRACK + BAIL DHCP 1H
-:do {
-  /ip firewall filter add chain=forward action=accept hotspot=auth comment="JOOWIFI_FASTTRACK_BYPASS"
-  :local fRule [/ip firewall filter find where comment="JOOWIFI_FASTTRACK_BYPASS"]
-  /ip firewall filter move $fRule 0
-} on-error={}
-
-:foreach d in=[/ip dhcp-server find] do={
-  :do { /ip dhcp-server set $d lease-time=1h } on-error={}
+:foreach srv in=[/ip dhcp-server find] do={
+    :do { /ip dhcp-server set $srv lease-time=1h } on-error={}
 }
 
-# 5. OPTIMISATION DES PROFILS HOTSPOT & RECONNEXION TRANSPARENTE PAR COOKIE MAC
-:foreach hp in=[/ip hotspot profile find] do={
-  :do { /ip hotspot profile set $hp http-cookie-lifetime=30d login-by=http-pap,http-chap,cookie,mac-cookie,mac } on-error={}
+:local ftRule [/ip firewall filter find where action=fasttrack-connection]
+:if ([:len $ftRule] > 0) do={
+    :if ([:len [/ip firewall filter find where comment="Joowifi: Bypass FastTrack Hotspot"]] = 0) do={
+        :do { /ip firewall filter add chain=forward src-address=10.5.50.0/24 action=accept place-before=($ftRule->0) comment="Joowifi: Bypass FastTrack Hotspot" } on-error={}
+        :do { /ip firewall filter add chain=forward dst-address=10.5.50.0/24 action=accept place-before=($ftRule->0) comment="Joowifi: Bypass FastTrack Hotspot Return" } on-error={}
+    }
 }
-:foreach hsrv in=[/ip hotspot find] do={
-  :do { /ip hotspot set $hsrv idle-timeout=none keepalive-timeout=none addresses-per-mac=2 } on-error={}
-}
-:do { /ip hotspot user profile set [find where default=yes] shared-users=1000 keepalive-timeout=none mac-cookie-timeout=90d } on-error={}
-:do { /ip hotspot user profile add name="joowifi-standard" rate-limit="10M/3M" shared-users=1000 mac-cookie-timeout=30d status-autorefresh=1m } on-error={}
-:do { /ip hotspot user profile add name="joowifi-vip" rate-limit="25M/8M" shared-users=1000 mac-cookie-timeout=30d status-autorefresh=1m } on-error={}
-:do { /ip hotspot user profile add name="joowifi-unlimited" rate-limit="50M/15M" shared-users=1000 mac-cookie-timeout=30d status-autorefresh=1m } on-error={}
 
-# 6. WALLED GARDEN : CLOUD JOOWIFI, SUPABASE & PASSERELLES MOBILE MONEY UEMOA
-:do { /ip hotspot walled-garden add dst-host="joowifi-cloud.vercel.app" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.vercel.app" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="qvpgehfttufecuapntnm.supabase.co" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.wave.com" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="wave.com" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.orange.ci" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.mtn.ci" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.moov-africa.ci" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.cinetpay.com" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.fedapay.com" action=allow comment="JOOWIFI" } on-error={}
-:do { /ip hotspot walled-garden add dst-host="*.kkiapay.me" action=allow comment="JOOWIFI" } on-error={}
+:do { /ip hotspot profile set [find] login-by=http-chap,http-pap,cookie,mac-cookie mac-cookie-timeout=30d } on-error={}
+:do { /ip hotspot user profile remove [find where name~"^joowifi-"] } on-error={}
 
-# 7. SYNCHRONISATION INITIALE IMMEDIATE DES TICKETS & BYPASS MAC DEPUIS SUPABASE
+/ip hotspot user profile add name="joowifi-standard" rate-limit="10M/3M" shared-users=1000 add-mac-cookie=yes mac-cookie-timeout=30d status-autorefresh=1m transparent-proxy=no on-login=":local u \\$user; :local m \\$"mac-address\\"; :local a \\$address; :do { /tool fetch url=(\\"${hostUrl}/api/v1/mikrotik/heartbeat?mode=authevent&token=${token}&event=login&code=\\" . \\$u . \\"&mac=\\" . \\$m . \\"&ip=\\" . \\$a) keep-result=no } on-error={}"
+/ip hotspot user profile add name="joowifi-vip" rate-limit="25M/8M" shared-users=1000 add-mac-cookie=yes mac-cookie-timeout=30d status-autorefresh=1m transparent-proxy=no on-login=":local u \\$user; :local m \\$"mac-address\\"; :local a \\$address; :do { /tool fetch url=(\\"${hostUrl}/api/v1/mikrotik/heartbeat?mode=authevent&token=${token}&event=login&code=\\" . \\$u . \\"&mac=\\" . \\$m . \\"&ip=\\" . \\$a) keep-result=no } on-error={}"
+
+:do { /ip hotspot walled-garden ip remove [find where comment~"^JW-WG"] } on-error={}
+/ip hotspot walled-garden ip add action=accept disabled=no dst-host="joowifi-cloud.vercel.app" comment="JW-WG: Joowifi Cloud"
+/ip hotspot walled-garden ip add action=accept disabled=no dst-host="*.supabase.co" comment="JW-WG: Cloud DB"
+/ip hotspot walled-garden ip add action=accept disabled=no dst-host="*.wave.com" comment="JW-WG: Wave"
+/ip hotspot walled-garden ip add action=accept disabled=no dst-host="*.orange.ci" comment="JW-WG: Orange"
+/ip hotspot walled-garden ip add action=accept disabled=no dst-host="*.mtn.ci" comment="JW-WG: MTN"
+
+# Synchronisation initiale des tickets appartenant exclusivement a cet operateur
 ${dynamicTicketsBlock}
+
+# Synchronisation initiale des adresses MAC Bypass de cet operateur
 ${dynamicBypassesBlock}
 
-# 8. AGENT HEARTBEAT PRINCIPAL (45s) AVEC RECONCILIATION AUTOMATIQUE D'INVENTAIRE
-:do { /system script remove [find where name="jw_heartbeat"] } on-error={}
-/system script add name="jw_heartbeat" dont-require-permissions=yes comment="JOOWIFI" source={
-  :if ([:len [/system script job find where script="jw_heartbeat"]] > 1) do={ :error "skip" }
+:do { /system scheduler remove [find where name~"^jw_"] } on-error={}
+:do { /system script remove [find where name~"^jw_"] } on-error={}
 
-  :local token "${token}"
-  :local cpu [/system resource get cpu-load]
-  :local freeMem [/system resource get free-memory]
-  :local totalMem [/system resource get total-memory]
-  :local ramPct (100 - (($freeMem * 100) / $totalMem))
-  :local up [/system resource get uptime]
-  :local ver [/system resource get version]
-  :local actCount [:len [/ip hotspot active find]]
-  :local jwUsers [:len [/ip hotspot user find where comment~"^JW:"]]
-  :local syncFile "jw_sync.rsc"
+/system script add name="jw_fastpoll" policy=read,write,policy,test source=":local token \\"${token}\\"; :local jwCount [:len [/ip hotspot user find where comment~\\"^JW:\\"]]; :local url (\\"${hostUrl}/api/v1/mikrotik/heartbeat?mode=fastpoll&token=\\" . \\$token . \\"&jw_users=\\" . \\$jwCount); :do { /tool fetch url=\\$url dst-path=\\"jw_fast.rsc\\" mode=https check-certificate=no; :delay 1s; :if ([:len [/file find name=\\"jw_fast.rsc\\"]] > 0) do={ :if ([/file get [find name=\\"jw_fast.rsc\\"] size] > 15) do={ :do { /import file-name=\\"jw_fast.rsc\\" } on-error={} }; /file remove [find name=\\"jw_fast.rsc\\"] } } on-error={}"
+/system script add name="jw_heartbeat" policy=read,write,policy,test source=":local token \\"${token}\\"; :local cpu [/system resource get cpu-load]; :local freeMem [/system resource get free-memory]; :local totalMem [/system resource get total-memory]; :local ram (100 - ((\\$freeMem * 100) / \\$totalMem)); :local active [:len [/ip hotspot active find]]; :local jwCount [:len [/ip hotspot user find where comment~\\"^JW:\\"]]; :local url (\\"${hostUrl}/api/v1/mikrotik/heartbeat?mode=heartbeat&token=\\" . \\$token . \\"&cpu=\\" . \\$cpu . \\"&ram=\\" . \\$ram . \\"&active=\\" . \\$active . \\"&jw_users=\\" . \\$jwCount); :do { /tool fetch url=\\$url dst-path=\\"jw_cmd.rsc\\" mode=https check-certificate=no; :delay 1s; :if ([:len [/file find name=\\"jw_cmd.rsc\\"]] > 0) do={ :if ([/file get [find name=\\"jw_cmd.rsc\\"] size] > 15) do={ :do { /import file-name=\\"jw_cmd.rsc\\" } on-error={} }; /file remove [find name=\\"jw_cmd.rsc\\"] } } on-error={}"
+/system script add name="jw_guardian" policy=read,write,policy,test source=":if ([:len [/system scheduler find name=\\"jw_fastpoll_sch\\"]] = 0) do={ /system scheduler add name=\\"jw_fastpoll_sch\\" interval=10s on-event=\\"/system script run jw_fastpoll\\" }"
 
-  :do {
-    /tool fetch mode=https check-certificate=no keep-result=yes dst-path=$syncFile duration=15s \\
-      url=("${hostUrl}/api/v1/mikrotik/heartbeat?token=" . $token . "&cpu=" . $cpu . "&ram=" . $ramPct . "&active=" . $actCount . "&jw_users=" . $jwUsers)
-    :delay 1s
-    :if ([:len [/file find where name=$syncFile]] > 0) do={
-      :if ([/file get $syncFile size] > 5) do={
-        :do { /import file-name=$syncFile } on-error={ :log warning "Joowifi: erreur import sync" }
-      }
-      :do { /file remove $syncFile } on-error={}
-    }
-  } on-error={
-    :log warning "Joowifi Cloud: attente reseau sur heartbeat 45s"
-  }
-}
+/system scheduler add name="jw_fastpoll_sch" interval=10s start-time=startup on-event="/system script run jw_fastpoll" comment="Joowifi: Fast-Poll Tickets (10s)"
+/system scheduler add name="jw_heartbeat_sch" interval=45s start-time=startup on-event="/system script run jw_heartbeat" comment="Joowifi: Heartbeat Telemetry (45s)"
+/system scheduler add name="jw_guardian_sch" interval=2m start-time=startup on-event="/system script run jw_guardian" comment="Joowifi: Auto-Heal Guardian (2m)"
 
-# 9. AGENT FAST-POLL BASSE LATENCE (10s) POUR LIVRAISON INSTANTANEE CAISSE POS
-:do { /system script remove [find where name="jw_fastpoll"] } on-error={}
-/system script add name="jw_fastpoll" dont-require-permissions=yes comment="JOOWIFI" source={
-  :if ([:len [/system script job find where script="jw_fastpoll"]] > 1) do={ :error "skip" }
-
-  :local token "${token}"
-  :local jwUsers [:len [/ip hotspot user find where comment~"^JW:"]]
-  :local pollFile "jw_poll.rsc"
-
-  :do {
-    /tool fetch mode=https check-certificate=no keep-result=yes dst-path=$pollFile duration=8s \\
-      url=("${hostUrl}/api/v1/mikrotik/heartbeat?mode=fastpoll&token=" . $token . "&jw_users=" . $jwUsers)
-    :delay 500ms
-    :if ([:len [/file find where name=$pollFile]] > 0) do={
-      :if ([/file get $pollFile size] > 5) do={
-        :do { /import file-name=$pollFile } on-error={}
-      }
-      :do { /file remove $pollFile } on-error={}
-    }
-  } on-error={}
-}
-
-# 10. REMONTEE TEMPS REEL DES CONNEXIONS CLIENTS HOTSPOT (15s) VERS SUPABASE
-:do { /system script remove [find where name="jw_log_watcher"] } on-error={}
-/system script add name="jw_log_watcher" dont-require-permissions=yes comment="JOOWIFI" source={
-  :if ([:len [/system script job find where script="jw_log_watcher"]] > 1) do={ :error "skip" }
-  :global jwSentLogs
-  :if ([:typeof $jwSentLogs] = "nothing") do={ :set jwSentLogs "" }
-
-  :foreach item in=[/log find where topics~"hotspot"] do={
-    :local msg [/log get $item message]
-    :local ltime [/log get $item time]
-    :local evType ""
-    :if ([:find $msg "logged in"] >= 0) do={ :set evType "login" }
-    :if ([:find $msg "login failed"] >= 0) do={ :set evType "failed" }
-
-    :if ($evType != "") do={
-      :local sep [:find $msg " ("]
-      :local ucode $msg
-      :if ($sep >= 0) do={ :set ucode [:pick $msg 0 $sep] }
-      :if ([:len $ucode] > 0 && [:len $ucode] < 32 && [:find $ucode " "] < 0 && [:find $ucode ":"] < 0) do={
-        :local logKey ("[" . $ltime . "|" . $ucode . "|" . $evType . "]")
-        :if ([:find $jwSentLogs $logKey] < 0) do={
-          :set jwSentLogs ($jwSentLogs . $logKey)
-          :do {
-            /tool fetch mode=https check-certificate=no keep-result=no duration=8s \\
-              url=("${hostUrl}/api/v1/mikrotik/heartbeat?mode=authevent&token=${token}&code=" . $ucode . "&event=" . $evType)
-          } on-error={}
-        }
-      }
-    }
-  }
-  :if ([:len $jwSentLogs] > 4000) do={
-    :set jwSentLogs [:pick $jwSentLogs ([:len $jwSentLogs] - 2000) [:len $jwSentLogs]]
-  }
-}
-
-# 11. PLANIFICATION SANS START-DATE (COMPATIBILITE STRICTE ROUTEROS 7.24+)
-:do { /system scheduler add name="jw_heartbeat_sch" interval=45s on-event="jw_heartbeat" comment="JOOWIFI" } on-error={}
-:do { /system scheduler set [find where name="jw_heartbeat_sch"] interval=45s on-event="jw_heartbeat" comment="JOOWIFI" } on-error={}
-
-:do { /system scheduler add name="jw_fastpoll_sch" interval=10s on-event="jw_fastpoll" comment="JOOWIFI" } on-error={}
-:do { /system scheduler set [find where name="jw_fastpoll_sch"] interval=10s on-event="jw_fastpoll" comment="JOOWIFI" } on-error={}
-
-:do { /system scheduler add name="jw_log_watcher_sch" interval=15s on-event="jw_log_watcher" comment="JOOWIFI" } on-error={}
-:do { /system scheduler set [find where name="jw_log_watcher_sch"] interval=15s on-event="jw_log_watcher" comment="JOOWIFI" } on-error={}
-
-# 12. GARDIEN AUTO-REPARATEUR AUTONOME (JW_GUARDIAN - 2m, IMPORT ONE-SHOT ANTI-SUICIDE)
-:do { /system scheduler remove [find where name="jw_guardian_sch"] } on-error={}
-:do { /system script remove [find where name="jw_guardian"] } on-error={}
-/system script add name="jw_guardian" dont-require-permissions=yes comment="JW_GUARDIAN" source={
-  :if ([:len [/system scheduler find where name="jw_heartbeat_sch"]] = 0) do={
-    :log warning "Joowifi Guardian: jw_heartbeat_sch manquant, lancement auto-reparation..."
-    :do {
-      /tool fetch mode=https check-certificate=no keep-result=yes dst-path=jw_repair.rsc duration=15s \\
-        url="${hostUrl}/api/v1/mikrotik/install?token=${token}"
-      :delay 2s
-      :if ([:len [/file find where name="jw_repair.rsc"]] > 0) do={
-        :do { /system scheduler remove [find where name="jw_oneshot_sch"] } on-error={}
-        :do { /system script remove [find where name="jw_oneshot"] } on-error={}
-        /system script add name="jw_oneshot" dont-require-permissions=yes source={
-          :do { /system scheduler remove [find where name="jw_oneshot_sch"] } on-error={}
-          :do { /import file-name=jw_repair.rsc } on-error={}
-          :do { /file remove jw_repair.rsc } on-error={}
-          :do { /system script remove [find where name="jw_oneshot"] } on-error={}
-        }
-        :do { /system scheduler add name="jw_oneshot_sch" interval=5s on-event="jw_oneshot" } on-error={}
-      }
-    } on-error={}
-  }
-}
-:do { /system scheduler add name="jw_guardian_sch" interval=2m on-event="jw_guardian" comment="JW_GUARDIAN" } on-error={}
-
-# 13. PREMIER APPEL HEARTBEAT IMMEDIAT
-:do { /system script run jw_heartbeat } on-error={}
-:log info "==> [JOOWIFI CLOUD v5.0] Installation et synchronisation des tickets terminees avec succes ! <=="
+:do { /system script run jw_fastpoll } on-error={}
+:log info "[JOOWIFI] Installation Multi-Tenant terminee avec succes !"
 `;
 
   return res.status(200).send(rscScript);

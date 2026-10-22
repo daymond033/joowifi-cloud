@@ -1,7 +1,13 @@
 // ============================================================================
-// JOOWIFI CLOUD v5.1 — ENDPOINT HEARTBEAT (45s), FASTPOLL (10s) & AUTH-EVENTS
+// JOOWIFI CLOUD v6.3 — API DE SYNCHRONISATION MIKROTIK MULTI-TENANT ISOLÉE
 // URL : https://joowifi-cloud.vercel.app/api/v1/mikrotik/heartbeat
-// Inclut l'Acknowledgment (router_synced) + Re-sync auto si routeur vide (jw_users=0)
+//
+// Sécurité Multi-Tenant :
+// 1. Exige obligatoirement le Token unique d'identification du routeur (`token`).
+// 2. Aucun fallback vers un compte global n'est autorisé.
+// 3. Délègue à la fonction RPC PostgreSQL `public.mikrotik_heartbeat` (et
+//    `public.mikrotik_record_authevent`) qui filtre strictement les tickets et
+//    commandes par `tenant_id` du propriétaire du routeur ET `router_id`.
 // ============================================================================
 
 export default async function handler(req, res) {
@@ -13,13 +19,20 @@ export default async function handler(req, res) {
   const body = req.body || {};
 
   const mode = String(query.mode || body.mode || 'heartbeat').trim();
-  const token = String(query.token || body.token || 'JWT-AF6L-JG37-7K23').trim();
+  const token = String(query.token || body.token || '').trim();
   const cpu = Math.min(100, Math.max(0, Math.round(Number(query.cpu || body.cpu || 12))));
   const ram = Math.min(100, Math.max(0, Math.round(Number(query.ram || body.ram || 34))));
   const uptime = String(query.uptime || body.uptime || '01j 00h 00m');
   const active = Math.max(0, Math.round(Number(query.active || query.users || body.activeUsers || 0)));
   const version = String(query.version || body.version || 'v7.23.8');
   const jwUsersParam = query.jw_users !== undefined ? Number(query.jw_users) : -1;
+
+  // 1. Exiger un Token unique d'identification du routeur (Zéro token par défaut partagé !)
+  if (!token) {
+    return res
+      .status(401)
+      .send('# [JOOWIFI] ERREUR : Token unique du routeur requis (?token=JWT-...)\n');
+  }
 
   const supabaseUrl =
     process.env.VITE_SUPABASE_URL ||
@@ -31,7 +44,7 @@ export default async function handler(req, res) {
   if (!supabaseKey) {
     return res
       .status(200)
-      .send(`# [JOOWIFI] Heartbeat recu pour ${token} (Cle Supabase en attente)\n`);
+      .send(`# [JOOWIFI] Heartbeat recu pour ${token} (Cle Cloud en attente)\n`);
   }
 
   const headers = {
@@ -43,52 +56,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. MODE AUTH-EVENT : Remontée temps réel quand un client se connecte sur le MikroTik
+    // 2. MODE AUTH-EVENT ISOLÉ PAR TOKEN ROUTEUR :
+    // Active le ticket et crée la session active uniquement dans le `tenant_id` propriétaire de ce routeur
     if (mode === 'authevent') {
       const code = String(query.code || body.code || '').trim();
       const evType = String(query.event || body.event || 'login').trim();
       if (code && evType === 'login') {
-        await fetch(`${supabaseUrl}/rest/v1/tickets?code=ilike.${encodeURIComponent(code)}`, {
-          method: 'PATCH',
+        await fetch(`${supabaseUrl}/rest/v1/rpc/mikrotik_record_authevent`, {
+          method: 'POST',
           headers,
           body: JSON.stringify({
-            status: 'actif',
-            activated_at: new Date().toISOString(),
+            p_token: token,
+            p_code: code,
+            p_ip: String(query.ip || '10.5.50.10'),
+            p_mac: String(query.mac || '00:00:00:00:00:00'),
           }),
-        });
-        await fetch(`${supabaseUrl}/rest/v1/active_sessions?on_conflict=operator_id,username`, {
-          method: 'POST',
-          headers: { ...headers, Prefer: 'resolution=merge-duplicates,return=minimal' },
-          body: JSON.stringify([
-            {
-              operator_id: '11111111-1111-1111-1111-111111111111',
-              router_id: '33333333-3333-3333-3333-333333333331',
-              username: code,
-              ip_address: String(query.ip || '10.5.50.10'),
-              mac_address: String(query.mac || 'AA:BB:CC:11:22:33'),
-              forfait_name: 'Session Hotspot MikroTik',
-              uptime_minutes: 1,
-              device_type: 'smartphone',
-            },
-          ]),
         });
       }
       return res.status(200).send(`# [JOOWIFI] Auth event recorded (${code})\n`);
     }
 
-    // 2. Si le routeur signale explicitement jw_users=0 (mémoire Hotspot vide suite à un reset ou 1ère install),
-    // on réarme router_synced = false dans public.tickets pour forcer l'envoi initial complet !
-    if (jwUsersParam === 0) {
-      await fetch(`${supabaseUrl}/rest/v1/tickets?status=neq.expire`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ router_synced: false }),
-      });
-    }
-
-    // 3. Appeler la fonction RPC public.mikrotik_heartbeat (qui dépile heartbeat_commands + tickets non synchronisés
-    // et passe automatiquement router_synced = true pour éviter toute boucle !)
-    const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/mikrotik_heartbeat`, {
+    // 3. SYNCHRONISATION HEARTBEAT / FAST-POLL ISOLÉE PAR TENANT & ROUTEUR :
+    // La fonction RPC `public.mikrotik_heartbeat` résout `v_router_id` et `v_tenant_id` à partir
+    // de `p_token`, réarme `router_synced = false` uniquement pour ce `tenant_id` si `p_jw_users = 0`,
+    // et ne renvoie que les tickets et commandes appartenant à ce `tenant_id` et ce `router_id`.
+    let rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/mikrotik_heartbeat`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -98,8 +90,25 @@ export default async function handler(req, res) {
         p_uptime: uptime,
         p_active_users: active,
         p_version: version,
+        p_jw_users: jwUsersParam,
       }),
     });
+
+    // Rétrocompatibilité si la migration SQL à 7 paramètres n'a pas encore été exécutée
+    if (!rpcRes.ok) {
+      rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/mikrotik_heartbeat`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          p_token: token,
+          p_cpu: cpu,
+          p_ram: ram,
+          p_uptime: uptime,
+          p_active_users: active,
+          p_version: version,
+        }),
+      });
+    }
 
     if (rpcRes.ok) {
       const scriptResult = await rpcRes.json();
