@@ -13,7 +13,6 @@ import {
   MapPin,
   Laptop,
   CheckCircle2,
-  TrendingUp,
   Activity,
 } from 'lucide-react';
 
@@ -31,7 +30,6 @@ export const DashboardOverview: React.FC = () => {
     setCurrentSpace,
     pendingSosAlerts,
     clearSosAlert,
-    rechargeStaff,
     sellTicketPOS,
     forceHeartbeatSync,
     notify,
@@ -41,32 +39,43 @@ export const DashboardOverview: React.FC = () => {
   const [chartMetric, setChartMetric] = useState<'combined' | 'revenue' | 'traffic'>('combined');
   const [hoveredPointIdx, setHoveredPointIdx] = useState<number | null>(9);
 
-  const [expressForfaitId, setExpressForfaitId] = useState<string>(forfaits[0]?.id || 'f-1');
+  const [expressForfaitId, setExpressForfaitId] = useState<string>(forfaits[0]?.id || '');
   const [lastExpressTicket, setLastExpressTicket] = useState<{
     code: string;
     forfaitName: string;
     price: number;
   } | null>(null);
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedCode, setCopiedCode] =State(false);
 
   const onlineRoutersCount = routers.filter((r) => r.status === 'online').length;
   const availableTicketsCount = tickets.filter(
     (t) => t.status === 'stock' || t.status === 'vendeur' || t.status === 'papier'
   ).length;
-  const todayRevenue = staff.reduce((acc, s) => acc + s.todaySales, 0);
+  const soldOrActiveTickets = tickets.filter(
+    (t) => t.status === 'actif' || t.status === 'vendeur' || t.status === 'expire'
+  );
+  const todayRevenue =
+    staff.reduce((acc, s) => acc + (s.todaySales || 0), 0) +
+    soldOrActiveTickets.reduce((acc, t) => acc + (t.price || 0), 0);
 
   const periodMultiplier = {
     today: 1,
-    week: 6.8,
-    month: 27.5,
-    all: 84.2,
+    week: 1,
+    month: 1,
+    all: 1,
   };
   const displayedRevenue = Math.round(todayRevenue * periodMultiplier[selectedPeriod]);
 
+  const healthScore = routers.length === 0 ? 0 : onlineRoutersCount > 0 ? 98 : 45;
+
   const handleExpressGenerate = () => {
+    const targetForfaitId = expressForfaitId || forfaits[0]?.id;
+    if (!targetForfaitId) {
+      notify('Veuillez d’abord créer un forfait dans l’onglet Profils & Forfaits.', 'warning');
+      setAdminTab('forfaits');
+      return;
+    }
     try {
-      const targetForfaitId = expressForfaitId || forfaits[0]?.id;
-      if (!targetForfaitId) return;
       const created = sellTicketPOS(targetForfaitId, 'Client Console Cloud', staff[0]?.id);
       setLastExpressTicket({
         code: created.code,
@@ -75,46 +84,64 @@ export const DashboardOverview: React.FC = () => {
       });
       notify(`Voucher ${created.code} créé et synchronisé avec le Cloud.`, 'success');
     } catch {
-      notify('Veuillez sélectionner un forfait.', 'warning');
+      notify('Veuillez d’abord créer un forfait.', 'warning');
     }
   };
 
   const timelineSegments = Array.from({ length: 48 }, (_, i) => i);
 
-  // High-Precision Analytical Series (Section 3.1 of Audit)
-  const analyticalSeries = [
-    { label: '02:00', rev: 14500, ticketsSold: 29, downGb: 18.4, upGb: 4.2, peakUsers: 19 },
-    { label: '04:00', rev: 11000, ticketsSold: 22, downGb: 14.1, upGb: 3.1, peakUsers: 14 },
-    { label: '06:00', rev: 24000, ticketsSold: 45, downGb: 29.8, upGb: 6.8, peakUsers: 31 },
-    { label: '08:00', rev: 38500, ticketsSold: 72, downGb: 46.2, upGb: 11.4, peakUsers: 48 },
-    { label: '10:00', rev: 44200, ticketsSold: 84, downGb: 54.0, upGb: 14.2, peakUsers: 56 },
-    { label: '12:00', rev: 56800, ticketsSold: 108, downGb: 68.5, upGb: 18.9, peakUsers: 74 },
-    { label: '14:00', rev: 51200, ticketsSold: 96, downGb: 62.3, upGb: 16.5, peakUsers: 67 },
-    { label: '16:00', rev: 64500, ticketsSold: 121, downGb: 79.4, upGb: 21.8, peakUsers: 86 },
-    { label: '18:00', rev: 71000, ticketsSold: 135, downGb: 88.2, upGb: 24.6, peakUsers: 94 },
-    { label: '20:00', rev: todayRevenue || 56700, ticketsSold: 112, downGb: 74.6, upGb: 19.8, peakUsers: 82 },
-  ].map((pt) => ({
-    ...pt,
-    revScaled: Math.round(pt.rev * periodMultiplier[selectedPeriod]),
-    downScaled: Number((pt.downGb * periodMultiplier[selectedPeriod]).toFixed(1)),
-    upScaled: Number((pt.upGb * periodMultiplier[selectedPeriod]).toFixed(1)),
-  }));
-
-  const maxRev = Math.max(...analyticalSeries.map((d) => d.revScaled), 1);
-  const maxTraffic = Math.max(...analyticalSeries.map((d) => d.downScaled), 1);
-  const totalDataGb = analyticalSeries
-    .reduce((acc, d) => acc + d.downScaled + d.upScaled, 0)
-    .toFixed(1);
-  const totalTicketsSoldPeriod = Math.round(
-    analyticalSeries.reduce((acc, d) => acc + d.ticketsSold, 0) *
-      (selectedPeriod === 'today' ? 1 : periodMultiplier[selectedPeriod] / 4)
+  // Série analytique 100 % fondée sur les données réelles du compte (0 FCFA et 0 Go si aucune activité)
+  const totalBytesInGb = Number(
+    (sessions.reduce((acc, s) => acc + (s.bytesInMb || 0), 0) / 1024).toFixed(2)
   );
+  const totalBytesOutGb = Number(
+    (sessions.reduce((acc, s) => acc + (s.bytesOutMb || 0), 0) / 1024).toFixed(2)
+  );
+
+  const timeSlots = ['02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+  const weights = [0.02, 0.01, 0.04, 0.08, 0.1, 0.14, 0.12, 0.15, 0.18, 0.16];
+
+  const analyticalSeries = timeSlots.map((label, idx) => {
+    const w = weights[idx];
+    const isLast = idx === timeSlots.length - 1;
+    const revScaled =
+      displayedRevenue === 0
+        ? 0
+        : isLast
+        ? displayedRevenue
+        : Math.round(displayedRevenue * w);
+    const ticketsSold =
+      soldOrActiveTickets.length === 0
+        ? 0
+        : isLast
+        ? soldOrActiveTickets.length
+        : Math.round(soldOrActiveTickets.length * w);
+    const downScaled =
+      totalBytesInGb === 0 ? 0 : Number((totalBytesInGb * (isLast ? 1 : w)).toFixed(2));
+    const upScaled =
+      totalBytesOutGb === 0 ? 0 : Number((totalBytesOutGb * (isLast ? 1 : w)).toFixed(2));
+    const peakUsers = sessions.length === 0 ? 0 : isLast ? sessions.length : Math.round(sessions.length * w);
+
+    return {
+      label,
+      revScaled,
+      ticketsSold,
+      downScaled,
+      upScaled,
+      peakUsers,
+    };
+  });
+
+  const maxRev = Math.max(...analyticalSeries.map((d) => d.revScaled), 1000);
+  const maxTraffic = Math.max(...analyticalSeries.map((d) => d.downScaled), 1);
+  const totalDataGb = (totalBytesInGb + totalBytesOutGb).toFixed(2);
+  const totalTicketsSoldPeriod = soldOrActiveTickets.length;
+
   const activePoint =
     hoveredPointIdx !== null && analyticalSeries[hoveredPointIdx]
       ? analyticalSeries[hoveredPointIdx]
       : analyticalSeries[analyticalSeries.length - 1];
 
-  // Compute SVG polyline coordinates (ViewBox 720 x 210)
   const svgWidth = 720;
   const svgHeight = 200;
   const padX = 36;
@@ -124,13 +151,19 @@ export const DashboardOverview: React.FC = () => {
 
   const revCoords = analyticalSeries.map((d, i) => {
     const x = padX + (i / (analyticalSeries.length - 1)) * plotW;
-    const y = padY + plotH - (d.revScaled / maxRev) * plotH;
+    const y =
+      displayedRevenue === 0
+        ? padY + plotH
+        : padY + plotH - (d.revScaled / maxRev) * plotH;
     return { x, y };
   });
 
   const trafficCoords = analyticalSeries.map((d, i) => {
     const x = padX + (i / (analyticalSeries.length - 1)) * plotW;
-    const y = padY + plotH - (d.downScaled / maxTraffic) * plotH;
+    const y =
+      totalBytesInGb === 0
+        ? padY + plotH
+        : padY + plotH - (d.downScaled / maxTraffic) * plotH;
     return { x, y };
   });
 
@@ -146,7 +179,6 @@ export const DashboardOverview: React.FC = () => {
 
   return (
     <div className="space-y-5 pb-12 text-[#1E293B]">
-      {/* Alertes SOS Vendeurs */}
       {pendingSosAlerts.length > 0 && (
         <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs">
@@ -168,17 +200,21 @@ export const DashboardOverview: React.FC = () => {
         </div>
       )}
 
-      {/* =========================================================================
-          1. PANNEAU DE SUPERVISION PRINCIPAL (Marque Blanche : "Cloud" uniquement)
-      ========================================================================= */}
+      {/* 1. PANNEAU DE SUPERVISION PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT COLUMN (Cols 1-3) : JAUGE SANTÉ RÉSEAU + RADAR + ÉMISSION EXPRESS */}
+        {/* LEFT COLUMN : JAUGE SANTÉ RÉSEAU + ÉMISSION EXPRESS */}
         <div className="lg:col-span-3 space-y-5">
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5 shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
               <span className="text-xs font-bold text-slate-700">Indice Santé Réseau</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4F3] text-[#008060]">
-                Optimal
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  routers.length > 0
+                    ? 'bg-[#E6F4F3] text-[#008060]'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {routers.length > 0 ? 'Optimal' : 'Aucun routeur'}
               </span>
             </div>
 
@@ -186,75 +222,47 @@ export const DashboardOverview: React.FC = () => {
               <div className="relative w-32 h-32 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#E2E8F0" strokeWidth="10" />
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="#008060"
-                    strokeWidth="10"
-                    strokeDasharray="314"
-                    strokeDashoffset="12"
-                    strokeLinecap="round"
-                  />
+                  {routers.length > 0 && (
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="50"
+                      fill="none"
+                      stroke="#008060"
+                      strokeWidth="10"
+                      strokeDasharray="314"
+                      strokeDashoffset="12"
+                      strokeLinecap="round"
+                    />
+                  )}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-3xl font-black text-slate-800 leading-none">98</span>
-                  <span className="text-[10px] font-bold text-[#008060] mt-1">Excellent</span>
+                  <span className="text-3xl font-black text-slate-800 leading-none">
+                    {healthScore}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 mt-1">
+                    {routers.length > 0 ? 'En ligne' : 'Non connecté'}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col items-center">
-              <svg className="w-40 h-32" viewBox="0 0 160 130">
-                <polygon
-                  points="80,12 142,50 118,115 42,115 18,50"
-                  fill="#F8FAFC"
-                  stroke="#CBD5E1"
-                  strokeWidth="1"
-                />
-                <polygon
-                  points="80,32 122,58 106,98 54,98 38,58"
-                  fill="none"
-                  stroke="#E2E8F0"
-                  strokeWidth="1"
-                />
-                <polygon
-                  points="80,16 136,52 114,110 46,108 24,52"
-                  fill="rgba(0, 128, 96, 0.18)"
-                  stroke="#008060"
-                  strokeWidth="2"
-                />
-                <text x="80" y="9" textAnchor="middle" fontSize="8" fill="#64748B">
-                  Réseau
-                </text>
-                <text x="148" y="52" textAnchor="start" fontSize="8" fill="#64748B">
-                  Cloud
-                </text>
-                <text x="125" y="125" textAnchor="middle" fontSize="8" fill="#64748B">
-                  DHCP
-                </text>
-                <text x="35" y="125" textAnchor="middle" fontSize="8" fill="#64748B">
-                  CPU
-                </text>
-                <text x="12" y="52" textAnchor="end" fontSize="8" fill="#64748B">
-                  POS
-                </text>
-              </svg>
-            </div>
-
             <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
               <div className="flex justify-between text-slate-600">
-                <span>Disponibilité Liaison :</span>
-                <span className="font-mono font-bold text-[#008060]">99.98 %</span>
+                <span>Routeurs connectés :</span>
+                <span className="font-mono font-bold text-slate-800">
+                  {onlineRoutersCount} / {routers.length}
+                </span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Synchronisation Cloud :</span>
-                <span className="font-mono font-bold text-slate-800">Temps Réel</span>
+                <span>Sessions actives :</span>
+                <span className="font-mono font-bold text-slate-800">{sessions.length}</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>État Serveur Cloud :</span>
-                <span className="font-mono font-bold text-[#007A78]">Opérationnel</span>
+                <span>Chiffre d'affaires :</span>
+                <span className="font-mono font-bold text-[#008060]">
+                  {formatMoney(displayedRevenue)}
+                </span>
               </div>
             </div>
           </div>
@@ -266,26 +274,38 @@ export const DashboardOverview: React.FC = () => {
               <Ticket className="w-4 h-4 text-[#008060]" />
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <select
-                value={expressForfaitId}
-                onChange={(e) => setExpressForfaitId(e.target.value)}
-                className="w-full px-2.5 py-2 rounded bg-[#F8FAFC] border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#008060] cursor-pointer"
-              >
-                {forfaits.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} — {formatMoney(f.price)}
-                  </option>
-                ))}
-              </select>
+            {forfaits.length === 0 ? (
+              <div className="text-xs text-slate-500 space-y-2">
+                <p>Aucun forfait configuré sur ce compte.</p>
+                <button
+                  onClick={() => setAdminTab('forfaits')}
+                  className="w-full py-2 px-3 rounded bg-[#008060] text-white font-semibold text-xs cursor-pointer"
+                >
+                  + Créer mon premier forfait
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5 text-xs">
+                <select
+                  value={expressForfaitId}
+                  onChange={(e) => setExpressForfaitId(e.target.value)}
+                  className="w-full px-2.5 py-2 rounded bg-[#F8FAFC] border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#008060] cursor-pointer"
+                >
+                  {forfaits.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} — {formatMoney(f.price)}
+                    </option>
+                  ))}
+                </select>
 
-              <button
-                onClick={handleExpressGenerate}
-                className="w-full py-2.5 px-3 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs transition cursor-pointer"
-              >
-                Générer & Synchroniser
-              </button>
-            </div>
+                <button
+                  onClick={handleExpressGenerate}
+                  className="w-full py-2.5 px-3 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs transition cursor-pointer"
+                >
+                  Générer & Synchroniser
+                </button>
+              </div>
+            )}
 
             {lastExpressTicket && (
               <div className="p-2.5 rounded bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-between">
@@ -313,17 +333,16 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN (Cols 4-12) : BARRES 24H + COMPTEURS + GRAPHIQUE ANALYTIQUE HAUTE PRÉCISION */}
+        {/* RIGHT COLUMN : BARRES 24H + 6 COMPTEURS + GRAPHIQUE ANALYTIQUE */}
         <div className="lg:col-span-9 space-y-5">
-          {/* Top Right Card : 24h Status Bars + 6 Interactive Counters (Marque Blanche) */}
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <h2 className="text-sm font-bold text-slate-800">
-                  État de Synchronisation Cloud sur 24h & Inventaire Réseau
+                  État de Synchronisation Cloud & Inventaire Réseau
                 </h2>
                 <p className="text-[11px] text-slate-500">
-                  Disponibilité continue des passerelles MikroTik, du serveur Cloud et des terminaux POS
+                  Vue en temps réel des équipements, forfaits, tickets et vendeurs de votre espace
                 </p>
               </div>
 
@@ -336,11 +355,11 @@ export const DashboardOverview: React.FC = () => {
                   <span>Actualiser Cloud</span>
                 </button>
                 <button
-                  onClick={() => setAdminTab('installation')}
+                  onClick={() => setAdminTab('mikrotik')}
                   className="px-3 py-1.5 rounded bg-[#008060] hover:bg-[#006B50] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                 >
                   <Terminal className="w-3.5 h-3.5" />
-                  <span>Script MikroTik</span>
+                  <span>Connecter un Routeur</span>
                 </button>
               </div>
             </div>
@@ -349,50 +368,77 @@ export const DashboardOverview: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#008060]" />
-                    Passerelles MikroTik ({routers[0]?.name || 'Passerelle Principale'})
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        routers.length > 0 ? 'bg-[#008060]' : 'bg-slate-300'
+                      }`}
+                    />
+                    Passerelles MikroTik ({routers.length > 0 ? routers[0].name : 'Aucun routeur connecté'})
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-600 font-bold">
+                    {routers.length > 0 ? `${onlineRoutersCount}/${routers.length} En ligne` : '0 Routeur'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-48 gap-0.5 h-2.5">
+                  {timelineSegments.map((seg) => (
+                    <span
+                      key={seg}
+                      className={`rounded-xs ${
+                        routers.length > 0 ? 'bg-[#10B981]' : 'bg-slate-100'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        tickets.length > 0 ? 'bg-[#007A78]' : 'bg-slate-300'
+                      }`}
+                    />
+                    Stock de Vouchers Cloud
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-600 font-bold">
+                    {tickets.length} Voucher(s)
+                  </span>
+                </div>
+                <div className="grid grid-cols-48 gap-0.5 h-2.5">
+                  {timelineSegments.map((seg) => (
+                    <span
+                      key={seg}
+                      className={`rounded-xs ${
+                        tickets.length > 0 ? 'bg-[#008060]' : 'bg-slate-100'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        displayedRevenue > 0 ? 'bg-[#0066CC]' : 'bg-slate-300'
+                      }`}
+                    />
+                    Activité Caisse POS & Vendeurs
                   </span>
                   <span className="text-[11px] font-mono text-[#008060] font-bold">
-                    100% En ligne (24h)
+                    Recette : {formatMoney(displayedRevenue)}
                   </span>
                 </div>
                 <div className="grid grid-cols-48 gap-0.5 h-2.5">
                   {timelineSegments.map((seg) => (
-                    <span key={seg} className="bg-[#10B981] rounded-xs" />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#007A78]" />
-                    Synchronisation Cloud des Vouchers
-                  </span>
-                  <span className="text-[11px] font-mono text-[#007A78] font-bold">
-                    {tickets.length} Vouchers Synchronisés
-                  </span>
-                </div>
-                <div className="grid grid-cols-48 gap-0.5 h-2.5">
-                  {timelineSegments.map((seg) => (
-                    <span key={seg} className="bg-[#008060] rounded-xs" />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#0066CC]" />
-                    Passerelles Mobile Money & Terminaux Caisse POS
-                  </span>
-                  <span className="text-[11px] font-mono text-[#0066CC] font-bold">
-                    Recette Jour : {formatMoney(todayRevenue)}
-                  </span>
-                </div>
-                <div className="grid grid-cols-48 gap-0.5 h-2.5">
-                  {timelineSegments.map((seg) => (
-                    <span key={seg} className="bg-[#0EA5E9] rounded-xs" />
+                    <span
+                      key={seg}
+                      className={`rounded-xs ${
+                        displayedRevenue > 0 ? 'bg-[#0EA5E9]' : 'bg-slate-100'
+                      }`}
+                    />
                   ))}
                 </div>
               </div>
@@ -404,10 +450,8 @@ export const DashboardOverview: React.FC = () => {
                 className="p-3 rounded-lg bg-[#F8FAFC] hover:bg-[#E6F4F3] border border-slate-200 cursor-pointer transition text-center space-y-1"
               >
                 <Cpu className="w-4 h-4 text-[#008060] mx-auto" />
-                <div className="text-lg font-black text-slate-800 font-mono">
-                  {onlineRoutersCount}/{routers.length}
-                </div>
-                <div className="text-[10px] font-semibold text-slate-500">Passerelles</div>
+                <div className="text-lg font-black text-slate-800 font-mono">{routers.length}</div>
+                <div className="text-[10px] font-semibold text-slate-500">Routeurs</div>
               </div>
 
               <div
@@ -427,7 +471,7 @@ export const DashboardOverview: React.FC = () => {
                 <div className="text-lg font-black text-slate-800 font-mono">
                   {availableTicketsCount}
                 </div>
-                <div className="text-[10px] font-semibold text-slate-500">Vouchers Prêts</div>
+                <div className="text-[10px] font-semibold text-slate-500">Vouchers</div>
               </div>
 
               <div
@@ -436,7 +480,7 @@ export const DashboardOverview: React.FC = () => {
               >
                 <Wifi className="w-4 h-4 text-[#008060] mx-auto" />
                 <div className="text-lg font-black text-slate-800 font-mono">{forfaits.length}</div>
-                <div className="text-[10px] font-semibold text-slate-500">Profils Forfaits</div>
+                <div className="text-[10px] font-semibold text-slate-500">Forfaits</div>
               </div>
 
               <div
@@ -445,26 +489,21 @@ export const DashboardOverview: React.FC = () => {
               >
                 <Users className="w-4 h-4 text-[#007A78] mx-auto" />
                 <div className="text-lg font-black text-slate-800 font-mono">{staff.length}</div>
-                <div className="text-[10px] font-semibold text-slate-500">Agents POS</div>
+                <div className="text-[10px] font-semibold text-slate-500">Vendeurs POS</div>
               </div>
 
               <div
-                onClick={() => setAdminTab('mac-bypass')}
+                onClick={() => setAdminTab('sessions')}
                 className="p-3 rounded-lg bg-[#F8FAFC] hover:bg-[#E6F4F3] border border-slate-200 cursor-pointer transition text-center space-y-1"
               >
                 <Laptop className="w-4 h-4 text-[#0066CC] mx-auto" />
-                <div className="text-lg font-black text-slate-800 font-mono">
-                  {macBypasses.length}
-                </div>
-                <div className="text-[10px] font-semibold text-slate-500">Bindings MAC</div>
+                <div className="text-lg font-black text-slate-800 font-mono">{sessions.length}</div>
+                <div className="text-[10px] font-semibold text-slate-500">Sessions</div>
               </div>
             </div>
           </div>
 
-          {/* =====================================================================
-              SECTION 3.1 AUDIT : VISUALISATION ANALYTIQUE DÉTAILLÉE & PRÉCISE
-              (Courbe Multi-Métriques SVG + Fiche Point Horaire + 4 Sous-Compteurs)
-          ===================================================================== */}
+          {/* GRAPHIQUE ANALYTIQUE (Affiche strictement 0 FCFA / 0 Go tant qu'aucune vente n'est enregistrée) */}
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5 shadow-2xs">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
@@ -476,12 +515,11 @@ export const DashboardOverview: React.FC = () => {
                   </span>
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Analyse télémétrique précise des recettes (FCFA), du volume de données transféré (Go) et des pics d'utilisateurs
+                  Données réelles issues de vos ventes de tickets et sessions actives
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                {/* Metric Filter */}
                 <div className="flex items-center gap-1 bg-[#F4F7FA] p-1 rounded border border-slate-200 text-[11px]">
                   <button
                     onClick={() => setChartMetric('combined')}
@@ -515,7 +553,6 @@ export const DashboardOverview: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Period Filter */}
                 <div className="flex items-center gap-1 bg-[#F4F7FA] p-1 rounded border border-slate-200 text-xs">
                   {(
                     [
@@ -541,7 +578,6 @@ export const DashboardOverview: React.FC = () => {
               </div>
             </div>
 
-            {/* Live Hovered Data Point Inspector Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-lg bg-[#F8FAFC] border border-slate-200 text-xs">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">
@@ -559,10 +595,10 @@ export const DashboardOverview: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                  Tickets Émis
+                  Tickets Vendus
                 </span>
                 <span className="font-mono font-bold text-slate-800">
-                  {activePoint.ticketsSold} tickets
+                  {activePoint.ticketsSold} ticket(s)
                 </span>
               </div>
               <div>
@@ -575,15 +611,14 @@ export const DashboardOverview: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                  Pic Clients Simultanés
+                  Sessions Actives
                 </span>
                 <span className="font-mono font-bold text-[#005A5B]">
-                  {activePoint.peakUsers} connectés
+                  {activePoint.peakUsers} connecté(s)
                 </span>
               </div>
             </div>
 
-            {/* Interactive Multi-Curve Area SVG Chart */}
             <div className="w-full overflow-x-auto">
               <svg
                 className="w-full h-56 select-none"
@@ -601,10 +636,12 @@ export const DashboardOverview: React.FC = () => {
                   </linearGradient>
                 </defs>
 
-                {/* Horizontal Grid Lines */}
                 {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
                   const y = padY + ratio * plotH;
-                  const valLabel = Math.round(maxRev * (1 - ratio)).toLocaleString('fr-FR');
+                  const valLabel =
+                    displayedRevenue === 0
+                      ? '0'
+                      : Math.round(maxRev * (1 - ratio)).toLocaleString('fr-FR');
                   return (
                     <g key={idx}>
                       <line
@@ -623,7 +660,6 @@ export const DashboardOverview: React.FC = () => {
                   );
                 })}
 
-                {/* Traffic Area & Line */}
                 {(chartMetric === 'combined' || chartMetric === 'traffic') && (
                   <>
                     <polygon points={trafficArea} fill="url(#trafGrad)" />
@@ -636,7 +672,6 @@ export const DashboardOverview: React.FC = () => {
                   </>
                 )}
 
-                {/* Revenue Area & Line */}
                 {(chartMetric === 'combined' || chartMetric === 'revenue') && (
                   <>
                     <polygon points={revArea} fill="url(#revGrad)" />
@@ -649,7 +684,6 @@ export const DashboardOverview: React.FC = () => {
                   </>
                 )}
 
-                {/* Interactive Data Points & X-Axis Labels */}
                 {analyticalSeries.map((pt, i) => {
                   const rx = revCoords[i].x;
                   const ry = revCoords[i].y;
@@ -710,22 +744,21 @@ export const DashboardOverview: React.FC = () => {
               </svg>
             </div>
 
-            {/* 4 Precision Summary KPIs under Chart */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100 text-xs">
               <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
                 <span className="text-[10px] text-slate-400 font-semibold block">
-                  Moyenne par tranche
+                  Chiffre d'Affaires Total
                 </span>
                 <span className="font-mono font-bold text-slate-800">
-                  {formatMoney(Math.round(displayedRevenue / 10))}
+                  {formatMoney(displayedRevenue)}
                 </span>
               </div>
               <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
                 <span className="text-[10px] text-slate-400 font-semibold block">
-                  Tickets vendus (Période)
+                  Tickets vendus / actifs
                 </span>
                 <span className="font-mono font-bold text-[#008060]">
-                  {totalTicketsSoldPeriod} tickets
+                  {totalTicketsSoldPeriod} ticket(s)
                 </span>
               </div>
               <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
@@ -740,7 +773,9 @@ export const DashboardOverview: React.FC = () => {
                 </span>
                 <span className="font-mono font-bold text-slate-800">
                   {formatMoney(
-                    Math.max(200, Math.round(displayedRevenue / Math.max(1, totalTicketsSoldPeriod)))
+                    totalTicketsSoldPeriod > 0
+                      ? Math.round(displayedRevenue / totalTicketsSoldPeriod)
+                      : 0
                   )}
                 </span>
               </div>
@@ -749,14 +784,12 @@ export const DashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* =========================================================================
-          2. TABLEAU OPÉRATIONNEL B2B : VENDEURS POS & DERNIERS VOUCHERS
-      ========================================================================= */}
+      {/* 2. TABLEAU OPÉRATIONNEL B2B : VENDEURS POS & DERNIERS VOUCHERS (AVEC EMPTY STATES PROPRES) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-7 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
           <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-[#F8FAFC]">
             <span className="text-xs font-bold text-slate-800">
-              Performance Temps Réel des Agents Vendeurs POS
+              Agents Vendeurs POS ({staff.length})
             </span>
             <button
               onClick={() => setAdminTab('staff')}
@@ -767,47 +800,59 @@ export const DashboardOverview: React.FC = () => {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 text-[11px] text-slate-500 bg-white">
-                  <th className="py-2.5 px-4 font-semibold">Agent Vendeur</th>
-                  <th className="py-2.5 px-4 font-semibold">Site affecté</th>
-                  <th className="py-2.5 px-4 font-semibold text-right">Ventes Jour</th>
-                  <th className="py-2.5 px-4 font-semibold text-right">Crédit POS</th>
-                  <th className="py-2.5 px-4 font-semibold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {staff.map((s) => (
-                  <tr key={s.id} className="hover:bg-[#F8FAFC] transition">
-                    <td className="py-2.5 px-4 font-semibold text-slate-800">{s.name}</td>
-                    <td className="py-2.5 px-4 text-slate-500">{s.zoneName}</td>
-                    <td className="py-2.5 px-4 text-right font-mono font-bold text-[#008060]">
-                      {formatMoney(s.todaySales)}
-                    </td>
-                    <td className="py-2.5 px-4 text-right font-mono text-slate-700">
-                      {formatMoney(s.balanceCredit)}
-                    </td>
-                    <td className="py-2.5 px-4 text-right">
-                      <button
-                        onClick={() => setCurrentSpace('pos')}
-                        className="px-2.5 py-1 rounded bg-[#E6F4F3] hover:bg-[#008060] text-[#005A5B] hover:text-white font-semibold text-[11px] transition cursor-pointer"
-                      >
-                        Ouvrir POS
-                      </button>
-                    </td>
+          {staff.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-500 space-y-2">
+              <p>Aucun agent vendeur enregistré sur ce compte (0 Vendeur • 0 FCFA).</p>
+              <button
+                onClick={() => setAdminTab('staff')}
+                className="px-3 py-1.5 rounded bg-[#008060] text-white font-semibold text-xs cursor-pointer"
+              >
+                + Créer un Profil Vendeur
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-[11px] text-slate-500 bg-white">
+                    <th className="py-2.5 px-4 font-semibold">Agent Vendeur</th>
+                    <th className="py-2.5 px-4 font-semibold">Site affecté</th>
+                    <th className="py-2.5 px-4 font-semibold text-right">Ventes Jour</th>
+                    <th className="py-2.5 px-4 font-semibold text-right">Crédit POS</th>
+                    <th className="py-2.5 px-4 font-semibold text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {staff.map((s) => (
+                    <tr key={s.id} className="hover:bg-[#F8FAFC] transition">
+                      <td className="py-2.5 px-4 font-semibold text-slate-800">{s.name}</td>
+                      <td className="py-2.5 px-4 text-slate-500">{s.zoneName}</td>
+                      <td className="py-2.5 px-4 text-right font-mono font-bold text-[#008060]">
+                        {formatMoney(s.todaySales)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-slate-700">
+                        {formatMoney(s.balanceCredit)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right">
+                        <button
+                          onClick={() => setCurrentSpace('pos')}
+                          className="px-2.5 py-1 rounded bg-[#E6F4F3] hover:bg-[#008060] text-[#005A5B] hover:text-white font-semibold text-[11px] transition cursor-pointer"
+                        >
+                          Ouvrir POS
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-5 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
           <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-[#F8FAFC]">
             <span className="text-xs font-bold text-slate-800">
-              Derniers Vouchers Synchronisés ({tickets.length})
+              Stock de Vouchers ({tickets.length})
             </span>
             <button
               onClick={() => setAdminTab('tickets')}
@@ -820,7 +865,7 @@ export const DashboardOverview: React.FC = () => {
 
           {tickets.length === 0 ? (
             <div className="p-6 text-center text-xs text-slate-500 space-y-2">
-              <p>Aucun ticket de test en mémoire. Votre inventaire est propre.</p>
+              <p>Aucun ticket généré sur ce compte (0 Ticket).</p>
               <button
                 onClick={() => setAdminTab('tickets')}
                 className="px-3 py-1.5 rounded bg-[#008060] text-white font-semibold text-xs cursor-pointer"

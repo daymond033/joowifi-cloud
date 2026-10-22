@@ -21,7 +21,11 @@
     <script>
       (function () {
         try {
-          var SW_VERSION = 'joowifi_sw_v7_multitenant_fix';
+          var SW_VERSION = 'joowifi_sw_v9_zero_mock_clean';
+          if (localStorage.getItem('joowifi_zero_mock_v9') !== '1') {
+            localStorage.clear();
+            localStorage.setItem('joowifi_zero_mock_v9', '1');
+          }
           if (localStorage.getItem(SW_VERSION) !== '1') {
             localStorage.setItem(SW_VERSION, '1');
             if ('serviceWorker' in navigator) {

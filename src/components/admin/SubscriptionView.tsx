@@ -29,6 +29,7 @@ export const SubscriptionView: React.FC = () => {
     routers,
     staff,
     tickets,
+    transactions,
     walletBalance,
     operatorProfile,
     formatMoney,
@@ -55,11 +56,15 @@ export const SubscriptionView: React.FC = () => {
     Math.round((tickets.length / (currentPlan.ticketLimit || 1)) * 100)
   );
 
-  const invoices: InvoiceItem[] = [
-    { id: 'FAC-2026-10-01', period: 'Octobre 2026', date: '01/10/2026', amount: currentPlan.priceMonthly, plan: `Plan ${currentPlan.name}` },
-    { id: 'FAC-2026-09-01', period: 'Septembre 2026', date: '01/09/2026', amount: 6000, plan: 'Plan Pro' },
-    { id: 'FAC-2026-08-01', period: 'Août 2026', date: '01/08/2026', amount: 3000, plan: 'Plan Starter' },
-  ];
+  const invoices: InvoiceItem[] = transactions
+    .filter((tx) => tx.category === 'Abonnement SaaS')
+    .map((tx) => ({
+      id: tx.reference || tx.id,
+      period: new Date(tx.timestamp).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+      date: new Date(tx.timestamp).toLocaleDateString('fr-FR'),
+      amount: tx.amount,
+      plan: `Plan ${currentPlan.name}`,
+    }));
 
   const handleDownloadInvoiceHTML = (inv: InvoiceItem) => {
     const htmlContent = `<!doctype html>

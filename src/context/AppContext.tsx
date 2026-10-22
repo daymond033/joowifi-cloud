@@ -164,9 +164,9 @@ const DEFAULT_SAVED_TEMPLATES: SavedPortalTemplate[] = [
 ];
 
 const DEFAULT_TELEGRAM_CONFIG: TelegramConfig = {
-  botToken: '718294021:AAH8e2910kdja812-7kL_2',
-  chatId: '-100294810294',
-  enabled: true,
+  botToken: '',
+  chatId: '',
+  enabled: false,
   triggers: {
     routerDown: true,
     vendorLowCredit: true,
@@ -177,14 +177,14 @@ const DEFAULT_TELEGRAM_CONFIG: TelegramConfig = {
 };
 
 const DEFAULT_OPERATOR_PROFILE: OperatorProfile = {
-  name: 'Jean-Marc Koffi',
-  company: 'Joo Studio Réseaux & Télécoms',
-  email: 'joostudio.pro@gmail.com',
-  phone: '+225 01 00 44 38 39',
-  city: 'Abidjan (Cocody Angré)',
+  name: '',
+  company: '',
+  email: '',
+  phone: '',
+  city: 'Abidjan',
   country: "Côte d'Ivoire",
-  defaultIspMonthlyCost: 50000,
-  twoFactorEnabled: true,
+  defaultIspMonthlyCost: 0,
+  twoFactorEnabled: false,
 };
 
 interface AppContextType {
@@ -361,93 +361,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Core Data
-  const [routers, setRouters] = useState<RouterItem[]>(() =>
-    safeGetStorage('joowifi_routers', INITIAL_ROUTERS)
-  );
-  const [zones, setZones] = useState<ZoneItem[]>(() =>
-    safeGetStorage('joowifi_zones', INITIAL_ZONES)
-  );
-  const [forfaits, setForfaits] = useState<ForfaitItem[]>(() =>
-    safeGetStorage('joowifi_forfaits', INITIAL_FORFAITS)
-  );
-  const LEGACY_DEMO_CODES = new Set([
-    'r7gt', 'mj79', '6hgj', 'JW-8492-710', 'JW-9143-228', 'JW-3310-904',
-    'JW-4781-620', 'JW-5592-113', 'JW-6820-441', 'JW-7904-882',
-    'JW-1129-330', 'JW-2048-512', 'JW-9901-774'
-  ]);
-
-  const [tickets, setTickets] = useState<TicketItem[]>(() => {
-    const raw = safeGetStorage<TicketItem[]>('joowifi_tickets', []);
-    return Array.isArray(raw)
-      ? raw.filter(
-          (t) =>
-            t &&
-            t.code &&
-            !LEGACY_DEMO_CODES.has(t.code) &&
-            !String(t.id || '').startsWith('t-pos-demo') &&
-            !String(t.id || '').startsWith('t-10')
-        )
-      : [];
-  });
-  const [staff, setStaff] = useState<StaffItem[]>(() =>
-    safeGetStorage('joowifi_staff', INITIAL_STAFF)
-  );
-  const [sessions, setSessions] = useState<ConnectedSession[]>(INITIAL_SESSIONS);
-  const [physicalHosts, setPhysicalHosts] = useState<PhysicalWifiHost[]>(INITIAL_PHYSICAL_HOSTS);
-  const [connectionLogs, setConnectionLogs] = useState<ConnectionLog[]>(INITIAL_LOGS);
-  const [macBypasses, setMacBypasses] = useState<MacBypassItem[]>(() =>
-    safeGetStorage('joowifi_mac_bypass', INITIAL_MAC_BYPASS)
-  );
-  const [transactions, setTransactions] = useState<WalletTransaction[]>(() =>
-    safeGetStorage('joowifi_transactions', INITIAL_TRANSACTIONS)
-  );
-  const [walletBalance, setWalletBalance] = useState<number>(() =>
-    safeGetStorage('joowifi_wallet', 44000)
-  );
-  const [gainsBalance, setGainsBalance] = useState<number>(() =>
-    safeGetStorage('joowifi_gains', 182500)
-  );
-  const [currentPlanId, setCurrentPlanId] = useState<PlanDetails['id']>(() =>
-    safeGetStorage('joowifi_plan', 'pro')
-  );
-  const [captiveConfig, setCaptiveConfig] = useState<CaptivePortalConfig>(() =>
-    safeGetStorage('joowifi_captive_config', {
-      ...INITIAL_CAPTIVE_CONFIG,
-      primaryColor: '#F59E0B',
-      backgroundColor: '#0B0F19',
-    })
-  );
-  const [savedTemplates, setSavedTemplates] = useState<SavedPortalTemplate[]>(() =>
-    safeGetStorage('joowifi_saved_templates', DEFAULT_SAVED_TEMPLATES)
-  );
-  const [telegramConfig, setTelegramConfig] = useState<TelegramConfig>(() =>
-    safeGetStorage('joowifi_telegram', DEFAULT_TELEGRAM_CONFIG)
-  );
-  const [operatorProfile, setOperatorProfile] = useState<OperatorProfile>(() =>
-    safeGetStorage('joowifi_profile', DEFAULT_OPERATOR_PROFILE)
-  );
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(INITIAL_AUDIT_LOGS);
-  const [heartbeatQueue, setHeartbeatQueue] = useState<HeartbeatCommandItem[]>([
-    {
-      id: 'hb-cmd-init-1',
-      routerName: 'Tous les routeurs (Parc Global)',
-      commandType: 'ADD_TICKET',
-      routerOsCommand: '/ip hotspot user add name="r7gt" password="r7gt" profile="jw-prof-f-1" limit-uptime="1h" comment="POS Vente Eclair"',
-      status: 'synced',
-      createdAt: 'Il y a 2 min',
-      syncedAt: 'Synchronisé (Pull 45s)',
-    },
-    {
-      id: 'hb-cmd-init-2',
-      routerName: 'MikroTik Cocody Angré',
-      commandType: 'ADD_MAC_BYPASS',
-      routerOsCommand: '/ip hotspot ip-binding add mac-address="B8:27:EB:45:12:90" type=bypassed comment="Joowifi: Caméra IP Entrée"',
-      status: 'synced',
-      createdAt: 'Il y a 8 min',
-      syncedAt: 'Synchronisé (Pull 45s)',
-    },
-  ]);
+  // Core Data — Strictly Empty Initial State (0 Mock Data, 100% Cloud DB Driven)
+  const [routers, setRouters] = useState<RouterItem[]>([]);
+  const [zones, setZones] = useState<ZoneItem[]>([]);
+  const [forfaits, setForfaits] = useState<ForfaitItem[]>([]);
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [staff, setStaff] = useState<StaffItem[]>([]);
+  const [sessions, setSessions] = useState<ConnectedSession[]>([]);
+  const [physicalHosts, setPhysicalHosts] = useState<PhysicalWifiHost[]>([]);
+  const [connectionLogs, setConnectionLogs] = useState<ConnectionLog[]>([]);
+  const [macBypasses, setMacBypasses] = useState<MacBypassItem[]>([]);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [gainsBalance, setGainsBalance] = useState<number>(0);
+  const [currentPlanId, setCurrentPlanId] = useState<PlanDetails['id']>('starter');
+  const [captiveConfig, setCaptiveConfig] = useState<CaptivePortalConfig>(INITIAL_CAPTIVE_CONFIG);
+  const [savedTemplates, setSavedTemplates] = useState<SavedPortalTemplate[]>(DEFAULT_SAVED_TEMPLATES);
+  const [telegramConfig, setTelegramConfig] = useState<TelegramConfig>(DEFAULT_TELEGRAM_CONFIG);
+  const [operatorProfile, setOperatorProfile] = useState<OperatorProfile>(DEFAULT_OPERATOR_PROFILE);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [heartbeatQueue, setHeartbeatQueue] = useState<HeartbeatCommandItem[]>([]);
 
   const [activeTenantId, setActiveTenantIdState] = useState<string>(() => getActiveTenantId());
   const OP_ID = activeTenantId;
@@ -703,52 +636,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const forceHeartbeatSync = () => {
-    const nowStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setHeartbeatQueue((prev) =>
-      prev.map((c) => (c.status === 'pending' ? { ...c, status: 'synced', syncedAt: `Pull OK à ${nowStr}` } : c))
-    );
-    setRouters((current) =>
-      current.map((r) =>
-        r.status === 'online'
-          ? {
-              ...r,
-              lastHeartbeat: new Date().toISOString(),
-            }
-          : r
-      )
-    );
-    syncAll12TablesToSupabase();
+    if (OP_ID) {
+      void loadTenantWorkspace(OP_ID);
+    }
     setHeartbeatSecondsRemaining(45);
-    notify(`Synchronisation Cloud Joowifi (${tickets.length} tickets, ${staff.length} vendeurs, ${forfaits.length} forfaits) effectuée !`, 'success');
+    notify(`Données actualisées depuis le Cloud Joowifi.`, 'success');
   };
 
-  // SOS Recharge alerts from field vendors
+  // SOS Recharge alerts from field vendors (Strictly empty by default)
   const [pendingSosAlerts, setPendingSosAlerts] = useState<
     { id: string; staffName: string; amount: number; time: string }[]
-  >([
-    {
-      id: 'sos-1',
-      staffName: 'Moussa Bakayoko (Vendeur Ambulant)',
-      amount: 10000,
-      time: 'Il y a 5 min',
-    },
-  ]);
+  >([]);
 
   // Auth State (Persisted in localStorage with RBAC + Multi-Tenant ID)
   const [user, setUser] = useState<UserSession | null>(() => {
     const saved = safeGetStorage<UserSession | null>('joowifi_auth_user', null);
-    if (saved && saved.email) {
-      return {
-        ...saved,
-        tenantId: saved.tenantId || getActiveTenantId(),
-      };
+    if (saved && saved.email && saved.tenantId) {
+      return saved;
     }
-    return {
-      name: operatorProfile.name,
-      email: operatorProfile.email,
-      role: 'admin',
-      tenantId: DEFAULT_MAIN_TENANT_ID,
-    };
+    return null;
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -758,204 +664,242 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setHeartbeatSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          const syncTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          setHeartbeatQueue((q) =>
-            q.map((c) => (c.status === 'pending' ? { ...c, status: 'synced', syncedAt: `Pull 45s (${syncTime})` } : c))
-          );
-          setRouters((current) =>
-            current.map((r) =>
-              r.status === 'online'
-                ? {
-                    ...r,
-                    lastHeartbeat: new Date().toISOString(),
-                    cpuUsage: Math.min(
-                      95,
-                      Math.max(10, r.cpuUsage + Math.floor(Math.random() * 7 - 3))
-                    ),
-                    trafficDownMbps: Number(
-                      Math.max(5, r.trafficDownMbps + (Math.random() * 4 - 2)).toFixed(1)
-                    ),
-                  }
-                : r
-            )
-          );
-          return 45;
-        }
-        return prev - 1;
-      });
+      setHeartbeatSecondsRemaining((prev) => (prev <= 1 ? 45 : prev - 1));
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Save changes to localStorage AND synchronize all 12 tables with Supabase
-  useEffect(() => {
-    safeSetStorage('joowifi_routers', routers);
-    syncRoutersToSupabase(routers);
-  }, [routers]);
-
-  useEffect(() => {
-    safeSetStorage('joowifi_zones', zones);
-    syncZonesToSupabase(zones);
-  }, [zones]);
-
-  useEffect(() => {
-    safeSetStorage('joowifi_forfaits', forfaits);
-    syncForfaitsToSupabase(forfaits);
-  }, [forfaits]);
-
-  useEffect(() => {
-    safeSetStorage('joowifi_tickets', tickets);
-  }, [tickets]);
-
-  useEffect(() => {
-    const loadTenantWorkspace = async (targetTenant: string) => {
-      if (!isSupabaseConfigured() || !targetTenant) return;
-      try {
-        await supabaseDelete(
-          'tickets',
-          'code=in.(r7gt,mj79,6hgj,JW-8492-710,JW-9143-228,JW-3310-904,JW-4781-620,JW-5592-113,JW-6820-441,JW-7904-882,JW-1129-330,JW-2048-512,JW-9901-774)',
+  // Fonction centrale de chargement strict depuis la base Cloud Supabase pour un tenant_id donné
+  const loadTenantWorkspace = async (targetTenant: string) => {
+    if (!isSupabaseConfigured() || !targetTenant) return;
+    try {
+      const [zRows, rRows, fRows, sRows, tRows, mRows, sesRows, txRows] = await Promise.all([
+        supabaseSelect<Record<string, any>>(
+          'zones',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
           targetTenant
-        );
-
-        // 1. Charger les tickets appartenant strictement à ce tenant_id
-        const tRows = await supabaseSelect<Record<string, any>>(
-          'tickets',
-          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&order=created_at.desc&limit=500`,
-          targetTenant
-        );
-        if (Array.isArray(tRows)) {
-          const validRows = tRows.filter(
-            (r) =>
-              r &&
-              r.code &&
-              !LEGACY_DEMO_CODES.has(String(r.code)) &&
-              String(r.tenant_id || r.operator_id || '') === targetTenant
-          );
-          const mappedTickets: TicketItem[] = validRows.map((r, idx) => ({
-            id: String(r.id || `t-db-${idx}-${r.code}`),
-            code: String(r.code),
-            pin: String(r.pin || r.code),
-            password: String(r.password || r.code),
-            forfaitId: String(r.forfait_id || 'Pass WiFi'),
-            forfaitName: String(r.forfait_id || 'Pass WiFi'),
-            price: Number(r.price_xof || 0),
-            duration: String(r.duration_label || '24h'),
-            status: (r.status as any) || 'stock',
-            createdAt: String(r.created_at || new Date().toISOString()),
-            activatedAt: r.activated_at ? String(r.activated_at) : undefined,
-            expiresAt: r.expires_at ? String(r.expires_at) : undefined,
-            customerPhone: r.customer_phone ? String(r.customer_phone) : undefined,
-            sellerId: r.seller_id ? String(r.seller_id) : undefined,
-            sellerName: r.seller_id ? String(r.seller_id) : undefined,
-            zoneName: String(r.zone_id || 'Zone Principale'),
-            batchId: r.batch_id ? String(r.batch_id) : undefined,
-          }));
-          setTickets(mappedTickets);
-          safeSetStorage('joowifi_tickets', mappedTickets);
-        }
-
-        // 2. Charger les routeurs de ce tenant_id
-        const rRows = await supabaseSelect<Record<string, any>>(
+        ),
+        supabaseSelect<Record<string, any>>(
           'routers',
           `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
           targetTenant
-        );
-        if (Array.isArray(rRows) && rRows.length > 0) {
-          const mappedRouters: RouterItem[] = rRows.map((r) => ({
-            id: String(r.id),
-            name: String(r.name || 'Routeur MikroTik'),
-            model: String(r.model || 'MikroTik RouterOS'),
-            zoneId: String(r.zone_id || 'zone-1'),
-            zoneName: String(r.zone_id || 'Zone Principale'),
-            ipAddress: String(r.ip_address || '10.5.50.1'),
-            macAddress: String(r.mac_address || '48:A9:8A:00:00:01'),
-            routerOsVersion: String(r.routeros_version || 'v7.23.8'),
-            status: (r.status as any) || 'online',
-            lastHeartbeat: String(r.last_heartbeat_at || new Date().toISOString()),
-            uptime: String(r.uptime || '01j 00h 00m'),
-            cpuUsage: Number(r.cpu_usage || 15),
-            ramUsage: Number(r.ram_usage || 32),
-            trafficDownMbps: Number(r.traffic_down_mbps || 12),
-            trafficUpMbps: Number(r.traffic_up_mbps || 4),
-            totalSubscribers: Number(r.total_subscribers || 0),
-            installToken: String(r.install_token),
-          }));
-          setRouters(mappedRouters);
-          safeSetStorage('joowifi_routers', mappedRouters);
-        }
-
-        // 3. Charger les vendeurs POS de ce tenant_id
-        const sRows = await supabaseSelect<Record<string, any>>(
+        ),
+        supabaseSelect<Record<string, any>>(
+          'forfaits',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
+          targetTenant
+        ),
+        supabaseSelect<Record<string, any>>(
           'staff_vendors',
           `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
           targetTenant
-        );
-        if (Array.isArray(sRows) && sRows.length > 0) {
-          const mappedStaff: StaffItem[] = sRows.map((s) => ({
-            id: String(s.id),
-            name: String(s.name),
-            email: s.email ? String(s.email) : undefined,
-            password: s.pin_hash ? String(s.pin_hash) : '1234',
-            phone: String(s.phone || '+225'),
-            zoneId: String(s.zone_id || 'zone-1'),
-            zoneName: String(s.zone_id || 'Zone Principale'),
-            commissionRate: Number(s.commission_rate || 10),
-            balanceCredit: Number(s.balance_credit_xof || 0),
-            dailyGoal: Number(s.daily_goal_xof || 15000),
-            todaySales: Number(s.today_sales_xof || 0),
-            totalSales: Number(s.total_sales_xof || 0),
-            active: Boolean(s.active ?? true),
-            lastActive: 'Synchronisé',
-          }));
-          setStaff(mappedStaff);
-          safeSetStorage('joowifi_staff', mappedStaff);
-        }
-      } catch {
-        // Ignore network errors
-      }
-    };
-    void loadTenantWorkspace(OP_ID);
-  }, []);
+        ),
+        supabaseSelect<Record<string, any>>(
+          'tickets',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&order=created_at.desc&limit=500`,
+          targetTenant
+        ),
+        supabaseSelect<Record<string, any>>(
+          'mac_bypasses',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=200`,
+          targetTenant
+        ),
+        supabaseSelect<Record<string, any>>(
+          'active_sessions',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=200`,
+          targetTenant
+        ),
+        supabaseSelect<Record<string, any>>(
+          'wallet_transactions',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&order=created_at.desc&limit=200`,
+          targetTenant
+        ),
+      ]);
+
+      setZones(
+        Array.isArray(zRows)
+          ? zRows
+              .filter((z) => String(z.tenant_id || z.operator_id || '') === targetTenant)
+              .map((z) => ({
+                id: String(z.id),
+                name: String(z.name),
+                city: String(z.city || 'Abidjan'),
+                country: String(z.country || "Côte d'Ivoire"),
+                routerCount: 0,
+                activeTicketsCount: 0,
+                monthlyRevenue: Number(z.monthly_revenue_xof || 0),
+                description: String(z.description || ''),
+                status: (z.status as any) || 'active',
+                siteType: String(z.site_type || 'commerce'),
+                todaySales: Number(z.today_sales_xof || 0),
+                ispMonthlyCost: Number(z.isp_monthly_cost || 0),
+              }))
+          : []
+      );
+
+      setRouters(
+        Array.isArray(rRows)
+          ? rRows
+              .filter((r) => String(r.tenant_id || r.operator_id || '') === targetTenant)
+              .map((r) => ({
+                id: String(r.id),
+                name: String(r.name),
+                model: String(r.model || 'MikroTik RouterOS'),
+                zoneId: String(r.zone_id || ''),
+                zoneName: String(r.zone_id || 'Zone Principale'),
+                ipAddress: String(r.ip_address || '10.5.50.1'),
+                macAddress: String(r.mac_address || ''),
+                routerOsVersion: String(r.routeros_version || 'v7.23.8'),
+                status: (r.status as any) || 'offline',
+                lastHeartbeat: String(r.last_heartbeat_at || new Date().toISOString()),
+                uptime: String(r.uptime || '00j 00h 00m'),
+                cpuUsage: Number(r.cpu_usage || 0),
+                ramUsage: Number(r.ram_usage || 0),
+                trafficDownMbps: Number(r.traffic_down_mbps || 0),
+                trafficUpMbps: Number(r.traffic_up_mbps || 0),
+                totalSubscribers: Number(r.total_subscribers || 0),
+                installToken: String(r.install_token || ''),
+              }))
+          : []
+      );
+
+      setForfaits(
+        Array.isArray(fRows)
+          ? fRows
+              .filter((f) => String(f.tenant_id || f.operator_id || '') === targetTenant)
+              .map((f) => ({
+                id: String(f.id),
+                name: String(f.name),
+                durationHours: Number(f.duration_hours || 24),
+                validityValue: Number(f.validity_value || 1),
+                validityUnit: (f.validity_unit as any) || 'days',
+                price: Number(f.price_xof || 0),
+                downloadSpeedMbps: Number(f.download_speed_mbps || 10),
+                uploadSpeedMbps: Number(f.upload_speed_mbps || 3),
+                dataLimitMb: Number(f.data_limit_mb || 0),
+                simultaneousDevices: Number(f.simultaneous_devices || 1),
+                macLock: Boolean(f.mac_lock ?? true),
+                popular: Boolean(f.popular),
+                color: String(f.color || 'emerald'),
+              }))
+          : []
+      );
+
+      setStaff(
+        Array.isArray(sRows)
+          ? sRows
+              .filter((s) => String(s.tenant_id || s.operator_id || '') === targetTenant)
+              .map((s) => ({
+                id: String(s.id),
+                name: String(s.name),
+                email: s.email ? String(s.email) : undefined,
+                password: s.pin_hash ? String(s.pin_hash) : '1234',
+                phone: String(s.phone || ''),
+                zoneId: String(s.zone_id || ''),
+                zoneName: String(s.zone_id || 'Zone Principale'),
+                commissionRate: Number(s.commission_rate || 10),
+                balanceCredit: Number(s.balance_credit_xof || 0),
+                dailyGoal: Number(s.daily_goal_xof || 15000),
+                todaySales: Number(s.today_sales_xof || 0),
+                totalSales: Number(s.total_sales_xof || 0),
+                active: Boolean(s.active ?? true),
+                lastActive: 'En ligne',
+              }))
+          : []
+      );
+
+      setTickets(
+        Array.isArray(tRows)
+          ? tRows
+              .filter((t) => t && t.code && String(t.tenant_id || t.operator_id || '') === targetTenant)
+              .map((r, idx) => ({
+                id: String(r.id || `t-db-${idx}-${r.code}`),
+                code: String(r.code),
+                pin: String(r.pin || r.code),
+                password: String(r.password || r.code),
+                forfaitId: String(r.forfait_id || 'Pass WiFi'),
+                forfaitName: String(r.forfait_id || 'Pass WiFi'),
+                price: Number(r.price_xof || 0),
+                duration: String(r.duration_label || '24h'),
+                status: (r.status as any) || 'stock',
+                createdAt: String(r.created_at || new Date().toISOString()),
+                activatedAt: r.activated_at ? String(r.activated_at) : undefined,
+                expiresAt: r.expires_at ? String(r.expires_at) : undefined,
+                customerPhone: r.customer_phone ? String(r.customer_phone) : undefined,
+                sellerId: r.seller_id ? String(r.seller_id) : undefined,
+                sellerName: r.seller_id ? String(r.seller_id) : undefined,
+                zoneName: String(r.zone_id || 'Zone Principale'),
+                batchId: r.batch_id ? String(r.batch_id) : undefined,
+              }))
+          : []
+      );
+
+      setMacBypasses(
+        Array.isArray(mRows)
+          ? mRows
+              .filter((m) => String(m.tenant_id || m.operator_id || '') === targetTenant)
+              .map((m) => ({
+                id: String(m.id),
+                macAddress: String(m.mac_address),
+                label: String(m.label || ''),
+                category: (m.category as any) || 'VIP',
+                bindingType: (m.binding_type as any) || 'bypassed',
+                autoCookie: Boolean(m.auto_cookie ?? true),
+                expiryType: (m.expiry_type as any) || 'permanent',
+                status: (m.status as any) || 'active',
+                addedAt: String(m.added_at || new Date().toISOString()),
+              }))
+          : []
+      );
+
+      setSessions(
+        Array.isArray(sesRows)
+          ? sesRows
+              .filter((s) => String(s.tenant_id || s.operator_id || '') === targetTenant)
+              .map((s) => ({
+                id: String(s.id),
+                username: String(s.username),
+                ipAddress: String(s.ip_address || '10.5.50.10'),
+                macAddress: String(s.mac_address || ''),
+                routerId: String(s.router_id || ''),
+                routerName: String(s.router_id || 'Routeur MikroTik'),
+                uptimeMinutes: Number(s.uptime_minutes || 0),
+                bytesInMb: Number(s.bytes_in_mb || 0),
+                bytesOutMb: Number(s.bytes_out_mb || 0),
+                forfaitName: String(s.forfait_name || 'Hotspot'),
+                signalDbm: Number(s.signal_dbm || -60),
+                suspended: false,
+                deviceType: (s.device_type as any) || 'smartphone',
+              }))
+          : []
+      );
+
+      setTransactions(
+        Array.isArray(txRows)
+          ? txRows
+              .filter((tx) => String(tx.tenant_id || tx.operator_id || '') === targetTenant)
+              .map((tx) => ({
+                id: String(tx.id),
+                timestamp: String(tx.created_at || new Date().toISOString()),
+                type: (tx.type as any) || 'credit',
+                amount: Number(tx.amount_xof || 0),
+                category: (tx.category as any) || 'Recharge Mobile Money',
+                reference: String(tx.reference || ''),
+                paymentMethod: (tx.payment_method as any) || 'Wave',
+                status: (tx.status as any) || 'completed',
+              }))
+          : []
+      );
+    } catch {
+      // Ignore network errors
+    }
+  };
 
   useEffect(() => {
-    safeSetStorage('joowifi_staff', staff);
-    syncStaffToSupabase(staff);
-  }, [staff]);
-
-  useEffect(() => {
-    safeSetStorage('joowifi_mac_bypass', macBypasses);
-    syncMacBypassesToSupabase(macBypasses);
-  }, [macBypasses]);
-
-  useEffect(() => {
-    safeSetStorage('joowifi_transactions', transactions);
-    syncTransactionsToSupabase(transactions);
-  }, [transactions]);
-
-  useEffect(() => {
-    syncSessionsToSupabase(sessions);
-  }, [sessions]);
-
-  useEffect(() => {
-    safeSetStorage('joowifi_wallet', walletBalance);
-    safeSetStorage('joowifi_gains', gainsBalance);
-    safeSetStorage('joowifi_plan', currentPlanId);
-    safeSetStorage('joowifi_telegram', telegramConfig);
-    safeSetStorage('joowifi_profile', operatorProfile);
-    safeSetStorage('joowifi_currency', currency);
-    syncOperatorToSupabase();
-  }, [walletBalance, gainsBalance, currentPlanId, telegramConfig, operatorProfile, currency]);
-
-  useEffect(() => safeSetStorage('joowifi_captive_config', captiveConfig), [captiveConfig]);
-  useEffect(() => safeSetStorage('joowifi_saved_templates', savedTemplates), [savedTemplates]);
-
-  // Initial bidirectional sync on mount
-  useEffect(() => {
-    syncAll12TablesToSupabase();
-  }, []);
+    if (user?.tenantId) {
+      void loadTenantWorkspace(user.tenantId);
+    }
+  }, [user?.tenantId]);
 
   const formatMoney = (rawAmount: number): string => {
     const amountInXof = Number(rawAmount || 0);
@@ -1273,17 +1217,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const refreshSessions = () => {
-    setSessions((prev) =>
-      prev.map((s) => ({
-        ...s,
-        uptimeMinutes: s.uptimeMinutes + 1,
-        timeRemainingMinutes: s.timeRemainingMinutes ? Math.max(0, s.timeRemainingMinutes - 1) : undefined,
-        bytesInMb: Number((s.bytesInMb + (Math.random() * 0.8 + 0.1)).toFixed(1)),
-        bytesOutMb: Number((s.bytesOutMb + (Math.random() * 0.2 + 0.05)).toFixed(1)),
-        downloadRateKbps: Math.floor(Math.random() * 2500 + 300),
-        uploadRateKbps: Math.floor(Math.random() * 600 + 80),
-      }))
-    );
+    if (OP_ID) {
+      void loadTenantWorkspace(OP_ID);
+    }
     setHeartbeatSecondsRemaining(45);
   };
 
@@ -1342,7 +1278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       lastHeartbeat: new Date().toISOString(),
       installToken: newToken,
     };
-    setRouters((prev) => [...prev, newRouter]);
+    setRouters((prev) => { const next = [...prev, newRouter]; syncRoutersToSupabase(next); return next; });
     addAuditLog('Ajout Routeur', newRouter.name, `Token: ${newToken} - Zone: ${newRouter.zoneName}`);
   };
 
@@ -1453,7 +1389,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().slice(0, 10),
     };
 
-    setZones((prev) => [...prev, newZone]);
+    setZones((prev) => { const next = [...prev, newZone]; syncZonesToSupabase(next); return next; });
 
     if (zoneData.initialRouterId) {
       setRouters((prev) =>
@@ -1511,7 +1447,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...forfaitData,
       id: `f-${Date.now()}`,
     };
-    setForfaits((prev) => [...prev, newForfait]);
+    setForfaits((prev) => { const next = [...prev, newForfait]; syncForfaitsToSupabase(next); return next; });
     addAuditLog('Création Forfait', newForfait.name, `Prix: ${newForfait.price} FCFA`);
     notify(`Forfait "${newForfait.name}" créé.`, 'success');
   };
@@ -1547,7 +1483,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalSales: 0,
       paidCommissions: 0,
     };
-    setStaff((prev) => [...prev, newStaff]);
+    setStaff((prev) => { const next = [...prev, newStaff]; syncStaffToSupabase(next); return next; });
     addAuditLog('Ajout Vendeur', newStaff.name, `Zone: ${newStaff.zoneName} - Téléphone: ${newStaff.phone}`);
     notify(`Vendeur POS "${newStaff.name}" ajouté à ${newStaff.zoneName}.`, 'success');
   };
@@ -1948,87 +1884,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     safeSetStorage('joowifi_auth_user', newSession);
     setIsAuthModalOpen(false);
 
-    // Si c'est un tout nouveau compte Opérateur (Tenant), initialiser un espace 100% isolé et vierge
-    if (isNewAccount && resolvedTenant !== DEFAULT_MAIN_TENANT_ID) {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      const rand4 = () =>
-        Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-      const uniqueToken = `JWT-${rand4()}-${rand4()}-${rand4()}`;
+    // Réinitialiser immédiatement tous les compteurs à 0 (0 Routeur, 0 Vendeur, 0 Session, 0 FCFA)
+    setZones([]);
+    setRouters([]);
+    setForfaits([]);
+    setTickets([]);
+    setStaff([]);
+    setSessions([]);
+    setPhysicalHosts([]);
+    setConnectionLogs([]);
+    setMacBypasses([]);
+    setTransactions([]);
+    setAuditLogs([]);
+    setHeartbeatQueue([]);
+    setPendingSosAlerts([]);
+    setWalletBalance(0);
+    setGainsBalance(0);
 
-      const initZone: ZoneItem = {
-        id: `zone-${Date.now()}`,
-        name: 'Zone Principale WiFi',
-        city: 'Abidjan',
-        country: "Côte d'Ivoire",
-        routerCount: 1,
-        activeTicketsCount: 0,
-        monthlyRevenue: 0,
-        status: 'active',
-        siteType: 'commerce',
-        todaySales: 0,
-      };
-
-      const initRouter: RouterItem = {
-        id: `router-${Date.now()}`,
-        name: 'MK-MAIN-ROUTER-01',
-        model: 'MikroTik RouterOS v7',
-        zoneId: initZone.id,
-        zoneName: initZone.name,
-        ipAddress: '10.5.50.1',
-        macAddress: '48:A9:8A:00:00:01',
-        routerOsVersion: 'v7.23.8',
-        status: 'online',
-        lastHeartbeat: new Date().toISOString(),
-        uptime: '00j 01h 00m',
-        cpuUsage: 12,
-        ramUsage: 28,
-        trafficDownMbps: 0,
-        trafficUpMbps: 0,
-        totalSubscribers: 0,
-        installToken: uniqueToken,
-      };
-
-      setZones([initZone]);
-      setRouters([initRouter]);
-      setTickets([]);
-      setStaff([]);
-      setMacBypasses([]);
-      setSessions([]);
-      safeSetStorage('joowifi_zones', [initZone]);
-      safeSetStorage('joowifi_routers', [initRouter]);
-      safeSetStorage('joowifi_tickets', []);
-      safeSetStorage('joowifi_staff', []);
-      safeSetStorage('joowifi_mac_bypass', []);
-    } else {
-      // Charger uniquement les données Cloud appartenant à ce tenant_id
-      void (async () => {
-        const tRows = await supabaseSelect<Record<string, any>>(
-          'tickets',
-          `select=*&tenant_id=eq.${encodeURIComponent(resolvedTenant)}&order=created_at.desc&limit=500`,
-          resolvedTenant
-        );
-        if (Array.isArray(tRows)) {
-          setTickets(
-            tRows
-              .filter((r) => r && r.code && !LEGACY_DEMO_CODES.has(String(r.code)))
-              .map((r, idx) => ({
-                id: String(r.id || `t-${idx}-${r.code}`),
-                code: String(r.code),
-                pin: String(r.pin || r.code),
-                password: String(r.password || r.code),
-                forfaitId: String(r.forfait_id || 'Pass WiFi'),
-                forfaitName: String(r.forfait_id || 'Pass WiFi'),
-                price: Number(r.price_xof || 0),
-                duration: String(r.duration_label || '24h'),
-                status: (r.status as any) || 'stock',
-                createdAt: String(r.created_at || new Date().toISOString()),
-                sellerId: r.seller_id ? String(r.seller_id) : undefined,
-                sellerName: r.seller_id ? String(r.seller_id) : undefined,
-                zoneName: String(r.zone_id || 'Zone Principale'),
-              }))
-          );
-        }
-      })();
+    if (!isNewAccount) {
+      void loadTenantWorkspace(resolvedTenant);
     }
 
     if (role === 'staff') {

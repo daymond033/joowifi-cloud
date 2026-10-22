@@ -560,30 +560,7 @@ export const AuthModal: React.FC = () => {
               </button>
             </form>
 
-            {/* Quick RBAC Test Shortcuts */}
-            <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
-              <div className="text-[10px] text-slate-400 text-center uppercase font-bold tracking-wider">
-                Connexion rapide selon le rôle (RBAC)
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => login('admin@joowifi.ci', 'admin', 'Kouamé Konan (Admin)')}
-                  className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#005A5B] font-semibold text-[11px] transition cursor-pointer"
-                >
-                  Accès Admin (Console)
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    login('mamadou@joowifi.ci', 'staff', 'Mamadou Fonate', 'staff-pos-1')
-                  }
-                  className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#008060] font-semibold text-[11px] transition cursor-pointer"
-                >
-                  Accès Vendeur (POS seul)
-                </button>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

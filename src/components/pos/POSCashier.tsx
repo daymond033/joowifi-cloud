@@ -376,13 +376,19 @@ export const POSCashier: React.FC = () => {
 
   // 7-day sales data points (for performance curve)
   const salesHistory7Days = [
-    { day: 'sam. 3', amount: 0 },
-    { day: 'dim. 4', amount: 0 },
-    { day: 'lun. 5', amount: 0 },
-    { day: 'mar. 6', amount: 0 },
-    { day: 'mer. 7', amount: 0 },
-    { day: 'jeu. 8', amount: 5200 },
-    { day: 'ven. 9', amount: todaySales },
+    { day: 'Lun', date: '-', tickets: 0, amount: 0, commission: 0 },
+    { day: 'Mar', date: '-', tickets: 0, amount: 0, commission: 0 },
+    { day: 'Mer', date: '-', tickets: 0, amount: 0, commission: 0 },
+    { day: 'Jeu', date: '-', tickets: 0, amount: 0, commission: 0 },
+    { day: 'Ven', date: '-', tickets: 0, amount: 0, commission: 0 },
+    { day: 'Sam', date: '-', tickets: 0, amount: 0, commission: 0 },
+    {
+      day: 'Auj.',
+      date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+      tickets: vendorSoldTickets.length,
+      amount: activeStaff?.todaySales || 0,
+      commission: Math.round(((activeStaff?.todaySales || 0) * (activeStaff?.commissionRate || 10)) / 100),
+    },
   ];
 
   return (
