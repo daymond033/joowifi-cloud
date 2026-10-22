@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { isSupabaseConfigured, supabaseInsert, supabaseSelect, supabaseUpdate, supabaseDelete } from '../lib/supabase';
+import {
+  isSupabaseConfigured,
+  supabaseInsert,
+  supabaseSelect,
+  supabaseUpdate,
+  supabaseDelete,
+  getActiveTenantId,
+  setActiveTenantId,
+  DEFAULT_MAIN_TENANT_ID,
+} from '../lib/supabase';
 import {
   Currency,
   RouterItem,
@@ -683,8 +692,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setHeartbeatQueue((prev) => [cmd, ...prev.slice(0, 29)]);
     if (isSupabaseConfigured()) {
       void supabaseInsert('heartbeat_commands', {
-        operator_id: '11111111-1111-1111-1111-111111111111',
-        router_id: '33333333-3333-3333-3333-333333333331',
+        tenant_id: OP_ID,
+        operator_id: OP_ID,
+        router_id: routers[0]?.id || 'all',
         command_type: commandType,
         routeros_script: routerOsCommand,
         status: 'pending',
@@ -947,7 +957,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     syncAll12TablesToSupabase();
   }, []);
 
-  const formatMoney = (amountInXof: number): string => {
+  const formatMoney = (rawAmount: number): string => {
+    const amountInXof = Number(rawAmount || 0);
     switch (currency) {
       case 'XOF':
         return `${amountInXof.toLocaleString('fr-FR')} FCFA`;

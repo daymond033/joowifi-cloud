@@ -1,7 +1,8 @@
 // ============================================================================
-// JOOWIFI CLOUD v6.3 — CONNECTEUR MULTI-TENANT & RLS (DIRECT + RELAIS /api/supabase)
-// Transmet automatiquement l'identifiant du locataire (`tenant_id` / `x-tenant-id`)
-// sur chaque lecture, création, modification et suppression.
+// JOOWIFI CLOUD v6.3 — CONNECTEUR MULTI-TENANT SANS ERREUR CORS
+// Scope automatiquement chaque lecture, création, modification et suppression
+// par le `tenant_id` de l'opérateur (ou du patron du vendeur POS) connecté,
+// en utilisant uniquement des en-têtes CORS standards autorisés par Supabase.
 // ============================================================================
 
 const SUPABASE_URL: string =
@@ -30,6 +31,9 @@ const TENANT_SCOPED_TABLES = new Set([
  */
 export function getActiveTenantId(): string {
   try {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return DEFAULT_MAIN_TENANT_ID;
+    }
     const rawUser = localStorage.getItem('joowifi_auth_user');
     if (rawUser) {
       const parsed = JSON.parse(rawUser);
@@ -49,7 +53,9 @@ export function getActiveTenantId(): string {
 
 export function setActiveTenantId(tenantId: string): void {
   try {
-    localStorage.setItem('joowifi_active_tenant_id', tenantId.trim());
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('joowifi_active_tenant_id', tenantId.trim());
+    }
   } catch {
     // Ignore
   }
@@ -59,12 +65,14 @@ export const isSupabaseConfigured = (): boolean => {
   return true;
 };
 
-const getHeaders = (preferHeader?: string, customTenantId?: string): HeadersInit => {
-  const tenantId = customTenantId || getActiveTenantId();
+/**
+ * Utilise uniquement les en-têtes standards autorisés par le CORS de Supabase PostgREST
+ * (pas d'en-tête personnalisé x-tenant-id côté navigateur pour éviter tout rejet CORS OPTIONS).
+ */
+const getHeaders = (preferHeader?: string): HeadersInit => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     apikey: SUPABASE_ANON_KEY,
-    'x-tenant-id': tenantId,
   };
   if (SUPABASE_ANON_KEY.startsWith('eyJ')) {
     headers.Authorization = `Bearer ${SUPABASE_ANON_KEY}`;
@@ -116,9 +124,6 @@ function appendTenantFilter(table: string, query: string, tenantId: string): str
   return clean ? `${clean}&${filter}` : filter;
 }
 
-/**
- * Déduplique un tableau d'objets selon les colonnes de conflit (ex: "tenant_id,code")
- */
 function deduplicateBatch(payload: unknown, conflictCols?: string): unknown {
   if (!Array.isArray(payload) || !conflictCols) return payload;
   const cols = conflictCols.split(',').map((c) => c.trim());
@@ -147,7 +152,6 @@ async function callProxy<T>(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-tenant-id': tenantId,
       },
       body: JSON.stringify({
         table,
@@ -178,7 +182,7 @@ export async function supabaseSelect<T>(
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${scopedQuery}`, {
         method: 'GET',
-        headers: getHeaders(undefined, tenantId),
+        headers: getHeaders(),
       });
       if (res.ok) {
         return (await res.json()) as T[];
@@ -211,19 +215,18 @@ export async function supabaseInsert<T>(
       const url = `${SUPABASE_URL}/rest/v1/${table}${query ? `?${query}` : ''}`;
       const res = await fetch(url, {
         method: 'POST',
-        headers: getHeaders(prefer, tenantId),
+        headers: getHeaders(prefer),
         body: JSON.stringify(cleanPayload),
       });
       if (res.ok) {
         return (await res.json()) as T[];
       }
-      // Si l'index de conflit utilise tenant_id,code au lieu de operator_id,code (ou inversement), tenter avec tenant_id
       if (upsertConflictCols && upsertConflictCols.includes('operator_id')) {
         const altConflict = upsertConflictCols.replace('operator_id', 'tenant_id');
         const altUrl = `${SUPABASE_URL}/rest/v1/${table}?on_conflict=${altConflict}`;
         const altRes = await fetch(altUrl, {
           method: 'POST',
-          headers: getHeaders(prefer, tenantId),
+          headers: getHeaders(prefer),
           body: JSON.stringify(cleanPayload),
         });
         if (altRes.ok) {
@@ -251,7 +254,7 @@ export async function supabaseUpdate(
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${scopedFilter}`, {
         method: 'PATCH',
-        headers: getHeaders(undefined, tenantId),
+        headers: getHeaders(),
         body: JSON.stringify(enrichedPayload),
       });
       if (res.ok) return true;
@@ -282,7 +285,7 @@ export async function supabaseDelete(
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${scopedFilter}`, {
         method: 'DELETE',
-        headers: getHeaders(undefined, tenantId),
+        headers: getHeaders(),
       });
       if (res.ok) return true;
     } catch {
@@ -295,15 +298,13 @@ export async function supabaseDelete(
 
 export async function supabaseRpc<T = string>(
   fnName: string,
-  params: Record<string, unknown>,
-  customTenantId?: string
+  params: Record<string, unknown>
 ): Promise<T | null> {
-  const tenantId = customTenantId || getActiveTenantId();
   if (SUPABASE_ANON_KEY) {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
         method: 'POST',
-        headers: getHeaders(undefined, tenantId),
+        headers: getHeaders(),
         body: JSON.stringify(params),
       });
       if (res.ok) {

@@ -4,7 +4,7 @@
 // tout en conservant le mode hors-ligne de secours en cas de coupure réseau.
 // ============================================================================
 
-const CACHE_NAME = 'joowifi-pwa-v6.0.0-supabase';
+const CACHE_NAME = 'joowifi-pwa-v7.0.0-multitenant-fix';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

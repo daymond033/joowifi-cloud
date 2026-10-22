@@ -8,7 +8,7 @@
     <meta property="og:title" content="Joowifi - Cloud MikroTik Hotspot & POS" />
     <meta property="og:description" content="Pilotez vos hotspots MikroTik depuis le cloud, gérez vos vendeurs POS et suivez vos revenus sans ouvrir aucun port (Zero-Trust & CGNAT)." />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#0B0F19" />
+    <meta name="theme-color" content="#005A5B" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -21,7 +21,7 @@
     <script>
       (function () {
         try {
-          var SW_VERSION = 'joowifi_sw_v6_supabase';
+          var SW_VERSION = 'joowifi_sw_v7_multitenant_fix';
           if (localStorage.getItem(SW_VERSION) !== '1') {
             localStorage.setItem(SW_VERSION, '1');
             if ('serviceWorker' in navigator) {
@@ -41,7 +41,7 @@
       })();
     </script>
   </head>
-  <body class="h-full bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-slate-950 font-sans">
+  <body class="h-full bg-[#F4F7FA] text-[#1E293B] antialiased selection:bg-[#008060] selection:text-white font-sans">
     <div id="root" class="h-full"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
