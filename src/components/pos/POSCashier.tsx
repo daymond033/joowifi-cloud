@@ -42,6 +42,8 @@ export const POSCashier: React.FC = () => {
     setCurrentSpace,
     tickets,
     forceHeartbeatSync,
+    user,
+    logout,
   } = useApp();
 
   // Active vendor (defaulting to mamadou fonate / first staff member)
@@ -65,7 +67,6 @@ export const POSCashier: React.FC = () => {
   const initialTicket = useMemo(() => {
     return (
       tickets.find((t) => t.sellerId === activeStaff?.id) ||
-      tickets.find((t) => t.code === 'r7gt') ||
       tickets[0] ||
       null
     );

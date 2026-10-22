@@ -242,7 +242,7 @@ export const AccountingView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900/60 to-slate-950 border border-[#99D5D3] space-y-2">
+        <div className="p-5 rounded-2xl bg-white border border-[#99D5D3] space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#005A5B] font-bold uppercase tracking-wider">
               Bénéfice Net Opérateur

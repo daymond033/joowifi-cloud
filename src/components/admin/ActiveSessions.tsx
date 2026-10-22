@@ -269,7 +269,7 @@ export const ActiveSessions: React.FC = () => {
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
-            className={`px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-750 text-slate-700 text-xs font-medium flex items-center gap-2 transition active:scale-95 cursor-pointer shadow-sm ${
+            className={`px-3.5 py-2 rounded-xl border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-2 transition active:scale-95 cursor-pointer shadow-sm ${
               isRefreshing ? 'opacity-70 cursor-not-allowed' : ''
             }`}
             title="Forcer la synchronisation avec les tables MikroTik"
@@ -283,7 +283,7 @@ export const ActiveSessions: React.FC = () => {
       {/* 2. RANGÉE DES 3 MÉTRIQUES MAJEURES (KPI CARDS) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* KPI 1 : ABONNÉS EN LIGNE */}
-        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-emerald-950/20 group hover:border-[#99D5D3] transition">
+        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-white group hover:border-[#99D5D3] transition">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-semibold">
@@ -305,7 +305,7 @@ export const ActiveSessions: React.FC = () => {
         </div>
 
         {/* KPI 2 : TOTAL DES ÉQUIPEMENTS (HÔTES) */}
-        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-blue-950/20 group hover:border-blue-500/40 transition">
+        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-white group hover:border-blue-500/40 transition">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-semibold">
@@ -327,7 +327,7 @@ export const ActiveSessions: React.FC = () => {
         </div>
 
         {/* KPI 3 : DÉBIT INSTANTANÉ TOTAL */}
-        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-amber-950/20 group hover:border-[#99D5D3] transition">
+        <div className="relative overflow-hidden p-5 rounded-2xl glass-card border border-slate-200 bg-white group hover:border-[#99D5D3] transition">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-wider text-slate-400 font-mono font-semibold">

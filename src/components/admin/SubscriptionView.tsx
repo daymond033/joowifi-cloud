@@ -33,6 +33,8 @@ export const SubscriptionView: React.FC = () => {
     operatorProfile,
     formatMoney,
     setAdminTab,
+    setCurrentSpace,
+    setPublicTab,
     notify,
   } = useApp();
 
@@ -129,7 +131,7 @@ export const SubscriptionView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Current Plan Overview Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-950/60 via-[#0B0F19] to-slate-950 border border-[#99D5D3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
+      <div className="p-6 rounded-3xl bg-white border border-[#99D5D3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-[#007A78]" />

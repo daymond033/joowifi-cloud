@@ -58,7 +58,7 @@ export const Sidebar: React.FC = () => {
 
   const categories: SidebarCategory[] = [
     {
-      title: 'SUPERVISION SDN',
+      title: 'SUPERVISION',
       items: [
         { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
         { id: 'assistant', label: 'Assistant Réseau IA', icon: Bot, badge: 'IA' },
@@ -67,9 +67,14 @@ export const Sidebar: React.FC = () => {
     {
       title: 'VOUCHERS & POS',
       items: [
-        { id: 'tickets', label: 'Gestion des Tickets', icon: Ticket, badge: `${tickets.length}` },
+        {
+          id: 'tickets',
+          label: 'Gestion des Tickets',
+          icon: Ticket,
+          badge: tickets.length > 0 ? `${tickets.length}` : undefined,
+        },
         { id: 'forfaits', label: 'Profils & Forfaits', icon: Wifi },
-        { id: 'pos-direct', label: 'Terminal Caisse POS', icon: Smartphone, badge: 'PWA' },
+        { id: 'pos-direct', label: 'Terminal Caisse POS', icon: Smartphone },
         {
           id: 'staff',
           label: 'Agents Vendeurs',
@@ -83,7 +88,7 @@ export const Sidebar: React.FC = () => {
       items: [
         { id: 'zones', label: 'Sites & Zones', icon: MapPin },
         { id: 'mikrotik', label: 'Passerelles MikroTik', icon: RouterIcon },
-        { id: 'installation', label: 'Script RouterOS (.rsc)', icon: Terminal, badge: 'v5.1' },
+        { id: 'installation', label: 'Installation (Script)', icon: Terminal },
         {
           id: 'sessions',
           label: 'Clients Connectés',
@@ -103,11 +108,11 @@ export const Sidebar: React.FC = () => {
     {
       title: 'FINANCES & COMPTES',
       items: [
-        { id: 'comptabilite', label: 'Comptabilité & ROI', icon: Calculator },
-        { id: 'portefeuille', label: 'Portefeuille Mobile', icon: Wallet },
+        { id: 'comptabilite', label: 'Comptabilité & Bilan', icon: Calculator },
+        { id: 'portefeuille', label: 'Portefeuille Pay', icon: Wallet },
         { id: 'ventes', label: 'Recettes Vendeurs', icon: TrendingUp },
-        { id: 'gains', label: 'Reversements', icon: DollarSign },
-        { id: 'abonnements', label: 'Licence Cloud', icon: CreditCard },
+        { id: 'gains', label: 'Mes Gains (Retrait)', icon: DollarSign },
+        { id: 'abonnements', label: 'Mon Abonnement', icon: CreditCard },
       ],
     },
     {
@@ -118,7 +123,7 @@ export const Sidebar: React.FC = () => {
         { id: 'marketplace-mes-templates', label: 'Mes Modèles', icon: Boxes },
         { id: 'notifications', label: 'Alertes Telegram', icon: Bell },
         { id: 'logs', label: 'Journal d’Audit', icon: FileText },
-        { id: 'profil', label: 'Profil Opérateur', icon: User },
+        { id: 'profil', label: 'Profil & Devise', icon: User },
       ],
     },
   ];
@@ -141,7 +146,7 @@ export const Sidebar: React.FC = () => {
       <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-[#F8FAFC]">
         {!collapsed && (
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Navigation Contrôleur
+            Menu Principal
           </span>
         )}
         <button
@@ -175,7 +180,7 @@ export const Sidebar: React.FC = () => {
                       collapsed ? 'justify-center px-2 py-2.5' : 'justify-between px-3 py-2'
                     } rounded text-xs transition cursor-pointer ${
                       isActive
-                        ? 'bg-[#007A78] text-white font-semibold keep-white'
+                        ? 'bg-[#008060] text-white font-semibold'
                         : 'text-slate-600 hover:text-[#005A5B] hover:bg-[#F1F5F9]'
                     }`}
                   >
@@ -194,9 +199,9 @@ export const Sidebar: React.FC = () => {
                           <span
                             className={`px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded ${
                               item.badge.includes('SOS')
-                                ? 'bg-rose-600 text-white keep-white'
+                                ? 'bg-rose-600 text-white'
                                 : isActive
-                                ? 'bg-[#005A5B] text-white keep-white'
+                                ? 'bg-[#005A5B] text-white'
                                 : 'bg-slate-100 text-slate-600 border border-slate-200'
                             }`}
                           >
@@ -216,40 +221,40 @@ export const Sidebar: React.FC = () => {
         ))}
       </div>
 
-      {/* Bottom Controller Status Box */}
+      {/* Bottom White-Label Cloud Status Box */}
       <div className="p-3 border-t border-slate-200 bg-[#F8FAFC]">
         {!collapsed ? (
           <div className="p-3 rounded bg-white border border-slate-200 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#005A5B]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#007A78]" />
-                <span>Cloud Pull Actif</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-[#008060]" />
+                <span>Liaison Cloud</span>
               </div>
               <button
                 onClick={forceHeartbeatSync}
                 className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#E6F4F3] hover:bg-[#d0ebe9] text-[#005A5B] transition cursor-pointer"
               >
-                Sync 10s
+                Synchroniser
               </button>
             </div>
 
             <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#007A78] transition-all duration-500"
+                className="h-full bg-[#008060] transition-all duration-500"
                 style={{ width: `${((45 - heartbeatSecondsRemaining) / 45) * 100}%` }}
               />
             </div>
 
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
-              <span>Supabase 12/12</span>
-              <span className="text-[#007A78] font-bold">Connecté</span>
+              <span>Serveur Cloud</span>
+              <span className="text-[#008060] font-bold">Connecté</span>
             </div>
           </div>
         ) : (
           <button
             onClick={forceHeartbeatSync}
-            title="Synchroniser maintenant"
-            className="w-full py-2 rounded bg-[#E6F4F3] text-[#007A78] flex items-center justify-center cursor-pointer"
+            title="Synchroniser le Cloud"
+            className="w-full py-2 rounded bg-[#E6F4F3] text-[#008060] flex items-center justify-center cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4" />
           </button>

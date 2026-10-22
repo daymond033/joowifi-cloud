@@ -61,7 +61,7 @@ export const MyEarningsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Balance Card */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-950/80 via-[#0B0F19] to-slate-950 border border-[#99D5D3] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl">
+      <div className="p-6 rounded-3xl bg-white border border-[#99D5D3] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-[#008060] text-xs font-bold uppercase tracking-wider">
             <DollarSign className="w-4 h-4" />

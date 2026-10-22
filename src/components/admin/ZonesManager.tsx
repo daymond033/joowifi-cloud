@@ -765,7 +765,7 @@ export const ZonesManager: React.FC = () => {
       {activeTab === 'packs' && (
         <div className="space-y-6">
           {/* Wallet Balance Banner */}
-          <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-amber-950/30 border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-[#E6F4F3] border border-[#99D5D3] flex items-center justify-center text-[#007A78] shrink-0 shadow-inner">
                 <Wallet className="w-7 h-7" />

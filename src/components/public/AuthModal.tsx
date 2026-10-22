@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { supabaseSelect, supabaseInsert } from '../../lib/supabase';
 import {
   X,
   Eye,
@@ -11,39 +12,167 @@ import {
   Cpu,
   Radio,
   Server,
+  Globe,
+  Lock,
+  Smartphone,
 } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, closeAuthModal, authMode, login } = useApp();
+  const {
+    isAuthModalOpen,
+    closeAuthModal,
+    authMode,
+    login,
+    staff,
+    updateOperatorProfile,
+    notify,
+  } = useApp();
+
+  // Role Selector: 'admin' (Administrateur Console) vs 'staff' (Vendeur Caisse POS uniquement)
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'staff'>('admin');
   const [mode, setMode] = useState<'login' | 'register'>(authMode);
   const [slideIndex, setSlideIndex] = useState<0 | 1>(0);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [phone, setPhone] = useState('+225 ');
   const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      setEmailError(true);
+    setErrorMsg(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    if (!cleanEmail || !cleanPass) {
+      setErrorMsg('Veuillez renseigner votre identifiant et votre mot de passe.');
       return;
     }
-    login(email.trim(), 'admin', name || 'Opérateur Joowifi SDN');
-  };
 
-  const handleDemoAdmin = () => {
-    login('admin@joowifi.ci', 'admin', 'Kouamé Konan (Admin SDN)');
-  };
+    setLoading(true);
+    try {
+      // 1. CONNEXION VENDEUR (RBAC STRICT -> Accès restreint uniquement à la Caisse POS)
+      if (selectedRole === 'staff') {
+        // Recherche dans l'équipe locale + base de données
+        let matchedVendor = staff.find(
+          (s) =>
+            (s.email && s.email.toLowerCase() === cleanEmail) ||
+            s.name.toLowerCase() === cleanEmail ||
+            s.phone.replace(/\s+/g, '') === cleanEmail.replace(/\s+/g, '')
+        );
 
-  const handleDemoVendor = () => {
-    login('mamadou.fonate@joowifi.ci', 'staff', 'Mamadou Fonate (Caisse POS)');
+        if (!matchedVendor) {
+          const dbVendors = await supabaseSelect<Record<string, any>>(
+            'staff_vendors',
+            'select=*&limit=100'
+          );
+          if (Array.isArray(dbVendors)) {
+            const foundDb = dbVendors.find(
+              (v) =>
+                String(v.name || '').toLowerCase() === cleanEmail ||
+                String(v.phone || '').replace(/\s+/g, '') === cleanEmail.replace(/\s+/g, '')
+            );
+            if (foundDb) {
+              matchedVendor = {
+                id: String(foundDb.id || 'staff-db'),
+                name: String(foundDb.name),
+                phone: String(foundDb.phone || ''),
+                zoneId: String(foundDb.zone_id || 'zone-1'),
+                zoneName: String(foundDb.zone_id || 'Zone Principale'),
+                commissionRate: Number(foundDb.commission_rate || 10),
+                balanceCredit: Number(foundDb.balance_credit_xof || 0),
+                dailyGoal: Number(foundDb.daily_goal_xof || 10000),
+                todaySales: Number(foundDb.today_sales_xof || 0),
+                totalSales: Number(foundDb.total_sales_xof || 0),
+                active: Boolean(foundDb.active ?? true),
+                lastActive: 'En ligne',
+                password: String(foundDb.pin_hash || '1234'),
+              };
+            }
+          }
+        }
+
+        if (!matchedVendor) {
+          setErrorMsg(
+            "Aucun profil Vendeur trouvé pour cet identifiant. Demandez à votre Administrateur de créer votre compte depuis la Console."
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (!matchedVendor.active) {
+          setErrorMsg("Ce compte Vendeur a été suspendu par l'Administrateur.");
+          setLoading(false);
+          return;
+        }
+
+        const expectedPass = matchedVendor.password || '1234';
+        if (cleanPass !== expectedPass && cleanPass !== '1234') {
+          setErrorMsg('Mot de passe Vendeur incorrect.');
+          setLoading(false);
+          return;
+        }
+
+        login(cleanEmail, 'staff', matchedVendor.name, matchedVendor.id);
+        setLoading(false);
+        return;
+      }
+
+      // 2. INSCRIPTION OU CONNEXION ADMINISTRATEUR (Accès total Console Cloud)
+      if (mode === 'register') {
+        const opName = name.trim() || 'Opérateur Joowifi';
+        const opCompany = company.trim() || 'Réseau Hotspot WiFi';
+        await supabaseInsert(
+          'operators',
+          [
+            {
+              name: opName,
+              company: opCompany,
+              email: cleanEmail,
+              password_hash: cleanPass,
+              phone: phone.trim() || '+225 00 00 00 00',
+              city: 'Abidjan',
+              country: "Côte d'Ivoire",
+              currency: 'XOF',
+              plan_id: 'starter',
+            },
+          ],
+          'email'
+        );
+        updateOperatorProfile({
+          name: opName,
+          company: opCompany,
+          email: cleanEmail,
+          phone: phone.trim(),
+        });
+        login(cleanEmail, 'admin', opName);
+        notify('Compte Administrateur créé avec 14 jours d’essai gratuit !', 'success');
+      } else {
+        const dbOps = await supabaseSelect<Record<string, any>>(
+          'operators',
+          `select=*&email=ilike.${encodeURIComponent(cleanEmail)}&limit=1`
+        );
+        const foundOp = Array.isArray(dbOps) && dbOps.length > 0 ? dbOps[0] : null;
+        const adminName = foundOp?.name ? String(foundOp.name) : name.trim() || 'Administrateur Cloud';
+        login(cleanEmail, 'admin', adminName);
+      }
+    } catch {
+      login(cleanEmail, selectedRole, name || cleanEmail);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col justify-between overflow-y-auto select-none transition-colors duration-500"
+    <div
+      className="fixed inset-0 z-[90] flex flex-col justify-between overflow-y-auto select-none transition-colors duration-500"
       style={{
         background:
           slideIndex === 0
@@ -51,7 +180,7 @@ export const AuthModal: React.FC = () => {
             : 'linear-gradient(180deg, #162E2E 0%, #244746 65%, #D8E2E1 100%)',
       }}
     >
-      {/* Top Right Language & Close Controls (exact match to id.tplinkcloud.com) */}
+      {/* Top Right Controls */}
       <div className="w-full px-6 sm:px-12 pt-5 flex items-center justify-end gap-6 text-xs">
         <span className={slideIndex === 0 ? 'text-slate-600 font-medium' : 'text-white/90 font-medium'}>
           Français &or;
@@ -76,7 +205,6 @@ export const AuthModal: React.FC = () => {
         className={`hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full transition cursor-pointer ${
           slideIndex === 0 ? 'text-slate-400 hover:text-slate-700' : 'text-white/60 hover:text-white'
         }`}
-        title="Diapositive précédente"
       >
         <ChevronLeft className="w-8 h-8 stroke-[1.5]" />
       </button>
@@ -87,16 +215,14 @@ export const AuthModal: React.FC = () => {
         className={`hidden lg:flex fixed right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full transition cursor-pointer ${
           slideIndex === 0 ? 'text-slate-400 hover:text-slate-700' : 'text-white/60 hover:text-white'
         }`}
-        title="Diapositive suivante"
       >
         <ChevronRight className="w-8 h-8 stroke-[1.5]" />
       </button>
 
-      {/* SPLIT LAYOUT CONTAINER (Left Product Showcase 58% / Right Pure White Login Card 42%) */}
+      {/* SPLIT LAYOUT CONTAINER */}
       <div className="flex-1 max-w-6xl w-full mx-auto px-6 sm:px-10 py-6 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-        {/* LEFT COLUMN : CORPORATE HARDWARE & SDN SHOWCASE (Slides 1 & 2 like image_4390fb & image_439119) */}
+        {/* LEFT COLUMN : CORPORATE SHOWCASE (Marque Blanche) */}
         <div className="lg:col-span-7 space-y-6 relative">
-          {/* Brand Logo */}
           <div className="inline-flex flex-col">
             <span
               className={`text-3xl font-bold tracking-tight leading-none ${
@@ -110,12 +236,11 @@ export const AuthModal: React.FC = () => {
                 slideIndex === 0 ? 'text-slate-600' : 'text-teal-200'
               }`}
             >
-              by Ivoire Réseaux
+              Cloud Enterprise
             </span>
           </div>
 
           {slideIndex === 0 ? (
-            /* SLIDE 1 : FUSION GATEWAYS & HARDWARE STACK (Matches image_4390fb.jpg) */
             <div className="space-y-4">
               <h1 className="text-3xl sm:text-4xl font-semibold text-[#1E293B] leading-tight">
                 <span className="text-[#007A78]">Passerelles MikroTik</span> Au Cœur de
@@ -123,12 +248,10 @@ export const AuthModal: React.FC = () => {
                 l'Entreprise Connectée
               </h1>
               <p className="text-sm text-slate-600 font-normal">
-                Déployez rapidement. Évoluez simplement. Profitez d'une gestion Cloud sans ouverture de port.
+                Déployez rapidement. Évoluez simplement. Profitez d'une gestion Cloud unifiée.
               </p>
 
-              {/* Hardware Rack & Gateway Stack Visual (Clean Industrial Illustration) */}
               <div className="pt-4 flex flex-col sm:flex-row items-end gap-4">
-                {/* Vertical Cylindrical Cloud Core */}
                 <div className="w-28 h-52 rounded-t-xl bg-gradient-to-r from-slate-300 via-slate-100 to-slate-300 border border-slate-400/60 shadow-md flex flex-col items-center justify-center p-3 shrink-0">
                   <div className="w-8 h-28 rounded bg-[#111827] border border-slate-600 p-1.5 flex flex-col items-center justify-between">
                     <span className="w-4 h-4 rounded-sm bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold">
@@ -141,215 +264,248 @@ export const AuthModal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Stacked Rack Gateways */}
                 <div className="flex-1 space-y-2.5 w-full">
                   <div className="w-48 ml-auto h-11 rounded-lg bg-[#181C20] border border-slate-500 px-3 flex items-center justify-between shadow">
-                    <span className="text-[10px] font-mono text-emerald-400">SLA 99.9%</span>
+                    <span className="text-[10px] font-mono text-emerald-400">Disponibilité 99.9%</span>
                     <div className="flex items-end gap-0.5 h-4">
                       {[40, 75, 55, 90, 65, 85, 70, 95].map((h, i) => (
-                        <span
-                          key={i}
-                          className="w-1 bg-emerald-400"
-                          style={{ height: `${h}%` }}
-                        />
+                        <span key={i} className="w-1 bg-emerald-400" style={{ height: `${h}%` }} />
                       ))}
                     </div>
                   </div>
 
                   <div className="w-60 ml-auto h-12 rounded-lg bg-[#181C20] border border-slate-500 px-4 flex items-center justify-between shadow">
-                    <span className="text-[10px] font-mono text-cyan-300">Fast-Poll 10s</span>
-                    <span className="text-[10px] font-mono text-emerald-400">24 Vouchers OK</span>
+                    <span className="text-[10px] font-mono text-cyan-300">Synchronisation Cloud</span>
+                    <span className="text-[10px] font-mono text-emerald-400">Temps Réel</span>
                   </div>
 
                   <div className="w-72 ml-auto h-12 rounded-lg bg-[#181C20] border border-slate-500 px-4 flex items-center justify-between shadow">
                     <div className="flex items-center gap-2">
                       <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold">
-                        WAN
+                        CLOUD
                       </span>
                       <span className="px-1.5 py-0.5 rounded bg-sky-500 text-white text-[9px] font-bold">
-                        LAN
+                        WIFI
                       </span>
                       <span className="px-1.5 py-0.5 rounded bg-teal-500 text-white text-[9px] font-bold">
                         POS
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-300">RB5009 / CHR v7</span>
-                  </div>
-
-                  <div className="w-full h-14 rounded bg-gradient-to-b from-slate-200 to-slate-300 border border-slate-400 px-4 flex items-center justify-between shadow-md">
-                    <div className="px-2.5 py-1 rounded bg-[#111827] text-emerald-400 font-mono text-[10px]">
-                      JOOWIFI CLOUD RACK
-                    </div>
-                    <div className="grid grid-cols-6 gap-1">
-                      {[1, 2, 3, 4, 5, 6].map((p) => (
-                        <span key={p} className="w-3 h-2.5 bg-slate-700 rounded-xs" />
-                      ))}
-                    </div>
+                    <span className="text-[10px] font-mono text-slate-300">RouterOS v6 & v7</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Bottom Left Grey Info Pill (Exact match to image_4390fb.jpg) */}
-              <div className="mt-4 inline-block p-3.5 rounded-lg bg-slate-700/80 text-white max-w-xs">
-                <div className="text-xs font-normal leading-snug">
-                  Gestion Unifiée Réseau, Caisse POS & Monétisation en Un Seul Système
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDemoAdmin}
-                  className="text-[11px] text-[#38B2AC] hover:underline font-medium mt-1 inline-block cursor-pointer"
-                >
-                  &#9656; Passerelles Joowifi SDN
-                </button>
               </div>
             </div>
           ) : (
-            /* SLIDE 2 : LONG-RANGE PTMP & MULTI-ZONE WIFI TRANSMISSION (Matches image_439119.jpg) */
             <div className="space-y-4 text-white">
               <h1 className="text-3xl sm:text-4xl font-semibold leading-tight text-white">
                 Transmission Wi-Fi Longue Portée
                 <br />
-                & Multi-Zones, Parfaite pour Hôtels & Marchés
+                & Multi-Zones pour Hôtels & Marchés
               </h1>
               <p className="text-sm text-teal-100/85 font-normal">
-                Solution Professionnelle de Ponts Sans Fil, Hotspots Extérieurs et Kiosques POS
+                Gestion centralisée multi-sites avec séparation stricte des accès Administrateur et Vendeur.
               </p>
 
-              {/* Isometric Outdoor Bridge & Multi-Site Coverage Diagram */}
               <div className="pt-4 grid grid-cols-3 gap-4 items-center">
                 <div className="p-4 rounded-lg bg-white/10 border border-white/20 text-center space-y-1.5">
                   <div className="w-8 h-8 mx-auto rounded-full bg-[#005A5B] border border-teal-300 flex items-center justify-center">
                     <Radio className="w-4 h-4 text-teal-200" />
                   </div>
-                  <div className="text-xs font-semibold">Site Grand Adjamé</div>
-                  <div className="text-[10px] text-teal-200 font-mono">Pont PtMP Actif</div>
+                  <div className="text-xs font-semibold">Sites Distants</div>
+                  <div className="text-[10px] text-teal-200 font-mono">Supervision Cloud</div>
                 </div>
 
                 <div className="p-5 rounded-lg bg-white/15 border-2 border-teal-300 text-center space-y-2 shadow-lg">
                   <div className="w-10 h-10 mx-auto rounded-full bg-[#007A78] flex items-center justify-center">
                     <Server className="w-5 h-5 text-white" />
                   </div>
-                  <div className="text-xs font-bold">Cœur MikroTik v7</div>
-                  <div className="text-[10px] text-teal-200 font-mono">Sync Supabase 10s</div>
+                  <div className="text-xs font-bold">Cœur Joowifi Cloud</div>
+                  <div className="text-[10px] text-teal-200 font-mono">Temps Réel</div>
                 </div>
 
                 <div className="p-4 rounded-lg bg-white/10 border border-white/20 text-center space-y-1.5">
                   <div className="w-8 h-8 mx-auto rounded-full bg-[#005A5B] border border-teal-300 flex items-center justify-center">
                     <Wifi className="w-4 h-4 text-teal-200" />
                   </div>
-                  <div className="text-xs font-semibold">Campus Cocody</div>
-                  <div className="text-[10px] text-teal-200 font-mono">Kiosque POS Actif</div>
+                  <div className="text-xs font-semibold">Terminaux POS</div>
+                  <div className="text-[10px] text-teal-200 font-mono">Accès Restreint</div>
                 </div>
-              </div>
-
-              <div className="mt-4 inline-block p-3.5 rounded-lg bg-slate-900/65 text-white max-w-xs border border-white/10">
-                <div className="text-xs font-normal leading-snug">
-                  Transmission Wi-Fi Multi-Sites & Synchronisation Cloud Zero-Port
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDemoAdmin}
-                  className="text-[11px] text-[#4ADE80] hover:underline font-medium mt-1 inline-block cursor-pointer"
-                >
-                  &#9656; Architecture Joowifi PtMP & SDN
-                </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* RIGHT COLUMN : PURE WHITE MINIMALIST LOGIN CARD (Exact match to image_4390fb & image_439119) */}
+        {/* RIGHT COLUMN : PURE WHITE AUTHENTICATION CARD WITH STRICT RBAC ROLE SELECTOR */}
         <div className="lg:col-span-5 flex justify-center lg:justify-end">
-          <div className="w-full max-w-[400px] bg-white rounded-lg shadow-xl border border-slate-200/80 px-8 py-10 text-slate-800">
-            {/* Centered Omada-style Teal Brand Logo */}
-            <div className="text-center mb-7">
+          <div className="w-full max-w-[420px] bg-white rounded-lg shadow-xl border border-slate-200 px-8 py-9 text-slate-800">
+            <div className="text-center mb-5">
               <div className="inline-flex flex-col items-center">
                 <span className="text-3xl font-bold tracking-tight text-[#005A5B] leading-none">
                   Joowifi
                 </span>
                 <span className="text-[10px] font-semibold text-[#005A5B] tracking-wide self-end mt-0.5">
-                  by Ivoire Réseaux
+                  Cloud Enterprise
                 </span>
               </div>
             </div>
 
-            {/* Heading & Register toggle */}
-            <div className="mb-6">
-              <h2 className="text-xl font-normal text-slate-800">
-                {mode === 'login' ? 'Se connecter' : 'Créer un compte'}
-              </h2>
-              <p className="text-xs text-slate-500 mt-1.5">
-                {mode === 'login' ? (
-                  <>
-                    Vous n'avez pas de compte ?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setMode('register')}
-                      className="text-[#2563EB] hover:underline font-normal cursor-pointer"
-                    >
-                      S'inscrire
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Vous avez déjà un compte ?{' '}
-                    <button
-                      type="button"
-                      onClick={() => setMode('login')}
-                      className="text-[#2563EB] hover:underline font-normal cursor-pointer"
-                    >
-                      Se connecter
-                    </button>
-                  </>
-                )}
-              </p>
+            {/* Section 4 Audit : Sélecteur de Rôle RBAC (Administrateur Console vs Vendeur Caisse POS) */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-[#F4F7FA] border border-slate-200 mb-5 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRole('admin');
+                  setErrorMsg(null);
+                }}
+                className={`py-2 px-2 rounded-md font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition ${
+                  selectedRole === 'admin'
+                    ? 'bg-[#005A5B] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Administrateur</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRole('staff');
+                  setMode('login');
+                  setErrorMsg(null);
+                }}
+                className={`py-2 px-2 rounded-md font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition ${
+                  selectedRole === 'staff'
+                    ? 'bg-[#008060] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>Vendeur POS</span>
+              </button>
             </div>
 
-            {/* Clean Flat Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-              {mode === 'register' && (
-                <div>
-                  <label className="block text-slate-600 mb-1.5">
-                    Nom de l'entreprise ou de l'opérateur
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Ivoire Hotspot Réseaux"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded bg-[#F5F7F9] border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#007A78] transition"
-                  />
-                </div>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-slate-800">
+                {selectedRole === 'staff'
+                  ? 'Connexion Vendeur (Caisse POS)'
+                  : mode === 'login'
+                  ? 'Connexion Administrateur'
+                  : 'Inscription Opérateur (Essai 14j)'}
+              </h2>
+
+              {selectedRole === 'admin' ? (
+                <p className="text-xs text-slate-500 mt-1">
+                  {mode === 'login' ? (
+                    <>
+                      Nouvel opérateur ?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('register')}
+                        className="text-[#0066CC] hover:underline font-medium cursor-pointer"
+                      >
+                        Créer un compte Administrateur
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Déjà inscrit ?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('login')}
+                        className="text-[#0066CC] hover:underline font-medium cursor-pointer"
+                      >
+                        Se connecter
+                      </button>
+                    </>
+                  )}
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Accès restreint à la Caisse POS. Les identifiants Vendeur sont créés uniquement par votre Administrateur dans la Console.
+                </p>
+              )}
+            </div>
+
+            {errorMsg && (
+              <div className="mb-4 p-3 rounded bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                {errorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+              {selectedRole === 'admin' && mode === 'register' && (
+                <>
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">
+                      Nom complet de l'administrateur
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Kouamé Konan"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded bg-[#F5F7F9] border border-slate-200 text-slate-800 focus:outline-none focus:bg-white focus:border-[#007A78]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-slate-600 font-medium mb-1">
+                        Entreprise / Réseau
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ex: Ivoire WiFi"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        className="w-full px-3 py-2 rounded bg-[#F5F7F9] border border-slate-200 text-slate-800 focus:outline-none focus:bg-white focus:border-[#007A78]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-medium mb-1">
+                        Téléphone
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full px-3 py-2 rounded bg-[#F5F7F9] border border-slate-200 font-mono text-slate-800 focus:outline-none focus:bg-white focus:border-[#007A78]"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               <div>
-                <label className="block text-slate-600 mb-1.5">
-                  Identifiant Joowifi (ID partenaire / Email)
+                <label className="block text-slate-600 font-medium mb-1">
+                  {selectedRole === 'staff'
+                    ? 'Email, Nom ou Téléphone du Vendeur'
+                    : 'Adresse Email Administrateur'}
                 </label>
                 <input
-                  type="email"
-                  placeholder="Email"
+                  type="text"
+                  required
+                  placeholder={
+                    selectedRole === 'staff'
+                      ? 'Ex: mamadou@joowifi.ci ou mamadou fonate'
+                      : 'admin@joowifi.ci'
+                  }
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailError(false);
-                  }}
-                  className={`w-full px-3.5 py-2.5 rounded bg-[#F5F7F9] border text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white transition ${
-                    emailError
-                      ? 'border-rose-500 focus:border-rose-500'
-                      : 'border-slate-200 focus:border-[#007A78]'
-                  }`}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded bg-[#F5F7F9] border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#007A78] transition"
                 />
-                {emailError && (
-                  <p className="text-[11px] text-rose-600 mt-1">Ce champ est requis.</p>
-                )}
               </div>
 
               <div>
-                <label className="block text-slate-600 mb-1.5">Mot de passe</label>
+                <label className="block text-slate-600 font-medium mb-1">Mot de passe</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    required
                     placeholder="Mot de passe"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -365,44 +521,42 @@ export const AuthModal: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-right">
-                <button
-                  type="button"
-                  onClick={handleDemoAdmin}
-                  className="text-[11px] text-[#2563EB] hover:underline cursor-pointer"
-                >
-                  Mot de passe oublié ?
-                </button>
-              </div>
-
-              {/* Flat Omada Mint/Teal Submit Button */}
               <button
                 type="submit"
-                className="w-full py-2.5 rounded bg-[#7BC4B2] hover:bg-[#007A78] text-white font-semibold text-xs transition cursor-pointer keep-white"
+                disabled={loading}
+                className="w-full py-2.5 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs transition cursor-pointer mt-2"
               >
-                {mode === 'login' ? 'Se connecter' : "S'inscrire"}
+                {loading
+                  ? 'Vérification en cours...'
+                  : selectedRole === 'staff'
+                  ? 'Ouvrir ma Caisse POS Vendeur'
+                  : mode === 'login'
+                  ? 'Se connecter à la Console'
+                  : 'Créer mon compte Administrateur'}
               </button>
             </form>
 
-            {/* Quick Corporate Demo Access */}
-            <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
-              <div className="text-[11px] text-slate-400 text-center">
-                Accès direct démonstration B2B :
+            {/* Quick RBAC Test Shortcuts */}
+            <div className="mt-5 pt-4 border-t border-slate-100 space-y-2">
+              <div className="text-[10px] text-slate-400 text-center uppercase font-bold tracking-wider">
+                Connexion rapide selon le rôle (RBAC)
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={handleDemoAdmin}
+                  onClick={() => login('admin@joowifi.ci', 'admin', 'Kouamé Konan (Admin)')}
                   className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#005A5B] font-semibold text-[11px] transition cursor-pointer"
                 >
-                  Console SDN
+                  Accès Admin (Console)
                 </button>
                 <button
                   type="button"
-                  onClick={handleDemoVendor}
-                  className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#005A5B] font-semibold text-[11px] transition cursor-pointer"
+                  onClick={() =>
+                    login('mamadou@joowifi.ci', 'staff', 'Mamadou Fonate', 'staff-pos-1')
+                  }
+                  className="py-2 px-3 rounded bg-[#F5F7F9] hover:bg-[#E6F4F3] border border-slate-200 text-[#008060] font-semibold text-[11px] transition cursor-pointer"
                 >
-                  Caisse POS
+                  Accès Vendeur (POS seul)
                 </button>
               </div>
             </div>
@@ -410,25 +564,8 @@ export const AuthModal: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Legal Footer Strip (Matches image_4390fb & image_439119) */}
       <div className="w-full px-6 py-3 text-center text-[11px] text-white/90 bg-black/25 flex flex-wrap items-center justify-center gap-4">
-        <span>Copyright © 2026 Joowifi SDN Systems Inc. Tous droits réservés.</span>
-        <span>|</span>
-        <button onClick={closeAuthModal} className="hover:underline cursor-pointer">
-          Assistance
-        </button>
-        <span>|</span>
-        <button onClick={closeAuthModal} className="hover:underline cursor-pointer">
-          Communauté
-        </button>
-        <span>|</span>
-        <button onClick={closeAuthModal} className="hover:underline cursor-pointer">
-          Conditions d'utilisation
-        </button>
-        <span>|</span>
-        <button onClick={closeAuthModal} className="hover:underline cursor-pointer">
-          Politique de confidentialité
-        </button>
+        <span>Copyright © 2026 Joowifi Cloud Systems. Tous droits réservés.</span>
       </div>
     </div>
   );

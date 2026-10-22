@@ -215,6 +215,7 @@ interface AppContextType {
 
   // Notifications
   notify: (message: string, type?: ToastNotification['type']) => void;
+  showToast: (message: string, type?: ToastNotification['type']) => void;
   dismissToast: (id: string) => void;
 
   // Actions
@@ -249,7 +250,7 @@ interface AppContextType {
   deleteZone: (id: string) => void;
   purchaseZonePack: (packName: string, zonesCount: number, priceMonthly: number) => boolean;
   addForfait: (forfait: Omit<ForfaitItem, 'id'>) => void;
-  updateForfait: (forfait: ForfaitItem) => void;
+  updateForfait: (idOrForfait: string | ForfaitItem, updates?: Partial<ForfaitItem>) => void;
   deleteForfait: (id: string) => void;
   addStaff: (member: Omit<StaffItem, 'id' | 'totalSales' | 'todaySales'>) => void;
   updateStaff: (member: StaffItem) => void;
@@ -287,7 +288,7 @@ interface AppContextType {
   authMode: 'login' | 'register';
   openAuthModal: (mode?: 'login' | 'register') => void;
   closeAuthModal: () => void;
-  login: (email: string, role?: 'admin' | 'staff', name?: string) => void;
+  login: (email: string, role?: 'admin' | 'staff', name?: string, staffId?: string) => void;
   logout: () => void;
 }
 
@@ -354,9 +355,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [forfaits, setForfaits] = useState<ForfaitItem[]>(() =>
     safeGetStorage('joowifi_forfaits', INITIAL_FORFAITS)
   );
-  const [tickets, setTickets] = useState<TicketItem[]>(() =>
-    safeGetStorage('joowifi_tickets', INITIAL_TICKETS)
-  );
+  const LEGACY_DEMO_CODES = new Set([
+    'r7gt', 'mj79', '6hgj', 'JW-8492-710', 'JW-9143-228', 'JW-3310-904',
+    'JW-4781-620', 'JW-5592-113', 'JW-6820-441', 'JW-7904-882',
+    'JW-1129-330', 'JW-2048-512', 'JW-9901-774'
+  ]);
+
+  const [tickets, setTickets] = useState<TicketItem[]>(() => {
+    const raw = safeGetStorage<TicketItem[]>('joowifi_tickets', []);
+    return Array.isArray(raw)
+      ? raw.filter(
+          (t) =>
+            t &&
+            t.code &&
+            !LEGACY_DEMO_CODES.has(t.code) &&
+            !String(t.id || '').startsWith('t-pos-demo') &&
+            !String(t.id || '').startsWith('t-10')
+        )
+      : [];
+  });
   const [staff, setStaff] = useState<StaffItem[]>(() =>
     safeGetStorage('joowifi_staff', INITIAL_STAFF)
   );
@@ -628,7 +645,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     syncRoutersToSupabase(routers);
     syncForfaitsToSupabase(forfaits);
     syncStaffToSupabase(staff);
-    syncTicketsToSupabase(tickets);
     syncMacBypassesToSupabase(macBypasses);
     syncTransactionsToSupabase(transactions);
     syncSessionsToSupabase(sessions);
@@ -676,7 +692,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     syncAll12TablesToSupabase();
     setHeartbeatSecondsRemaining(45);
-    notify(`Synchronisation Supabase (12 tables : ${tickets.length} tickets, ${staff.length} vendeurs, ${forfaits.length} forfaits) réussie !`, 'success');
+    notify(`Synchronisation Cloud Joowifi (${tickets.length} tickets, ${staff.length} vendeurs, ${forfaits.length} forfaits) effectuée !`, 'success');
   };
 
   // SOS Recharge alerts from field vendors
@@ -691,12 +707,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
   ]);
 
-  // Auth State
-  const [user, setUser] = useState<UserSession | null>({
-    name: operatorProfile.name,
-    email: operatorProfile.email,
-    role: 'admin',
-  });
+  // Auth State (Persisted in localStorage with RBAC)
+  const [user, setUser] = useState<UserSession | null>(() =>
+    safeGetStorage<UserSession | null>('joowifi_auth_user', {
+      name: operatorProfile.name,
+      email: operatorProfile.email,
+      role: 'admin',
+    })
+  );
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
@@ -755,8 +773,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeSetStorage('joowifi_tickets', tickets);
-    syncTicketsToSupabase(tickets);
   }, [tickets]);
+
+  useEffect(() => {
+    const loadCloudTickets = async () => {
+      if (!isSupabaseConfigured()) return;
+      try {
+        await supabaseDelete(
+          'tickets',
+          'code=in.(r7gt,mj79,6hgj,JW-8492-710,JW-9143-228,JW-3310-904,JW-4781-620,JW-5592-113,JW-6820-441,JW-7904-882,JW-1129-330,JW-2048-512,JW-9901-774)'
+        );
+        const rows = await supabaseSelect<Record<string, any>>(
+          'tickets',
+          'select=*&order=created_at.desc&limit=500'
+        );
+        if (Array.isArray(rows)) {
+          const validRows = rows.filter(
+            (r) => r && r.code && !LEGACY_DEMO_CODES.has(String(r.code))
+          );
+          const mapped: TicketItem[] = validRows.map((r, idx) => ({
+            id: String(r.id || `t-db-${idx}-${r.code}`),
+            code: String(r.code),
+            pin: String(r.pin || r.code),
+            password: String(r.password || r.code),
+            forfaitId: String(r.forfait_id || 'Pass WiFi'),
+            forfaitName: String(r.forfait_id || 'Pass WiFi'),
+            price: Number(r.price_xof || 0),
+            duration: String(r.duration_label || '24h'),
+            status: (r.status as any) || 'stock',
+            createdAt: String(r.created_at || new Date().toISOString()),
+            activatedAt: r.activated_at ? String(r.activated_at) : undefined,
+            expiresAt: r.expires_at ? String(r.expires_at) : undefined,
+            customerPhone: r.customer_phone ? String(r.customer_phone) : undefined,
+            sellerId: r.seller_id ? String(r.seller_id) : undefined,
+            sellerName: r.seller_id ? String(r.seller_id) : undefined,
+            zoneName: String(r.zone_id || 'Zone Principale'),
+            batchId: r.batch_id ? String(r.batch_id) : undefined,
+          }));
+          setTickets(mapped);
+          safeSetStorage('joowifi_tickets', mapped);
+        }
+      } catch {
+        // Ignore network errors
+      }
+    };
+    void loadCloudTickets();
+  }, []);
 
   useEffect(() => {
     safeSetStorage('joowifi_staff', staff);
@@ -1353,10 +1415,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     notify(`Forfait "${newForfait.name}" créé.`, 'success');
   };
 
-  const updateForfait = (updated: ForfaitItem) => {
-    setForfaits((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
-    addAuditLog('Mise à jour Forfait', updated.name, `Prix: ${updated.price} FCFA`);
-    notify(`Forfait "${updated.name}" mis à jour.`, 'success');
+  const updateForfait = (idOrForfait: string | ForfaitItem, updates?: Partial<ForfaitItem>) => {
+    if (typeof idOrForfait === 'string') {
+      setForfaits((prev) =>
+        prev.map((f) => (f.id === idOrForfait ? { ...f, ...(updates || {}) } : f))
+      );
+      notify(`Forfait mis à jour avec succès.`, 'success');
+    } else {
+      setForfaits((prev) => prev.map((f) => (f.id === idOrForfait.id ? idOrForfait : f)));
+      addAuditLog('Mise à jour Forfait', idOrForfait.name, `Prix: ${idOrForfait.price} FCFA`);
+      notify(`Forfait "${idOrForfait.name}" mis à jour.`, 'success');
+    }
   };
 
   const deleteForfait = (id: string) => {
@@ -1755,12 +1824,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAuthModalOpen(false);
   };
 
-  const login = (email: string, role: 'admin' | 'staff' = 'admin', name: string = operatorProfile.name) => {
-    setUser({ email, role, name });
+  const login = (
+    email: string,
+    role: 'admin' | 'staff' = 'admin',
+    name: string = operatorProfile.name,
+    staffId?: string
+  ) => {
+    const newSession: UserSession = { email, role, name, staffId };
+    setUser(newSession);
+    safeSetStorage('joowifi_auth_user', newSession);
     setIsAuthModalOpen(false);
     if (role === 'staff') {
       setCurrentSpace('pos');
-      notify(`Bienvenue sur la Caisse POS, ${name} !`, 'success');
+      notify(`Bienvenue sur votre Caisse POS, ${name} !`, 'success');
     } else {
       setCurrentSpace('admin');
       notify(`Connecté à la Console Cloud Joowifi (${name}).`, 'success');
@@ -1769,6 +1845,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = () => {
     setUser(null);
+    safeSetStorage('joowifi_auth_user', null);
     setCurrentSpace('public');
     setPublicTab('home');
     notify('Session déconnectée en toute sécurité.', 'info');
@@ -1809,6 +1886,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         heartbeatQueue,
         forceHeartbeatSync,
         notify,
+        showToast: notify,
         dismissToast,
         generateTicketsBatch,
         sellTicketPOS,

@@ -3,21 +3,18 @@ import { useApp } from '../../context/AppContext';
 import {
   Wifi,
   Users,
-  TrendingUp,
   Ticket,
-  Server,
   Terminal,
   Copy,
   Check,
   ArrowRight,
   Cpu,
-  Globe,
   RefreshCw,
   MapPin,
-  Smartphone,
-  ShieldCheck,
   Laptop,
   CheckCircle2,
+  TrendingUp,
+  Activity,
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -30,7 +27,6 @@ export const DashboardOverview: React.FC = () => {
     forfaits,
     macBypasses,
     formatMoney,
-    heartbeatSecondsRemaining,
     setAdminTab,
     setCurrentSpace,
     pendingSosAlerts,
@@ -38,10 +34,13 @@ export const DashboardOverview: React.FC = () => {
     rechargeStaff,
     sellTicketPOS,
     forceHeartbeatSync,
-    showToast,
+    notify,
   } = useApp();
 
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month' | 'all'>('today');
+  const [chartMetric, setChartMetric] = useState<'combined' | 'revenue' | 'traffic'>('combined');
+  const [hoveredPointIdx, setHoveredPointIdx] = useState<number | null>(9);
+
   const [expressForfaitId, setExpressForfaitId] = useState<string>(forfaits[0]?.id || 'f-1');
   const [lastExpressTicket, setLastExpressTicket] = useState<{
     code: string;
@@ -51,7 +50,6 @@ export const DashboardOverview: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState(false);
 
   const onlineRoutersCount = routers.filter((r) => r.status === 'online').length;
-  const activeTicketsCount = tickets.filter((t) => t.status === 'actif').length;
   const availableTicketsCount = tickets.filter(
     (t) => t.status === 'stock' || t.status === 'vendeur' || t.status === 'papier'
   ).length;
@@ -69,70 +67,113 @@ export const DashboardOverview: React.FC = () => {
     try {
       const targetForfaitId = expressForfaitId || forfaits[0]?.id;
       if (!targetForfaitId) return;
-      const created = sellTicketPOS(targetForfaitId, 'Client Console 6.3', staff[0]?.id);
+      const created = sellTicketPOS(targetForfaitId, 'Client Console Cloud', staff[0]?.id);
       setLastExpressTicket({
         code: created.code,
         forfaitName: created.forfaitName,
         price: created.price,
       });
-      showToast(
-        `Voucher ${created.code} créé et synchronisé avec Supabase & MikroTik.`,
-        'success'
-      );
+      notify(`Voucher ${created.code} créé et synchronisé avec le Cloud.`, 'success');
     } catch {
-      showToast('Veuillez sélectionner un forfait.', 'warning');
+      notify('Veuillez sélectionner un forfait.', 'warning');
     }
   };
 
-  // 24-Hour Timeline Segments (48 segments representing 30-min slots over 24h)
   const timelineSegments = Array.from({ length: 48 }, (_, i) => i);
 
-  const salesHistory10Days = [
-    { day: '02:00', down: 35, up: 22, rev: 18000 },
-    { day: '04:00', down: 28, up: 18, rev: 12000 },
-    { day: '06:00', down: 45, up: 30, rev: 25000 },
-    { day: '08:00', down: 68, up: 42, rev: 38000 },
-    { day: '10:00', down: 74, up: 48, rev: 44000 },
-    { day: '12:00', down: 88, up: 60, rev: 56000 },
-    { day: '14:00', down: 82, up: 54, rev: 49000 },
-    { day: '16:00', down: 92, up: 65, rev: 64000 },
-    { day: '18:00', down: 96, up: 72, rev: 69000 },
-    { day: '20:00', down: 85, up: 58, rev: todayRevenue || 56700 },
-  ];
+  // High-Precision Analytical Series (Section 3.1 of Audit)
+  const analyticalSeries = [
+    { label: '02:00', rev: 14500, ticketsSold: 29, downGb: 18.4, upGb: 4.2, peakUsers: 19 },
+    { label: '04:00', rev: 11000, ticketsSold: 22, downGb: 14.1, upGb: 3.1, peakUsers: 14 },
+    { label: '06:00', rev: 24000, ticketsSold: 45, downGb: 29.8, upGb: 6.8, peakUsers: 31 },
+    { label: '08:00', rev: 38500, ticketsSold: 72, downGb: 46.2, upGb: 11.4, peakUsers: 48 },
+    { label: '10:00', rev: 44200, ticketsSold: 84, downGb: 54.0, upGb: 14.2, peakUsers: 56 },
+    { label: '12:00', rev: 56800, ticketsSold: 108, downGb: 68.5, upGb: 18.9, peakUsers: 74 },
+    { label: '14:00', rev: 51200, ticketsSold: 96, downGb: 62.3, upGb: 16.5, peakUsers: 67 },
+    { label: '16:00', rev: 64500, ticketsSold: 121, downGb: 79.4, upGb: 21.8, peakUsers: 86 },
+    { label: '18:00', rev: 71000, ticketsSold: 135, downGb: 88.2, upGb: 24.6, peakUsers: 94 },
+    { label: '20:00', rev: todayRevenue || 56700, ticketsSold: 112, downGb: 74.6, upGb: 19.8, peakUsers: 82 },
+  ].map((pt) => ({
+    ...pt,
+    revScaled: Math.round(pt.rev * periodMultiplier[selectedPeriod]),
+    downScaled: Number((pt.downGb * periodMultiplier[selectedPeriod]).toFixed(1)),
+    upScaled: Number((pt.upGb * periodMultiplier[selectedPeriod]).toFixed(1)),
+  }));
+
+  const maxRev = Math.max(...analyticalSeries.map((d) => d.revScaled), 1);
+  const maxTraffic = Math.max(...analyticalSeries.map((d) => d.downScaled), 1);
+  const totalDataGb = analyticalSeries
+    .reduce((acc, d) => acc + d.downScaled + d.upScaled, 0)
+    .toFixed(1);
+  const totalTicketsSoldPeriod = Math.round(
+    analyticalSeries.reduce((acc, d) => acc + d.ticketsSold, 0) *
+      (selectedPeriod === 'today' ? 1 : periodMultiplier[selectedPeriod] / 4)
+  );
+  const activePoint =
+    hoveredPointIdx !== null && analyticalSeries[hoveredPointIdx]
+      ? analyticalSeries[hoveredPointIdx]
+      : analyticalSeries[analyticalSeries.length - 1];
+
+  // Compute SVG polyline coordinates (ViewBox 720 x 210)
+  const svgWidth = 720;
+  const svgHeight = 200;
+  const padX = 36;
+  const padY = 20;
+  const plotW = svgWidth - padX * 2;
+  const plotH = svgHeight - padY * 2;
+
+  const revCoords = analyticalSeries.map((d, i) => {
+    const x = padX + (i / (analyticalSeries.length - 1)) * plotW;
+    const y = padY + plotH - (d.revScaled / maxRev) * plotH;
+    return { x, y };
+  });
+
+  const trafficCoords = analyticalSeries.map((d, i) => {
+    const x = padX + (i / (analyticalSeries.length - 1)) * plotW;
+    const y = padY + plotH - (d.downScaled / maxTraffic) * plotH;
+    return { x, y };
+  });
+
+  const revPolyline = revCoords.map((p) => `${p.x},${p.y}`).join(' ');
+  const revArea = `${revCoords[0].x},${padY + plotH} ${revPolyline} ${
+    revCoords[revCoords.length - 1].x
+  },${padY + plotH}`;
+
+  const trafficPolyline = trafficCoords.map((p) => `${p.x},${p.y}`).join(' ');
+  const trafficArea = `${trafficCoords[0].x},${padY + plotH} ${trafficPolyline} ${
+    trafficCoords[trafficCoords.length - 1].x
+  },${padY + plotH}`;
 
   return (
     <div className="space-y-5 pb-12 text-[#1E293B]">
-      {/* SOS Alert Banner if any */}
+      {/* Alertes SOS Vendeurs */}
       {pendingSosAlerts.length > 0 && (
         <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs">
             <strong className="text-rose-800">
-              Demande SOS Crédit POS : {pendingSosAlerts[0].vendorName} ({pendingSosAlerts[0].zoneName})
+              Demande SOS Crédit POS : {pendingSosAlerts[0].staffName} (+{formatMoney(pendingSosAlerts[0].amount)})
             </strong>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                rechargeStaff(pendingSosAlerts[0].vendorId, 25000);
                 clearSosAlert(pendingSosAlerts[0].id);
+                setAdminTab('staff');
               }}
               className="px-3 py-1.5 rounded bg-[#008060] text-white font-semibold text-xs cursor-pointer"
             >
-              Créditer +25 000 FCFA
+              Gérer la demande
             </button>
           </div>
         </div>
       )}
 
       {/* =========================================================================
-          1. MAIN CONTROLLER 6.3 PANEL (Exact layout of Monitor in Capture 160906.jpg:
-             Left Column = Circular Health Gauge 98 + Radar SVG +Express Voucher
-             Right Column = 24h Equipment Status Bars + 6 Icon Counters + Activity Chart)
+          1. PANNEAU DE SUPERVISION PRINCIPAL (Marque Blanche : "Cloud" uniquement)
       ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT COLUMN (Cols 1-3) : NETWORK HEALTH SCORE GAUGE + RADAR SVG + EXPRESS TICKET */}
+        {/* LEFT COLUMN (Cols 1-3) : JAUGE SANTÉ RÉSEAU + RADAR + ÉMISSION EXPRESS */}
         <div className="lg:col-span-3 space-y-5">
-          {/* Card 1 : Score de Santé Réseau (Circular Gauge + 5-Axis Radar like Omada 6.3) */}
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5 shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
               <span className="text-xs font-bold text-slate-700">Indice Santé Réseau</span>
@@ -141,18 +182,10 @@ export const DashboardOverview: React.FC = () => {
               </span>
             </div>
 
-            {/* Circular Gauge 98/100 */}
             <div className="flex flex-col items-center justify-center py-1">
               <div className="relative w-32 h-32 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="#E2E8F0"
-                    strokeWidth="10"
-                  />
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#E2E8F0" strokeWidth="10" />
                   <circle
                     cx="60"
                     cy="60"
@@ -172,7 +205,6 @@ export const DashboardOverview: React.FC = () => {
               </div>
             </div>
 
-            {/* 5-Axis Radar Chart SVG (just like under the gauge in Capture 160906.jpg) */}
             <div className="flex flex-col items-center">
               <svg className="w-40 h-32" viewBox="0 0 160 130">
                 <polygon
@@ -194,10 +226,10 @@ export const DashboardOverview: React.FC = () => {
                   strokeWidth="2"
                 />
                 <text x="80" y="9" textAnchor="middle" fontSize="8" fill="#64748B">
-                  WAN ISP
+                  Réseau
                 </text>
                 <text x="148" y="52" textAnchor="start" fontSize="8" fill="#64748B">
-                  Sync
+                  Cloud
                 </text>
                 <text x="125" y="125" textAnchor="middle" fontSize="8" fill="#64748B">
                   DHCP
@@ -211,24 +243,23 @@ export const DashboardOverview: React.FC = () => {
               </svg>
             </div>
 
-            {/* Summary Metrics List */}
             <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
               <div className="flex justify-between text-slate-600">
-                <span>Disponibilité WAN :</span>
+                <span>Disponibilité Liaison :</span>
                 <span className="font-mono font-bold text-[#008060]">99.98 %</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Fast-Poll MikroTik :</span>
-                <span className="font-mono font-bold text-slate-800">10 sec ({heartbeatSecondsRemaining}s)</span>
+                <span>Synchronisation Cloud :</span>
+                <span className="font-mono font-bold text-slate-800">Temps Réel</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Tables Supabase :</span>
-                <span className="font-mono font-bold text-[#007A78]">12 / 12 OK</span>
+                <span>État Serveur Cloud :</span>
+                <span className="font-mono font-bold text-[#007A78]">Opérationnel</span>
               </div>
             </div>
           </div>
 
-          {/* Card 2 : Émission Express de Voucher 1-Clic */}
+          {/* Émission Express 1-Clic */}
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-3.5 shadow-2xs">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <span className="text-xs font-bold text-slate-700">Émission Express 1-Clic</span>
@@ -252,7 +283,7 @@ export const DashboardOverview: React.FC = () => {
                 onClick={handleExpressGenerate}
                 className="w-full py-2.5 px-3 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs transition cursor-pointer"
               >
-                Générer & Pousser vers MikroTik
+                Générer & Synchroniser
               </button>
             </div>
 
@@ -282,49 +313,44 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN (Cols 4-12) : 24H EQUIPMENT BARS + 6 ICON COUNTERS + ACTIVITY CHART */}
+        {/* RIGHT COLUMN (Cols 4-12) : BARRES 24H + COMPTEURS + GRAPHIQUE ANALYTIQUE HAUTE PRÉCISION */}
         <div className="lg:col-span-9 space-y-5">
-          {/* Top Right Card : 24h Equipment & Synchronisation Trend + 6 Interactive Counters */}
+          {/* Top Right Card : 24h Status Bars + 6 Interactive Counters (Marque Blanche) */}
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div>
                 <h2 className="text-sm font-bold text-slate-800">
-                  État de Synchronisation sur 24h & Inventaire Réseau
+                  État de Synchronisation Cloud sur 24h & Inventaire Réseau
                 </h2>
                 <p className="text-[11px] text-slate-500">
-                  Disponibilité continue des passerelles MikroTik, de la base Supabase et des kiosques POS
+                  Disponibilité continue des passerelles MikroTik, du serveur Cloud et des terminaux POS
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    forceHeartbeatSync();
-                    showToast('Synchronisation envoyée aux routeurs MikroTik.', 'success');
-                  }}
+                  onClick={forceHeartbeatSync}
                   className="px-3 py-1.5 rounded bg-[#F4F7FA] hover:bg-slate-200 border border-slate-300 text-xs font-semibold text-slate-700 flex items-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-[#008060]" />
-                  <span>Forcer Sync</span>
+                  <span>Actualiser Cloud</span>
                 </button>
                 <button
                   onClick={() => setAdminTab('installation')}
                   className="px-3 py-1.5 rounded bg-[#008060] hover:bg-[#006B50] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                 >
                   <Terminal className="w-3.5 h-3.5" />
-                  <span>Script RouterOS</span>
+                  <span>Script MikroTik</span>
                 </button>
               </div>
             </div>
 
-            {/* 3 Horizontal 24h Segmented Timeline Bars (Exact match to Monitor in Capture 160906.jpg) */}
             <div className="space-y-3">
-              {/* Bar 1 */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-700 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-[#008060]" />
-                    Passerelles MikroTik ({routers[0]?.name || 'MK-ADJAME-CORE-01'})
+                    Passerelles MikroTik ({routers[0]?.name || 'Passerelle Principale'})
                   </span>
                   <span className="text-[11px] font-mono text-[#008060] font-bold">
                     100% En ligne (24h)
@@ -337,15 +363,14 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </div>
 
-              {/* Bar 2 */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-700 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-[#007A78]" />
-                    File d'attente Vouchers Supabase (router_synced)
+                    Synchronisation Cloud des Vouchers
                   </span>
                   <span className="text-[11px] font-mono text-[#007A78] font-bold">
-                    {tickets.length} / {tickets.length} Vouchers Synchronisés
+                    {tickets.length} Vouchers Synchronisés
                   </span>
                 </div>
                 <div className="grid grid-cols-48 gap-0.5 h-2.5">
@@ -355,7 +380,6 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </div>
 
-              {/* Bar 3 */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-700 flex items-center gap-1.5">
@@ -374,7 +398,6 @@ export const DashboardOverview: React.FC = () => {
               </div>
             </div>
 
-            {/* Row of 6 Interactive Equipment & Service Icon Counters (Like middle of Monitor in Capture 160906.jpg) */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2 border-t border-slate-100">
               <div
                 onClick={() => setAdminTab('mikrotik')}
@@ -438,76 +461,298 @@ export const DashboardOverview: React.FC = () => {
             </div>
           </div>
 
-          {/* Bottom Right Card : Activity & Revenue Chart + Period Switcher (Like bottom of Monitor in Capture 160906.jpg) */}
-          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4 shadow-2xs">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          {/* =====================================================================
+              SECTION 3.1 AUDIT : VISUALISATION ANALYTIQUE DÉTAILLÉE & PRÉCISE
+              (Courbe Multi-Métriques SVG + Fiche Point Horaire + 4 Sous-Compteurs)
+          ===================================================================== */}
+          <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-5 shadow-2xs">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">
-                  Activité Trafic & Chiffre d'Affaires Consolidé :{' '}
-                  <span className="text-[#008060] font-mono">{formatMoney(displayedRevenue)}</span>
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#008060]" />
+                  <span>
+                    Activité Trafic & Chiffre d'Affaires Consolidé :{' '}
+                    <span className="text-[#008060] font-mono">{formatMoney(displayedRevenue)}</span>
+                  </span>
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Évolution du trafic Hotspot et des recettes Caisse POS / Mobile Money
+                  Analyse télémétrique précise des recettes (FCFA), du volume de données transféré (Go) et des pics d'utilisateurs
                 </p>
               </div>
 
-              <div className="flex items-center gap-1 bg-[#F4F7FA] p-1 rounded border border-slate-200 text-xs">
-                {(
-                  [
-                    { id: 'today', label: '24h' },
-                    { id: 'week', label: '7 Jours' },
-                    { id: 'month', label: '30 Jours' },
-                    { id: 'all', label: 'Total' },
-                  ] as const
-                ).map((p) => (
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Metric Filter */}
+                <div className="flex items-center gap-1 bg-[#F4F7FA] p-1 rounded border border-slate-200 text-[11px]">
                   <button
-                    key={p.id}
-                    onClick={() => setSelectedPeriod(p.id)}
-                    className={`px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer transition ${
-                      selectedPeriod === p.id
-                        ? 'bg-[#008060] text-white'
-                        : 'text-slate-600 hover:text-slate-900'
+                    onClick={() => setChartMetric('combined')}
+                    className={`px-2.5 py-1 rounded font-semibold cursor-pointer ${
+                      chartMetric === 'combined'
+                        ? 'bg-white text-[#005A5B] shadow-2xs border border-slate-200'
+                        : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    {p.label}
+                    Vue Combinée
                   </button>
-                ))}
+                  <button
+                    onClick={() => setChartMetric('revenue')}
+                    className={`px-2.5 py-1 rounded font-semibold cursor-pointer ${
+                      chartMetric === 'revenue'
+                        ? 'bg-white text-[#008060] shadow-2xs border border-slate-200'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Recettes (FCFA)
+                  </button>
+                  <button
+                    onClick={() => setChartMetric('traffic')}
+                    className={`px-2.5 py-1 rounded font-semibold cursor-pointer ${
+                      chartMetric === 'traffic'
+                        ? 'bg-white text-[#0066CC] shadow-2xs border border-slate-200'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Trafic Data (Go)
+                  </button>
+                </div>
+
+                {/* Period Filter */}
+                <div className="flex items-center gap-1 bg-[#F4F7FA] p-1 rounded border border-slate-200 text-xs">
+                  {(
+                    [
+                      { id: 'today', label: '24h' },
+                      { id: 'week', label: '7 Jours' },
+                      { id: 'month', label: '30 Jours' },
+                      { id: 'all', label: 'Total' },
+                    ] as const
+                  ).map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPeriod(p.id)}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold cursor-pointer transition ${
+                        selectedPeriod === p.id
+                          ? 'bg-[#008060] text-white'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Dual Bar Chart (Download/Revenue in Teal + Upload/Sessions in Blue) */}
-            <div className="h-44 flex items-end gap-3 pt-4 px-2">
-              {salesHistory10Days.map((item) => (
-                <div
-                  key={item.day}
-                  className="flex-1 flex flex-col items-center gap-1.5 group h-full justify-end"
-                >
-                  <div className="opacity-0 group-hover:opacity-100 transition text-[10px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300 whitespace-nowrap">
-                    {formatMoney(item.rev)}
-                  </div>
-                  <div className="w-full flex items-end justify-center gap-1 h-full">
-                    <div
-                      className="w-1/2 bg-[#008060] rounded-t-xs transition-all"
-                      style={{ height: `${item.down}%` }}
+            {/* Live Hovered Data Point Inspector Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 p-3 rounded-lg bg-[#F8FAFC] border border-slate-200 text-xs">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                  Créneau analysé
+                </span>
+                <span className="font-mono font-bold text-slate-800">{activePoint.label}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                  Recette Période
+                </span>
+                <span className="font-mono font-bold text-[#008060]">
+                  {formatMoney(activePoint.revScaled)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                  Tickets Émis
+                </span>
+                <span className="font-mono font-bold text-slate-800">
+                  {activePoint.ticketsSold} tickets
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                  Volume Download / Upload
+                </span>
+                <span className="font-mono font-bold text-[#0066CC]">
+                  &darr;{activePoint.downScaled} Go / &uarr;{activePoint.upScaled} Go
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                  Pic Clients Simultanés
+                </span>
+                <span className="font-mono font-bold text-[#005A5B]">
+                  {activePoint.peakUsers} connectés
+                </span>
+              </div>
+            </div>
+
+            {/* Interactive Multi-Curve Area SVG Chart */}
+            <div className="w-full overflow-x-auto">
+              <svg
+                className="w-full h-56 select-none"
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#008060" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#008060" stopOpacity="0.02" />
+                  </linearGradient>
+                  <linearGradient id="trafGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0066CC" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="#0066CC" stopOpacity="0.01" />
+                  </linearGradient>
+                </defs>
+
+                {/* Horizontal Grid Lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
+                  const y = padY + ratio * plotH;
+                  const valLabel = Math.round(maxRev * (1 - ratio)).toLocaleString('fr-FR');
+                  return (
+                    <g key={idx}>
+                      <line
+                        x1={padX}
+                        y1={y}
+                        x2={svgWidth - padX}
+                        y2={y}
+                        stroke="#E2E8F0"
+                        strokeDasharray="3 3"
+                        strokeWidth="1"
+                      />
+                      <text x={4} y={y + 3} fontSize="8" fill="#94A3B8" fontFamily="monospace">
+                        {valLabel}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* Traffic Area & Line */}
+                {(chartMetric === 'combined' || chartMetric === 'traffic') && (
+                  <>
+                    <polygon points={trafficArea} fill="url(#trafGrad)" />
+                    <polyline
+                      fill="none"
+                      stroke="#0066CC"
+                      strokeWidth="2.2"
+                      points={trafficPolyline}
                     />
-                    <div
-                      className="w-1/2 bg-[#38BDF8] rounded-t-xs transition-all"
-                      style={{ height: `${item.up}%` }}
+                  </>
+                )}
+
+                {/* Revenue Area & Line */}
+                {(chartMetric === 'combined' || chartMetric === 'revenue') && (
+                  <>
+                    <polygon points={revArea} fill="url(#revGrad)" />
+                    <polyline
+                      fill="none"
+                      stroke="#008060"
+                      strokeWidth="2.5"
+                      points={revPolyline}
                     />
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400">{item.day}</span>
-                </div>
-              ))}
+                  </>
+                )}
+
+                {/* Interactive Data Points & X-Axis Labels */}
+                {analyticalSeries.map((pt, i) => {
+                  const rx = revCoords[i].x;
+                  const ry = revCoords[i].y;
+                  const ty = trafficCoords[i].y;
+                  const isHovered = hoveredPointIdx === i;
+                  return (
+                    <g
+                      key={pt.label}
+                      className="cursor-pointer"
+                      onMouseEnter={() => setHoveredPointIdx(i)}
+                      onClick={() => setHoveredPointIdx(i)}
+                    >
+                      {isHovered && (
+                        <line
+                          x1={rx}
+                          y1={padY}
+                          x2={rx}
+                          y2={padY + plotH}
+                          stroke="#005A5B"
+                          strokeWidth="1"
+                          strokeDasharray="2 2"
+                        />
+                      )}
+                      {(chartMetric === 'combined' || chartMetric === 'traffic') && (
+                        <circle
+                          cx={rx}
+                          cy={ty}
+                          r={isHovered ? 5 : 3}
+                          fill="#FFFFFF"
+                          stroke="#0066CC"
+                          strokeWidth="2"
+                        />
+                      )}
+                      {(chartMetric === 'combined' || chartMetric === 'revenue') && (
+                        <circle
+                          cx={rx}
+                          cy={ry}
+                          r={isHovered ? 5.5 : 3.5}
+                          fill="#008060"
+                          stroke="#FFFFFF"
+                          strokeWidth="2"
+                        />
+                      )}
+                      <text
+                        x={rx}
+                        y={svgHeight - 4}
+                        textAnchor="middle"
+                        fontSize="9"
+                        fill={isHovered ? '#0F172A' : '#64748B'}
+                        fontWeight={isHovered ? 'bold' : 'normal'}
+                        fontFamily="monospace"
+                      >
+                        {pt.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* 4 Precision Summary KPIs under Chart */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100 text-xs">
+              <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-semibold block">
+                  Moyenne par tranche
+                </span>
+                <span className="font-mono font-bold text-slate-800">
+                  {formatMoney(Math.round(displayedRevenue / 10))}
+                </span>
+              </div>
+              <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-semibold block">
+                  Tickets vendus (Période)
+                </span>
+                <span className="font-mono font-bold text-[#008060]">
+                  {totalTicketsSoldPeriod} tickets
+                </span>
+              </div>
+              <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-semibold block">
+                  Volume Data Cumulé
+                </span>
+                <span className="font-mono font-bold text-[#0066CC]">{totalDataGb} Go</span>
+              </div>
+              <div className="p-2.5 rounded bg-[#F8FAFC] border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-semibold block">
+                  Panier Moyen Ticket
+                </span>
+                <span className="font-mono font-bold text-slate-800">
+                  {formatMoney(
+                    Math.max(200, Math.round(displayedRevenue / Math.max(1, totalTicketsSoldPeriod)))
+                  )}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* =========================================================================
-          2. TABLEAU OPÉRATIONNEL B2B : VENDEURS POS & DERNIERS VOUCHERS SYNCHRONISÉS
+          2. TABLEAU OPÉRATIONNEL B2B : VENDEURS POS & DERNIERS VOUCHERS
       ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Table 1 : Équipe Vendeurs POS (7 colonnes) */}
         <div className="lg:col-span-7 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
           <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-[#F8FAFC]">
             <span className="text-xs font-bold text-slate-800">
@@ -559,48 +804,59 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* Table 2 : Derniers Vouchers Synchronisés (5 colonnes) */}
         <div className="lg:col-span-5 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
           <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-[#F8FAFC]">
             <span className="text-xs font-bold text-slate-800">
-              Derniers Vouchers Synchronisés (WinBox)
+              Derniers Vouchers Synchronisés ({tickets.length})
             </span>
             <button
               onClick={() => setAdminTab('tickets')}
               className="text-xs font-semibold text-[#008060] hover:underline flex items-center gap-1 cursor-pointer"
             >
-              <span>Tout le stock ({tickets.length})</span>
+              <span>Gérer le stock</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="divide-y divide-slate-100">
-            {tickets.slice(0, 5).map((t) => (
-              <div
-                key={t.id}
-                onClick={() => {
-                  navigator.clipboard.writeText(t.code);
-                  showToast(`Code voucher ${t.code} copié !`, 'success');
-                }}
-                className="px-4 py-2.5 hover:bg-[#F8FAFC] flex items-center justify-between cursor-pointer transition text-xs"
+          {tickets.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-500 space-y-2">
+              <p>Aucun ticket de test en mémoire. Votre inventaire est propre.</p>
+              <button
+                onClick={() => setAdminTab('tickets')}
+                className="px-3 py-1.5 rounded bg-[#008060] text-white font-semibold text-xs cursor-pointer"
               >
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#008060] shrink-0" />
-                  <div>
-                    <span className="font-mono font-bold text-slate-800">{t.code}</span>
-                    <span className="text-slate-400 mx-1.5">•</span>
-                    <span className="text-slate-600">{t.forfaitName}</span>
+                + Générer un lot de tickets
+              </button>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {tickets.slice(0, 5).map((t) => (
+                <div
+                  key={t.id}
+                  onClick={() => {
+                    navigator.clipboard.writeText(t.code);
+                    notify(`Code voucher ${t.code} copié !`, 'success');
+                  }}
+                  className="px-4 py-2.5 hover:bg-[#F8FAFC] flex items-center justify-between cursor-pointer transition text-xs"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#008060] shrink-0" />
+                    <div>
+                      <span className="font-mono font-bold text-slate-800">{t.code}</span>
+                      <span className="text-slate-400 mx-1.5">•</span>
+                      <span className="text-slate-600">{t.forfaitName}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-slate-800">{formatMoney(t.price)}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#E6F4F3] text-[#005A5B]">
+                      {t.status}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-800">{formatMoney(t.price)}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#E6F4F3] text-[#005A5B]">
-                    {t.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

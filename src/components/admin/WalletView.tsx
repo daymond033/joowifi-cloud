@@ -77,7 +77,7 @@ export const WalletView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner with Balance */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-[#0B0F19] to-amber-950/40 border border-[#99D5D3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
+      <div className="p-6 rounded-3xl bg-white border border-[#99D5D3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-[#007A78] text-xs font-bold uppercase tracking-wider">
             <Wallet className="w-4 h-4" />

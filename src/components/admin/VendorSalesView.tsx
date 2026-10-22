@@ -132,7 +132,7 @@ export const VendorSalesView: React.FC = () => {
           <p className="text-[11px] text-slate-400">Rémunération variable cumulée sur la période</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/50 via-slate-900/60 to-slate-950 border border-[#99D5D3] space-y-1">
+        <div className="p-5 rounded-2xl bg-white border border-[#99D5D3] space-y-1">
           <span className="text-xs text-[#005A5B] font-semibold uppercase tracking-wider">
             Revenu Net Opérateur
           </span>

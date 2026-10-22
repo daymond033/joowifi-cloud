@@ -58,7 +58,7 @@ export interface ForfaitItem {
   color?: string;
   macLock?: boolean; // Verrouillage Adresse MAC
   validityValue?: number;
-  validityUnit?: 'hours' | 'days' | 'weeks' | 'months';
+  validityUnit?: 'hours' | 'days' | 'weeks' | 'months' | 'unlimited';
 }
 
 export type TicketStatus = 'stock' | 'vendeur' | 'papier' | 'actif' | 'expire' | 'bloque';
@@ -94,9 +94,18 @@ export interface TicketItem {
   queuedForfaits?: TicketQueuedForfait[];
 }
 
+export interface StaffPermissions {
+  fastSale: boolean;
+  printThermal: boolean;
+  shareWhatsapp: boolean;
+  sosRequest: boolean;
+}
+
 export interface StaffItem {
   id: string;
   name: string;
+  email?: string;
+  password?: string;
   phone: string;
   zoneId: string;
   zoneName: string;
@@ -108,6 +117,7 @@ export interface StaffItem {
   active: boolean;
   lastActive: string;
   paidCommissions?: number;
+  permissions?: StaffPermissions;
 }
 
 export interface ConnectedSession {
