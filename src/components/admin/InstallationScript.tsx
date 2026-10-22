@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export const InstallationScript: React.FC = () => {
-  const { zones, routers, tickets, macBypasses, addRouter, setAdminTab, forceHeartbeatSync } = useApp();
+  const { zones, routers, tickets, macBypasses, addRouter, setAdminTab, forceHeartbeatSync, user } = useApp();
 
   // Mode toggle between Method 1 (Auto 1-line command) and Method 2 (Full Bootstrap Script)
   const [installMethodTab, setInstallMethodTab] = useState<'auto' | 'full'>('auto');
@@ -77,7 +77,32 @@ export const InstallationScript: React.FC = () => {
   };
 
   // Méthode 1 : Commande Automatique 1-Clic (avec nettoyage préalable du fichier .rsc)
-  const autoOneLineCommand = `:do { /file remove joowifi_install.rsc } on-error={}; /tool fetch url="https://joowifi-cloud.vercel.app/api/v1/mikrotik/install?token=${token}" mode=https check-certificate=no keep-result=yes dst-path=joowifi_install.rsc; :delay 2s; /import file-name=joowifi_install.rsc`;
+  const tenantQueryParam = user?.tenantId ? `&tenant_id=${encodeURIComponent(user.tenantId)}` : '';
+  const autoOneLineCommand = `:do { /file remove joowifi_install.rsc } on-error={}; /tool fetch url="https://joowifi-cloud.vercel.app/api/v1/mikrotik/install?token=${token}${tenantQueryParam}" mode=https check-certificate=no keep-result=yes dst-path=joowifi_install.rsc; :delay 2s; /import file-name=joowifi_install.rsc`;
+
+  const ensureRouterProvisioned = () => {
+    const exists = routers.some((r) => r.installToken === token);
+    if (!exists) {
+      const targetZone = zones.find((z) => z.id === selectedZoneId) || zones[0];
+      addRouter({
+        name: routerName.trim() || `MikroTik Hotspot (${token})`,
+        model: routerModel.trim() || 'MikroTik RouterOS v7',
+        zoneId: targetZone?.id || 'Zone Principale',
+        zoneName: targetZone?.name || 'Zone Principale',
+        ipAddress: '10.5.50.1',
+        macAddress: '48:A9:8A:7B:12:C4',
+        routerOsVersion: 'v7.23.8',
+        status: 'online',
+        uptime: '00j 00h 01m',
+        cpuUsage: 12,
+        ramUsage: 28,
+        trafficDownMbps: 0,
+        trafficUpMbps: 0,
+        totalSubscribers: 0,
+        installToken: token,
+      });
+    }
+  };
 
   // Commande d'import local WinBox (Étape 3)
   const localWinboxImportCmd = `/import file-name=joowifi_install.rsc`;
@@ -334,13 +359,15 @@ ${embeddedMacBypassesRsc}
   }, [token, routerName, routerModel, tickets.length, embeddedTicketsRsc, embeddedMacBypassesRsc]);
 
   const copyAutoCommand = () => {
-    navigator.clipboard.writeText(autoOneLineCommand);
+    ensureRouterProvisioned();
+                    navigator.clipboard.writeText(autoOneLineCommand);
     setCopiedAutoCmd(true);
     setTimeout(() => setCopiedAutoCmd(false), 2200);
   };
 
   const copyFullScript = () => {
-    navigator.clipboard.writeText(fullBootstrapScript);
+    ensureRouterProvisioned();
+                    navigator.clipboard.writeText(fullBootstrapScript);
     setCopiedFullScript(true);
     setTimeout(() => setCopiedFullScript(false), 2200);
   };

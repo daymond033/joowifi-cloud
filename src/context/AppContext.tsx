@@ -247,7 +247,7 @@ interface AppContextType {
   disconnectAllSessions: (routerId?: string) => void;
   refreshSessions: () => void;
   authorizeHost: (hostId: string, forfaitId?: string) => void;
-  addRouter: (router: Omit<RouterItem, 'id' | 'lastHeartbeat' | 'installToken'>) => void;
+  addRouter: (router: Omit<RouterItem, 'id' | 'lastHeartbeat' | 'installToken'> & { installToken?: string; id?: string }) => void;
   updateRouter: (id: string, updates: Partial<RouterItem>) => void;
   deleteRouter: (id: string) => void;
   rebootRouter: (routerId: string) => void;
@@ -666,10 +666,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setHeartbeatSecondsRemaining((prev) => (prev <= 1 ? 45 : prev - 1));
+      setHeartbeatSecondsRemaining((prev) => {
+        if (prev % 15 === 0 && user?.tenantId) {
+          void loadTenantWorkspace(user.tenantId);
+        }
+        return prev <= 1 ? 45 : prev - 1;
+      });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [user?.tenantId]);
 
   // Fonction centrale de chargement strict depuis la base Cloud Supabase pour un tenant_id donné
   const loadTenantWorkspace = async (targetTenant: string) => {
@@ -1271,16 +1276,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     notify(`Hôte ${host.macAddress} autorisé sur ${forfait.name}`, 'success');
   };
 
-  const addRouter = (routerData: Omit<RouterItem, 'id' | 'lastHeartbeat' | 'installToken'>) => {
+  const addRouter = (
+    routerData: Omit<RouterItem, 'id' | 'lastHeartbeat' | 'installToken'> & {
+      installToken?: string;
+      id?: string;
+    }
+  ) => {
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const newToken = `JWT-${randomSuffix}-JG37-${Math.floor(10 + Math.random() * 89)}K2`;
+    const newToken =
+      routerData.installToken && routerData.installToken.trim() !== ''
+        ? routerData.installToken.trim()
+        : `JWT-${randomSuffix}-JG37-${Math.floor(10 + Math.random() * 89)}K2`;
     const newRouter: RouterItem = {
       ...routerData,
-      id: `rb-${Date.now()}`,
+      id: routerData.id || `rb-${Date.now()}`,
       lastHeartbeat: new Date().toISOString(),
       installToken: newToken,
     };
-    setRouters((prev) => { const next = [...prev, newRouter]; syncRoutersToSupabase(next); return next; });
+    setRouters((prev) => {
+      const filtered = prev.filter((r) => r.installToken !== newToken);
+      const next = [...filtered, newRouter];
+      syncRoutersToSupabase(next);
+      return next;
+    });
     addAuditLog('Ajout Routeur', newRouter.name, `Token: ${newToken} - Zone: ${newRouter.zoneName}`);
   };
 
