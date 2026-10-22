@@ -148,7 +148,7 @@ export default async function handler(req, res) {
         ''
     ).trim();
 
-    if (TENANT_SCOPED_TABLES.has(table) && !tenantId) {
+    if (TENANT_SCOPED_TABLES.has(table) && !tenantId && !(table === 'staff_vendors' && method === 'GET')) {
       return res.status(401).json({
         ok: false,
         error: 'Isolation Multi-Tenant : identifiant opérateur (tenant_id) requis.',

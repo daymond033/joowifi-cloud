@@ -176,7 +176,7 @@ export async function supabaseSelect<T>(
   customTenantId?: string
 ): Promise<T[] | null> {
   const tenantId = (customTenantId || getActiveTenantId()).trim();
-  if (TENANT_SCOPED_TABLES.has(table) && !tenantId) {
+  if (TENANT_SCOPED_TABLES.has(table) && !tenantId && table !== 'staff_vendors') {
     return [];
   }
   const scopedQuery = appendTenantFilter(table, query, tenantId);
@@ -204,7 +204,7 @@ export async function supabaseInsert<T>(
   customTenantId?: string
 ): Promise<T[] | null> {
   const tenantId = (customTenantId || getActiveTenantId()).trim();
-  if (TENANT_SCOPED_TABLES.has(table) && !tenantId) {
+  if (TENANT_SCOPED_TABLES.has(table) && !tenantId && table !== 'staff_vendors') {
     return [];
   }
   const enriched = enrichPayloadWithTenant(table, payload, tenantId);

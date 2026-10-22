@@ -76,6 +76,7 @@ export const AuthModal: React.FC = () => {
           if (Array.isArray(dbVendors)) {
             const foundDb = dbVendors.find(
               (v) =>
+                String(v.email || '').toLowerCase() === cleanEmail ||
                 String(v.name || '').toLowerCase() === cleanEmail ||
                 String(v.phone || '').replace(/\s+/g, '') === cleanEmail.replace(/\s+/g, '')
             );

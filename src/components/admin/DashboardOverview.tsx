@@ -45,7 +45,7 @@ export const DashboardOverview: React.FC = () => {
     forfaitName: string;
     price: number;
   } | null>(null);
-  const [copiedCode, setCopiedCode] =State(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const onlineRoutersCount = routers.filter((r) => r.status === 'online').length;
   const availableTicketsCount = tickets.filter(

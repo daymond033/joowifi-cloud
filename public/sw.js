@@ -4,7 +4,7 @@
 // tout en conservant le mode hors-ligne de secours en cas de coupure réseau.
 // ============================================================================
 
-const CACHE_NAME = 'joowifi-pwa-v9.0.0-zero-mock';
+const CACHE_NAME = 'joowifi-pwa-v11.0.0-login-fixed';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

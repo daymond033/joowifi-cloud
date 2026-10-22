@@ -385,7 +385,7 @@ export const POSCashier: React.FC = () => {
     {
       day: 'Auj.',
       date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-      tickets: vendorSoldTickets.length,
+      tickets: vendorTickets.length,
       amount: activeStaff?.todaySales || 0,
       commission: Math.round(((activeStaff?.todaySales || 0) * (activeStaff?.commissionRate || 10)) / 100),
     },
