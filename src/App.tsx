@@ -110,6 +110,7 @@ export default function App() {
     notify,
     user,
     logout,
+    openAuthModal,
   } = useApp();
 
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('all');
@@ -158,8 +159,15 @@ export default function App() {
     );
   }
 
-  // 2. ESPACE ADMINISTRATEUR (CONSOLE CLOUD — Sans doublons de navigation dans la barre supérieure !)
-  if (currentSpace === 'admin') {
+  // 2. GARDE D'AUTHENTIFICATION JWT STRICTE SUR LA CONSOLE ADMINISTRATEUR (POINT 1 DE L'AUDIT)
+  useEffect(() => {
+    if (currentSpace === 'admin' && (!user || !user.accessToken || user.role !== 'admin')) {
+      setCurrentSpace('public');
+      openAuthModal('login');
+    }
+  }, [currentSpace, user]);
+
+  if (currentSpace === 'admin' && user && user.accessToken && user.role === 'admin') {
     return (
       <div className="h-screen w-screen overflow-hidden flex flex-col bg-[#F4F7FA] text-[#1E293B] font-sans select-none">
         <ToastContainer />

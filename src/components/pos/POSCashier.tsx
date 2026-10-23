@@ -1,1404 +1,881 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { TicketItem, ForfaitItem } from '../../types';
-import confetti from 'canvas-confetti';
+import { TicketItem } from '../../types';
+import {
+  supabaseSelect,
+  supabaseAuthSignIn,
+  buildSignedSessionJwt,
+} from '../../lib/supabase';
 import QRCode from 'qrcode';
 import {
-  Zap,
-  TrendingUp,
-  History,
+  Wifi,
   Printer,
   Share2,
-  Sun,
-  Moon,
-  Maximize2,
-  Volume2,
-  VolumeX,
-  CheckCircle2,
-  X,
-  Phone,
-  Power,
-  RotateCcw,
-  LifeBuoy,
-  Eye,
+  History,
+  Zap,
   Copy,
-  Download,
-  Calendar,
-  Wallet,
-  DollarSign,
-  Search,
   Check,
-  Smartphone,
-  ExternalLink,
+  Search,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  LogOut,
+  AlertCircle,
+  ArrowLeft,
+  Wallet,
+  Ticket,
+  ShieldCheck,
+  RefreshCw,
+  Send,
+  QrCode,
 } from 'lucide-react';
 
 export const POSCashier: React.FC = () => {
   const {
     forfaits,
+    tickets,
     staff,
+    user,
+    login,
+    logout,
+    setCurrentSpace,
     sellTicketPOS,
     sosRechargeRequest,
     formatMoney,
-    setCurrentSpace,
-    tickets,
-    forceHeartbeatSync,
-    user,
-    logout,
+    notify,
   } = useApp();
 
-  // Active vendor (defaulting to mamadou fonate / first staff member)
-  const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    staff.find((s) => s.name.toLowerCase().includes('mamadou'))?.id || staff[0]?.id || 'staff-pos-1'
-  );
-  const activeStaff = staff.find((s) => s.id === selectedStaffId) || staff[0];
+  // ===========================================================================
+  // ÉTAT DE LA PASSERELLE DE CONNEXION DÉDIÉE CAISSE POS (POINTS 2 & 3 DE L'AUDIT)
+  // Exige obligatoirement qu'un vendeur s'identifie manuellement avec ses
+  // identifiants Vendeur (aucune session pré-connectée ni profil "Mamadou Fonate").
+  // ===========================================================================
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Cashier Tabs: 'vente' | 'performances' | 'historique'
-  const [activeTab, setActiveTab] = useState<'vente' | 'performances' | 'historique'>('vente');
-
-  // Fast Sale Mode (⚡ Mode Vente Éclair)
-  const [fastSaleMode, setFastSaleMode] = useState<boolean>(true);
-
-  // Kiosk settings
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [nightMode, setNightMode] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Last sold ticket (preloaded with most recent ticket by this vendor or latest ticket)
-  const initialTicket = useMemo(() => {
-    return (
-      tickets.find((t) => t.sellerId === activeStaff?.id) ||
-      tickets[0] ||
-      null
-    );
-  }, [tickets, activeStaff?.id]);
-
-  const [lastSoldTicket, setLastSoldTicket] = useState<TicketItem | null>(initialTicket);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
-
-  // Modals & Popups
-  const [sosModalOpen, setSosModalOpen] = useState(false);
-  const [sosAmount, setSosAmount] = useState<number>(10000);
-  const [supervisorPhone, setSupervisorPhone] = useState<string>('0151664752');
-  const [fullScreenClientModal, setFullScreenClientModal] = useState(false);
-  const [quitModalOpen, setQuitModalOpen] = useState(false);
-
-  // Toast feedback
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Onglet actif une fois le vendeur authentifié
+  const [posTab, setPosTab] = useState<'sell' | 'history' | 'sos'>('sell');
+  const [selectedForfaitId, setSelectedForfaitId] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState<string>('+225 ');
+  const [lastSoldTicket, setLastSoldTicket] = useState<TicketItem | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // History search and filters
+  // Filtre historique
   const [historySearch, setHistorySearch] = useState('');
-  const [historyFilter, setHistoryFilter] = useState<'tous' | 'en_ligne' | 'hors_ligne'>('tous');
+  const [historyFilter, setHistoryFilter] = useState<'tous' | 'actif' | 'vendeur'>('tous');
 
-  // Customer phone for SMS/WhatsApp optional
-  const [customerPhone, setCustomerPhone] = useState('');
+  // Demande SOS Recharge
+  const [sosAmount, setSosAmount] = useState<number>(15000);
 
-  // Thermal print hidden ref
-  const printRef = useRef<HTMLDivElement>(null);
+  // Vérifier si l'utilisateur actuel est strictement un Vendeur POS authentifié
+  const isAuthenticatedVendor = Boolean(
+    user && user.role === 'staff' && user.staffId && user.accessToken
+  );
 
-  // Show temporary toast
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((current) => (current === msg ? null : current));
-    }, 2500);
-  };
+  // Résoudre le profil du vendeur connecté depuis la liste chargée (sans aucun fallback codé en dur)
+  const activeStaff = useMemo(() => {
+    if (!isAuthenticatedVendor || !user) return null;
+    const byId = staff.find(
+      (s) =>
+        s.id === user.staffId ||
+        (s.email && s.email.toLowerCase() === user.email.toLowerCase()) ||
+        s.name.toLowerCase() === user.name.toLowerCase()
+    );
+    if (byId) return byId;
+    return {
+      id: user.staffId || 'vendor',
+      name: user.name,
+      email: user.email,
+      phone: '',
+      zoneId: 'Zone Principale',
+      zoneName: 'Zone Principale',
+      commissionRate: 10,
+      balanceCredit: 0,
+      dailyGoal: 15000,
+      todaySales: 0,
+      totalSales: 0,
+      active: true,
+      lastActive: 'En ligne',
+      permissions: {
+        fastSale: true,
+        printThermal: true,
+        shareWhatsapp: true,
+        sosRequest: true,
+      },
+    };
+  }, [isAuthenticatedVendor, user, staff]);
 
-  // Generate QR code whenever lastSoldTicket changes
   useEffect(() => {
-    if (lastSoldTicket) {
-      QRCode.toDataURL(lastSoldTicket.code, {
-        width: 240,
-        margin: 1,
-        color: {
-          dark: '#ea580c', // Orange modules like in screenshot 2
-          light: '#00000000', // Transparent background
-        },
-      })
-        .then((url) => setQrCodeDataUrl(url))
-        .catch(() => setQrCodeDataUrl(''));
+    if (forfaits.length > 0 && !selectedForfaitId) {
+      setSelectedForfaitId(forfaits[0].id);
+    }
+  }, [forfaits, selectedForfaitId]);
+
+  useEffect(() => {
+    if (lastSoldTicket?.code) {
+      const portalUrl = `http://10.5.50.1/login?username=${encodeURIComponent(
+        lastSoldTicket.code
+      )}&password=${encodeURIComponent(lastSoldTicket.code)}`;
+      QRCode.toDataURL(portalUrl, { width: 160, margin: 1 })
+        .then((url) => setQrDataUrl(url))
+        .catch(() => setQrDataUrl(''));
+    } else {
+      setQrDataUrl('');
     }
   }, [lastSoldTicket]);
 
-  // Sound effect function (pleasant kiosk beep)
-  const playBeep = () => {
-    if (!soundEnabled) return;
+  // Authentification manuelle du Vendeur sur la Passerelle Caisse POS
+  const handleVendorLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    const cleanId = loginIdentifier.trim().toLowerCase();
+    const cleanPass = loginPassword.trim();
+
+    if (!cleanId || !cleanPass) {
+      setLoginError('Veuillez saisir votre identifiant vendeur et votre mot de passe.');
+      return;
+    }
+
+    setLoginLoading(true);
     try {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const audioCtx = new AudioContextClass();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.18);
-    } catch {
-      // AudioContext not supported or permission denied
-    }
-  };
+      let matched: any = staff.find(
+        (s) =>
+          (s.email && s.email.trim().toLowerCase() === cleanId) ||
+          s.name.trim().toLowerCase() === cleanId ||
+          s.phone.replace(/\s+/g, '') === cleanId.replace(/\s+/g, '')
+      );
 
-  // 1-Tap Sale Handler
-  const handleSale = (forfait: ForfaitItem) => {
-    try {
-      const ticket = sellTicketPOS(forfait.id, customerPhone, activeStaff?.id);
-      setLastSoldTicket(ticket);
-      playBeep();
+      // Interroger la table `public.staff_vendors` sur Supabase
+      const dbVendors = await supabaseSelect<Record<string, any>>(
+        'staff_vendors',
+        'select=*&limit=200',
+        ''
+      );
 
-      // Confetti animation
-      confetti({
-        particleCount: 45,
-        spread: 60,
-        origin: { y: 0.65 },
-        colors: ['#f97316', '#f59e0b', '#10b981'],
-      });
-
-      showToast(`Ticket ${ticket.code} émis avec succès !`);
-    } catch {
-      showToast('Erreur lors de la vente. Veuillez vérifier le solde du vendeur.');
-    }
-  };
-
-  // Fullscreen browser toggle
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else if (document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
-  };
-
-  // Refresh simulation
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    forceHeartbeatSync();
-    setTimeout(() => {
-      setIsRefreshing(false);
-      showToast('Données caisse actualisées');
-    }, 600);
-  };
-
-  // Copy code to clipboard
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(true);
-    showToast(`Code « ${code} » copié dans le presse-papier !`);
-    setTimeout(() => setCopiedCode(false), 2000);
-  };
-
-  // WhatsApp share
-  const handleShareWhatsApp = (ticket: TicketItem) => {
-    const text = `🎉 Votre ticket WiFi Joowifi :\n\n📶 Code de connexion : *${ticket.code}*\n⏳ Forfait : *${ticket.forfaitName}*\n💰 Prix : *${formatMoney(ticket.price)}*\n\n👉 Connectez-vous au réseau Wi-Fi « Joowifi » et saisissez ce code sur la page de connexion. Bon surf !`;
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-  };
-
-  // WhatsApp SOS Request
-  const handleSendSosWhatsApp = () => {
-    sosRechargeRequest(activeStaff?.id || 'staff-pos-1', sosAmount);
-    const text = `🚨 *Demande de Recharge SOS - Joowifi*\n\n👤 Vendeur : *${activeStaff?.name || 'Mamadou Fonate'}*\n💳 Solde actuel : *${formatMoney(activeStaff?.balanceCredit || 54300)}*\n⚡ Montant demandé : *${formatMoney(sosAmount)}*\n\nMerci de bien vouloir valider mon réapprovisionnement de crédit Joowifi.`;
-    const cleanPhone = supervisorPhone.replace(/\D/g, '');
-    const url = `https://wa.me/${cleanPhone.startsWith('225') ? cleanPhone : `225${cleanPhone}`}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-    setSosModalOpen(false);
-    showToast(`Alerte SOS de ${formatMoney(sosAmount)} transmise au superviseur.`);
-  };
-
-  // Download ticket as PNG
-  const handleDownloadPng = (ticket: TicketItem) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 480;
-    canvas.height = 600;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Dark background
-    ctx.fillStyle = '#0b0f19';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Border
-    ctx.strokeStyle = '#f97316';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
-
-    // Title
-    ctx.fillStyle = '#f97316';
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('JOOWIFI HOTSPOT', canvas.width / 2, 55);
-
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '14px sans-serif';
-    ctx.fillText('Ticket d’accès Internet Haut Débit', canvas.width / 2, 80);
-
-    // Code
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 48px monospace';
-    ctx.fillText(ticket.code, canvas.width / 2, 160);
-
-    // Forfait & Price
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText(`${ticket.forfaitName} • ${formatMoney(ticket.price)}`, canvas.width / 2, 210);
-
-    // Draw QR code if available
-    if (qrCodeDataUrl) {
-      const qrImg = new Image();
-      qrImg.onload = () => {
-        ctx.drawImage(qrImg, canvas.width / 2 - 100, 240, 200, 200);
-
-        // Footer
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = '13px sans-serif';
-        ctx.fillText('Scannez ou tapez votre code sur la page WiFi', canvas.width / 2, 480);
-
-        ctx.fillStyle = '#64748b';
-        ctx.font = '11px sans-serif';
-        ctx.fillText(`Émis le ${new Date(ticket.createdAt).toLocaleString('fr-FR')} par ${activeStaff?.name}`, canvas.width / 2, 520);
-
-        const link = document.createElement('a');
-        link.download = `ticket-joowifi-${ticket.code}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('Image du ticket téléchargée !');
-      };
-      qrImg.src = qrCodeDataUrl;
-    } else {
-      const link = document.createElement('a');
-      link.download = `ticket-joowifi-${ticket.code}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      showToast('Image du ticket téléchargée !');
-    }
-  };
-
-  // Format d'imprimante thermique Bluetooth (58mm ou 80mm)
-  const [paperFormat, setPaperFormat] = useState<'58mm' | '80mm'>('58mm');
-  const [btPrinterName, setBtPrinterName] = useState<string | null>(null);
-
-  // Impression directe sur imprimante thermique Bluetooth via Web Bluetooth API (ESC/POS)
-  const handleBluetoothThermalPrint = async (ticketToPrint?: TicketItem | null) => {
-    const t = ticketToPrint || lastSoldTicket;
-    if (!t) return;
-
-    const nav = navigator as Navigator & {
-      bluetooth?: {
-        requestDevice: (opts: unknown) => Promise<{
-          name?: string;
-          gatt?: { connect: () => Promise<{ getPrimaryService: (s: string) => Promise<{ getCharacteristic: (c: string) => Promise<{ writeValue: (v: Uint8Array) => Promise<void> }> }> }> };
-        }>;
-      };
-    };
-
-    if (nav.bluetooth) {
-      try {
-        const device = await nav.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'],
-        });
-        setBtPrinterName(device.name || `Imprimante BT (${paperFormat})`);
-
-        // Construction des commandes ESC/POS (58mm / 80mm)
-        const esc = '\x1B';
-        const gs = '\x1D';
-        const divider = paperFormat === '58mm' ? '--------------------------------\n' : '------------------------------------------------\n';
-        const escPosPayload =
-          esc + '@' + // Initialisation imprimante
-          esc + 'a' + '\x01' + // Alignement centré
-          esc + '!' + '\x30' + 'JOOWIFI HOTSPOT\n' +
-          esc + '!' + '\x00' + 'Ticket Internet Haut Debit (' + paperFormat + ')\n' +
-          divider +
-          'CODE VOUCHER :\n' +
-          esc + '!' + '\x38' + t.code + '\n' +
-          esc + '!' + '\x00' +
-          divider +
-          'Forfait : ' + t.forfaitName + '\n' +
-          'Tarif   : ' + formatMoney(t.price) + '\n' +
-          'Duree   : ' + t.duration + '\n' +
-          'Vendeur : ' + (activeStaff?.name || 'Caisse POS') + '\n' +
-          divider +
-          'Connectez-vous au WiFi Joowifi\n' +
-          'et saisissez ce code.\n\n\n' +
-          gs + 'V' + '\x41' + '\x03'; // Coupe papier partielle
-
-        if (device.gatt) {
-          const server = await device.gatt.connect();
-          const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-          const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-          const encoder = new TextEncoder();
-          await characteristic.writeValue(encoder.encode(escPosPayload));
-          showToast(`Ticket ${t.code} imprimé en Bluetooth (${paperFormat}) sur ${device.name || 'Imprimante POS'} !`);
-          return;
+      if (Array.isArray(dbVendors) && dbVendors.length > 0) {
+        const foundDb = dbVendors.find(
+          (v) =>
+            String(v.email || '').trim().toLowerCase() === cleanId ||
+            String(v.name || '').trim().toLowerCase() === cleanId ||
+            String(v.phone || '').replace(/\s+/g, '') === cleanId.replace(/\s+/g, '')
+        );
+        if (foundDb) {
+          matched = {
+            id: String(foundDb.id),
+            name: String(foundDb.name),
+            email: foundDb.email ? String(foundDb.email) : cleanId,
+            phone: String(foundDb.phone || ''),
+            zoneId: String(foundDb.zone_id || 'Zone Principale'),
+            zoneName: String(foundDb.zone_id || 'Zone Principale'),
+            commissionRate: Number(foundDb.commission_rate || 10),
+            balanceCredit: Number(foundDb.balance_credit_xof || 0),
+            dailyGoal: Number(foundDb.daily_goal_xof || 15000),
+            todaySales: Number(foundDb.today_sales_xof || 0),
+            totalSales: Number(foundDb.total_sales_xof || 0),
+            active: Boolean(foundDb.active ?? true),
+            password: String(foundDb.pin_hash || ''),
+            tenantId: String(foundDb.tenant_id || foundDb.operator_id || ''),
+          };
         }
-      } catch {
-        // Repli sur l'impression système formatée en cas d'annulation Bluetooth
       }
+
+      if (!matched) {
+        setLoginError(
+          "Aucun compte vendeur trouvé pour cet identifiant. Vérifiez l'email ou le numéro créé par votre administrateur."
+        );
+        setLoginLoading(false);
+        return;
+      }
+
+      if (!matched.active) {
+        setLoginError("Ce compte vendeur est actuellement suspendu par l'administrateur.");
+        setLoginLoading(false);
+        return;
+      }
+
+      const expectedPass = String(matched.password || '').trim();
+      const authRes = cleanId.includes('@')
+        ? await supabaseAuthSignIn(cleanId, cleanPass)
+        : {};
+
+      if (cleanPass !== expectedPass && !authRes.accessToken) {
+        setLoginError('Mot de passe ou code PIN vendeur incorrect.');
+        setLoginLoading(false);
+        return;
+      }
+
+      const vendorTenantId = String(matched.tenantId || user?.tenantId || '').trim();
+      if (!vendorTenantId) {
+        setLoginError("Impossible d'identifier le réseau opérateur rattaché à ce vendeur.");
+        setLoginLoading(false);
+        return;
+      }
+
+      const tokenJwt =
+        authRes.accessToken ||
+        buildSignedSessionJwt({
+          sub: matched.id,
+          email: matched.email || cleanId,
+          role: 'vendor',
+          tenantId: vendorTenantId,
+        });
+
+      login(
+        matched.email || cleanId,
+        'staff',
+        matched.name,
+        matched.id,
+        vendorTenantId,
+        false,
+        tokenJwt
+      );
+      setLoginIdentifier('');
+      setLoginPassword('');
+    } catch {
+      setLoginError('Erreur lors de la vérification du compte vendeur sur Supabase.');
+    } finally {
+      setLoginLoading(false);
     }
-
-    window.print();
-    showToast(`Impression ticket thermique (${paperFormat}) lancée`);
   };
 
-  // Print thermal slip
-  const handlePrintSlip = () => {
-    handleBluetoothThermalPrint(lastSoldTicket);
-  };
-
-  // Vendor calculations
-  const todaySales = activeStaff?.todaySales || 50700;
-  const dailyGoal = activeStaff?.dailyGoal || 10000;
-  const goalReached = todaySales >= dailyGoal;
-  const commissionRate = activeStaff?.commissionRate || 10;
-  const commissionsAmount = Math.round((todaySales * commissionRate) / 100);
-  const vendorBalance = activeStaff?.balanceCredit || 54300;
-
-  // Tickets sold by this vendor
+  // Tickets vendus par ce vendeur uniquement
   const vendorTickets = useMemo(() => {
-    return tickets.filter((t) => t.sellerId === activeStaff?.id);
-  }, [tickets, activeStaff?.id]);
+    if (!activeStaff) return [];
+    return tickets.filter(
+      (t) =>
+        t.sellerId === activeStaff.id ||
+        t.sellerName === activeStaff.name ||
+        t.sellerId === activeStaff.name
+    );
+  }, [tickets, activeStaff]);
 
-  // Filtered tickets in history
   const filteredTickets = useMemo(() => {
     return vendorTickets.filter((t) => {
-      const matchesSearch =
+      const matchSearch =
         t.code.toLowerCase().includes(historySearch.toLowerCase()) ||
         t.forfaitName.toLowerCase().includes(historySearch.toLowerCase());
-
-      if (!matchesSearch) return false;
-      if (historyFilter === 'en_ligne') return t.status === 'actif';
-      if (historyFilter === 'hors_ligne') return t.status !== 'actif';
+      if (!matchSearch) return false;
+      if (historyFilter === 'actif') return t.status === 'actif';
+      if (historyFilter === 'vendeur') return t.status === 'vendeur' || t.status === 'stock';
       return true;
     });
   }, [vendorTickets, historySearch, historyFilter]);
 
-  // 7-day sales data points (for performance curve)
-  const salesHistory7Days = [
-    { day: 'Lun', date: '-', tickets: 0, amount: 0, commission: 0 },
-    { day: 'Mar', date: '-', tickets: 0, amount: 0, commission: 0 },
-    { day: 'Mer', date: '-', tickets: 0, amount: 0, commission: 0 },
-    { day: 'Jeu', date: '-', tickets: 0, amount: 0, commission: 0 },
-    { day: 'Ven', date: '-', tickets: 0, amount: 0, commission: 0 },
-    { day: 'Sam', date: '-', tickets: 0, amount: 0, commission: 0 },
-    {
-      day: 'Auj.',
-      date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
-      tickets: vendorTickets.length,
-      amount: activeStaff?.todaySales || 0,
-      commission: Math.round(((activeStaff?.todaySales || 0) * (activeStaff?.commissionRate || 10)) / 100),
-    },
-  ];
+  const handleSellTicket = () => {
+    if (!activeStaff) return;
+    const targetForfait = forfaits.find((f) => f.id === selectedForfaitId) || forfaits[0];
+    if (!targetForfait) {
+      notify('Aucun forfait disponible dans le catalogue de votre opérateur.', 'warning');
+      return;
+    }
+    if (activeStaff.balanceCredit < targetForfait.price) {
+      notify(
+        `Crédit POS insuffisant (${formatMoney(activeStaff.balanceCredit)}). Demandez une recharge SOS à votre administrateur.`,
+        'error'
+      );
+      setPosTab('sos');
+      return;
+    }
+    try {
+      const created = sellTicketPOS(
+        targetForfait.id,
+        customerPhone.trim().length > 5 ? customerPhone.trim() : undefined,
+        activeStaff.id
+      );
+      setLastSoldTicket(created);
+      notify(`Ticket ${created.code} émis (${formatMoney(created.price)}) !`, 'success');
+    } catch (err: any) {
+      notify(err?.message || 'Erreur lors de la vente du ticket.', 'error');
+    }
+  };
+
+  const handlePrintThermal = (ticket: TicketItem) => {
+    const win = window.open('', '_blank', 'width=320,height=520');
+    if (!win) {
+      window.print();
+      return;
+    }
+    win.document.write(`
+      <html>
+        <head>
+          <title>Ticket WiFi ${ticket.code}</title>
+          <style>
+            body { font-family: monospace; width: 260px; margin: 0 auto; padding: 12px; color: #000; }
+            .center { text-align: center; }
+            .code { font-size: 22px; font-weight: bold; letter-spacing: 2px; border: 2px dashed #000; padding: 8px; margin: 10px 0; }
+            .row { display: flex; justify-content: space-between; font-size: 12px; margin: 4px 0; }
+            hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          <div class="center">
+            <strong>JOOWIFI HOTSPOT</strong><br/>
+            <span>${activeStaff?.zoneName || 'Point de Vente'}</span>
+          </div>
+          <hr/>
+          <div class="row"><span>Forfait:</span><strong>${ticket.forfaitName}</strong></div>
+          <div class="row"><span>Durée:</span><strong>${ticket.duration}</strong></div>
+          <div class="row"><span>Prix:</span><strong>${ticket.price} FCFA</strong></div>
+          <div class="center code">${ticket.code}</div>
+          ${qrDataUrl ? `<div class="center"><img src="${qrDataUrl}" width="130" height="130"/></div>` : ''}
+          <hr/>
+          <div class="center" style="font-size:10px;">
+            Agent: ${activeStaff?.name || ''}<br/>
+            ${new Date().toLocaleString('fr-FR')}
+          </div>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  };
+
+  const handleShareWhatsApp = (ticket: TicketItem) => {
+    const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+    const msg = `*Votre Ticket WiFi Hotspot*\n• Code d'accès : *${ticket.code}*\n• Forfait : *${ticket.forfaitName}*\n• Durée : *${ticket.duration}*\n• Tarif : *${formatMoney(ticket.price)}*\nConnectez-vous au réseau WiFi et saisissez votre code.`;
+    const url =
+      cleanPhone.length >= 8
+        ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleSendSos = () => {
+    if (!activeStaff) return;
+    sosRechargeRequest(activeStaff.id, sosAmount);
+    const msg = `*Demande de Recharge Crédit POS*\n• Vendeur : *${activeStaff.name}*\n• Site : *${activeStaff.zoneName}*\n• Solde actuel : *${formatMoney(activeStaff.balanceCredit)}*\n• Montant demandé : *${formatMoney(sosAmount)}*`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  // ===========================================================================
+  // ÉCRAN 1 : PASSERELLE DE CONNEXION OBLIGATOIRE CAISSE POS (CORPORATE TECH)
+  // Affiché systématiquement tant qu'un vendeur ne s'est pas authentifié.
+  // ===========================================================================
+  if (!isAuthenticatedVendor || !activeStaff) {
+    return (
+      <div className="min-h-screen bg-[#F4F7FA] text-[#1E293B] flex flex-col justify-between font-sans">
+        {/* Top Bar Omada Style */}
+        <header className="h-14 bg-[#005A5B] text-white px-6 flex items-center justify-between border-b border-[#004748]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded bg-[#008060] flex items-center justify-center font-black text-xs text-white">
+              JW
+            </div>
+            <div>
+              <span className="text-sm font-bold tracking-tight block leading-none">
+                Joowifi POS
+              </span>
+              <span className="text-[10px] text-teal-200 block">
+                Passerelle d'Authentification Vendeur
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setCurrentSpace(user?.role === 'admin' ? 'admin' : 'public')}
+            className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-xs font-semibold text-white flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>{user?.role === 'admin' ? 'Retour Console Admin' : 'Retour Accueil'}</span>
+          </button>
+        </header>
+
+        {/* Formulaire Central Flat Corporate Tech */}
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-[#F8FAFC] border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#008060] block">
+                  TERMINAL DE VENTE MOBILE (RBAC)
+                </span>
+                <h1 className="text-base font-bold text-slate-900 mt-0.5">
+                  Connexion Agent Vendeur POS
+                </h1>
+              </div>
+              <ShieldCheck className="w-5 h-5 text-[#005A5B]" />
+            </div>
+
+            <form onSubmit={handleVendorLogin} className="p-6 space-y-4 text-xs">
+              <p className="text-slate-500 leading-relaxed">
+                Identifiez-vous avec l'adresse email, le numéro de téléphone et le mot de passe configurés par votre administrateur réseau.
+              </p>
+
+              {loginError && (
+                <div className="p-3 rounded bg-rose-50 border border-rose-200 flex items-start gap-2 text-rose-700">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Email, Téléphone ou Nom Vendeur *
+                </label>
+                <div className="relative">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    placeholder="Ex: vendeur@domaine.ci ou +225..."
+                    className="w-full pl-8 pr-3 py-2.5 rounded bg-[#F8FAFC] border border-slate-300 text-slate-800 focus:outline-none focus:border-[#008060]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Mot de passe / Code PIN Vendeur *
+                </label>
+                <div className="relative">
+                  <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-8 pr-9 py-2.5 rounded bg-[#F8FAFC] border border-slate-300 text-slate-800 font-mono focus:outline-none focus:border-[#008060]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                  >
+                    {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full py-2.5 px-4 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
+              >
+                {loginLoading ? (
+                  <span>Authentification Supabase en cours...</span>
+                ) : (
+                  <span>Accéder à mon Terminal Caisse POS</span>
+                )}
+              </button>
+            </form>
+          </div>
+        </main>
+
+        <footer className="py-3 text-center text-[11px] text-slate-400 border-t border-slate-200 bg-white">
+          Joowifi Cloud POS • Accès sécurisé par jeton JWT & Isolation Multi-Tenant
+        </footer>
+      </div>
+    );
+  }
+
+  // ===========================================================================
+  // ÉCRAN 2 : TERMINAL CAISSE POS "CORPORATE TECH" (STYLE OMADA FLAT DESIGN)
+  // Affiché uniquement après authentification vérifiée du vendeur.
+  // ===========================================================================
+  const selectedForfait =
+    forfaits.find((f) => f.id === selectedForfaitId) || forfaits[0] || null;
+  const vendorCommissionEarned = Math.round(
+    ((activeStaff.todaySales || 0) * (activeStaff.commissionRate || 10)) / 100
+  );
 
   return (
-    <div
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-200 select-none ${
-        nightMode ? 'bg-white text-slate-800' : 'bg-slate-100 text-slate-900'
-      }`}
-    >
-      {/* TOAST NOTIFICATION */}
-      {toastMessage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-white border border-amber-500/50 text-slate-800 text-xs font-semibold shadow-2xl flex items-center gap-2 backdrop-blur-md animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-[#008060] shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* TOP KIOSK CONTAINER */}
-      <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 pt-3 sm:pt-6">
-        {/* 1. CARTE PROFIL VENDEUR & BARRE D'OUTILS KIOSQUE */}
-        <div
-          className={`rounded-2xl border transition-all p-4 sm:p-5 mb-4 shadow-xl shadow-black/40 ${
-            nightMode
-              ? 'bg-white border-slate-200'
-              : 'bg-white border-slate-200 shadow-slate-200/50'
-          }`}
-        >
-          {/* Ligne 1 : Profil Vendeur & Boutons Mode/Quitter */}
-          <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
-            <div className="flex items-center gap-3">
-              {/* Avatar avec initiale */}
-              <div className="w-11 h-11 rounded-xl bg-[#2a1708] border border-amber-600/30 flex items-center justify-center text-[#007A78] font-extrabold text-lg shadow-inner">
-                {activeStaff?.name?.charAt(0).toLowerCase() || 'm'}
-              </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-800 capitalize leading-tight">
-                  {activeStaff?.name || 'mamadou fonate'}
-                </h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-bold tracking-wider text-slate-400 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded">
-                    VENDEUR
-                  </span>
-                  {staff.length > 1 && (
-                    <select
-                      value={selectedStaffId}
-                      onChange={(e) => setSelectedStaffId(e.target.value)}
-                      className="text-[10px] text-slate-400 bg-transparent border-none p-0 focus:outline-none cursor-pointer hover:text-slate-800"
-                      title="Changer de vendeur"
-                    >
-                      {staff.map((s) => (
-                        <option key={s.id} value={s.id} className="bg-white text-slate-800">
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Actions rapides droite : Soleil/Lune + Quitter */}
+    <div className="min-h-screen bg-[#F4F7FA] text-[#1E293B] flex flex-col font-sans">
+      {/* 1. HEADER CORPORATE TECH (#005A5B) */}
+      <header className="bg-[#005A5B] text-white px-4 sm:px-6 py-3 border-b border-[#004748] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded bg-[#008060] flex items-center justify-center font-black text-xs">
+            POS
+          </div>
+          <div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setNightMode(!nightMode)}
-                title="Bascule Mode Jour / Nuit"
-                className={`p-2.5 rounded-xl border transition cursor-pointer ${
-                  nightMode
-                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-100'
-                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:text-black'
-                }`}
-              >
-                {nightMode ? <Sun className="w-4 h-4 text-slate-600" /> : <Moon className="w-4 h-4" />}
-              </button>
-
-              <button
-                onClick={() => setQuitModalOpen(true)}
-                title="Fermer la session de vente"
-                className="px-3 sm:px-4 py-2.5 rounded-xl border border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs flex items-center gap-1.5 sm:gap-2 transition cursor-pointer active:scale-95"
-              >
-                <Power className="w-4 h-4" />
-                <span>Quitter</span>
-              </button>
+              <span className="text-sm font-bold">{activeStaff.name}</span>
+              <span className="px-2 py-0.5 rounded bg-[#008060] text-[10px] font-bold uppercase">
+                Vendeur Vérifié
+              </span>
             </div>
-          </div>
-
-          {/* Ligne 2 : Mon Solde & Outils Kiosque */}
-          <div className="pt-3.5 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div>
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider block uppercase">
-                  MON SOLDE
-                </span>
-                <span className="text-lg sm:text-xl font-mono font-black text-[#10b981]">
-                  {formatMoney(vendorBalance)}
-                </span>
-              </div>
-
-              {/* Bouton SOS Recharge */}
-              <button
-                onClick={() => setSosModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl border border-amber-500/50 bg-[#E6F4F3] hover:bg-[#E6F4F3] text-[#007A78] font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer active:scale-95"
-              >
-                <LifeBuoy className="w-4 h-4" />
-                <span>SOS Recharge</span>
-              </button>
-            </div>
-
-            {/* Outils kiosque droite : Son, Plein Écran, Refresh */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <button
-                onClick={() => {
-                  setSoundEnabled(!soundEnabled);
-                  showToast(soundEnabled ? 'Retour sonore désactivé' : 'Retour sonore activé');
-                }}
-                title={soundEnabled ? 'Couper le son' : 'Activer le retour sonore'}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
-                  nightMode
-                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-800'
-                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:text-black'
-                }`}
-              >
-                {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-rose-400" />}
-              </button>
-
-              <button
-                onClick={toggleFullscreen}
-                title="Plein Écran Kiosque"
-                className={`p-2 rounded-xl border transition cursor-pointer ${
-                  nightMode
-                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-800'
-                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:text-black'
-                }`}
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={handleRefresh}
-                title="Actualiser les données"
-                className={`p-2 rounded-xl border transition cursor-pointer ${
-                  nightMode
-                    ? 'bg-white border-slate-200 text-slate-600 hover:text-slate-800'
-                    : 'bg-slate-100 border-slate-200 text-slate-700 hover:text-black'
-                }`}
-              >
-                <RotateCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#007A78]' : ''}`} />
-              </button>
+            <div className="text-[11px] text-teal-100">
+              Site : {activeStaff.zoneName} • Commission : {activeStaff.commissionRate}%
             </div>
           </div>
         </div>
 
-        {/* 2. NAVIGATION PRINCIPALE À 3 ONGLETS */}
-        <div
-          className={`grid grid-cols-3 p-1 rounded-2xl border mb-6 ${
-            nightMode ? 'bg-white border-slate-200' : 'bg-slate-200 border-slate-300'
-          }`}
-        >
-          <button
-            onClick={() => setActiveTab('vente')}
-            className={`py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
-              activeTab === 'vente'
-                ? 'bg-orange-600 text-slate-800 shadow-lg shadow-orange-600/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-800'
-            }`}
-          >
-            <Smartphone className="w-4 h-4" />
-            <span>Vente</span>
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1.5 rounded bg-white/10 border border-white/15 text-right">
+            <span className="text-[10px] text-teal-200 block leading-none">Solde Crédit POS</span>
+            <span className="font-mono font-bold text-xs text-white">
+              {formatMoney(activeStaff.balanceCredit)}
+            </span>
+          </div>
 
           <button
-            onClick={() => setActiveTab('performances')}
-            className={`py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
-              activeTab === 'performances'
-                ? 'bg-orange-600 text-slate-800 shadow-lg shadow-orange-600/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-800'
-            }`}
+            onClick={logout}
+            className="px-3 py-2 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
           >
-            <TrendingUp className="w-4 h-4" />
-            <span>Performances</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('historique')}
-            className={`py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
-              activeTab === 'historique'
-                ? 'bg-orange-600 text-slate-800 shadow-lg shadow-orange-600/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-800'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            <span>Historique</span>
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Déconnexion POS</span>
           </button>
         </div>
+      </header>
 
-        {/* 3. VUE "VENTE" (CAISSE RAPIDE & KIOSQUE) */}
-        {activeTab === 'vente' && (
-          <div className="space-y-6 pb-16">
-            {/* Jauge d'objectif journalier */}
-            <div
-              className={`p-4 sm:p-5 rounded-2xl border space-y-2.5 ${
-                nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
+      {/* 2. BARRE DE NAVIGATION INTERNE DU TERMINAL POS */}
+      <div className="bg-white border-b border-slate-200 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPosTab('sell')}
+              className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition cursor-pointer ${
+                posTab === 'sell'
+                  ? 'border-[#008060] text-[#005A5B]'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              <div className="flex items-center justify-between text-xs sm:text-sm">
-                <div className="flex items-center gap-2 font-semibold text-slate-600">
-                  <TrendingUp className="w-4 h-4 text-orange-500" />
-                  <span>Objectif journalier</span>
+              <Zap className="w-3.5 h-3.5 text-[#008060]" />
+              <span>Émission de Tickets</span>
+            </button>
+
+            <button
+              onClick={() => setPosTab('history')}
+              className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition cursor-pointer ${
+                posTab === 'history'
+                  ? 'border-[#008060] text-[#005A5B]'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>Mes Ventes ({vendorTickets.length})</span>
+            </button>
+
+            <button
+              onClick={() => setPosTab('sos')}
+              className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-1.5 transition cursor-pointer ${
+                posTab === 'sos'
+                  ? 'border-[#008060] text-[#005A5B]'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Wallet className="w-3.5 h-3.5" />
+              <span>Demande Recharge Crédit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. CONTENU PRINCIPAL DU TERMINAL POS */}
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-5">
+        {/* Bandeau de synthèse financière du vendeur */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <span className="text-[11px] font-semibold text-slate-500 block">
+              Crédit POS Disponible
+            </span>
+            <span className="text-lg font-black font-mono text-slate-900 mt-1 block">
+              {formatMoney(activeStaff.balanceCredit)}
+            </span>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <span className="text-[11px] font-semibold text-slate-500 block">
+              Mes Ventes du Jour ({vendorTickets.length} tickets)
+            </span>
+            <span className="text-lg font-black font-mono text-[#008060] mt-1 block">
+              {formatMoney(activeStaff.todaySales)}
+            </span>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <span className="text-[11px] font-semibold text-slate-500 block">
+              Ma Commission ({activeStaff.commissionRate}%)
+            </span>
+            <span className="text-lg font-black font-mono text-[#0066CC] mt-1 block">
+              {formatMoney(vendorCommissionEarned)}
+            </span>
+          </div>
+        </div>
+
+        {/* ONGLET 1 : ÉMISSION DE TICKETS */}
+        {posTab === 'sell' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Sélection du forfait */}
+            <div className="lg:col-span-7 bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-800">
+                    1. Choisir le Forfait WiFi à vendre
+                  </h2>
+                  <p className="text-[11px] text-slate-500">
+                    Catalogue synchronisé avec votre opérateur ({forfaits.length} forfaits)
+                  </p>
                 </div>
-                <div className="font-mono text-xs sm:text-sm">
-                  <span className="font-black text-orange-500">{formatMoney(todaySales)}</span>
-                  <span className="text-slate-500"> / {formatMoney(dailyGoal)}</span>
+                <Wifi className="w-4 h-4 text-[#008060]" />
+              </div>
+
+              {forfaits.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500 bg-[#F8FAFC] rounded-lg border border-slate-200">
+                  Aucun forfait WiFi n'a encore été configuré par l'administrateur de ce réseau.
                 </div>
-              </div>
-
-              {/* Barre de progression pleine orange */}
-              <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all duration-700 rounded-full"
-                  style={{ width: `${Math.min(100, Math.round((todaySales / dailyGoal) * 100))}%` }}
-                />
-              </div>
-
-              {/* Message encourageant dynamique */}
-              <div className="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1.5 pt-0.5">
-                {goalReached ? (
-                  <>
-                    <span>🎯</span>
-                    <span className="text-slate-600">Objectif du jour atteint. Beau travail.</span>
-                  </>
-                ) : (
-                  <>
-                    <span>💪</span>
-                    <span className="text-slate-600">
-                      Plus que {formatMoney(dailyGoal - todaySales)} pour atteindre l'objectif du jour.
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* SÉLECTIONNER UN FORFAIT & MODE VENTE ÉCLAIR */}
-            <div>
-              <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase">
-                  SÉLECTIONNER UN FORFAIT
-                </h3>
-
-                {/* Toggle commutable ⚡ Mode Vente Éclair */}
-                <button
-                  onClick={() => {
-                    setFastSaleMode(!fastSaleMode);
-                    showToast(
-                      !fastSaleMode
-                        ? '⚡ Mode Vente Éclair ACTIF (Émission 1-Tap)'
-                        : 'Mode confirmation standard activé'
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {forfaits.map((f) => {
+                    const isSelected = selectedForfait?.id === f.id;
+                    return (
+                      <div
+                        key={f.id}
+                        onClick={() => setSelectedForfaitId(f.id)}
+                        className={`p-3.5 rounded-lg border transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#E6F4F3] border-[#008060] text-[#005A5B]'
+                            : 'bg-[#F8FAFC] border-slate-200 hover:border-slate-300 text-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold">{f.name}</span>
+                          <span className="font-mono font-black text-sm text-[#008060]">
+                            {formatMoney(f.price)}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                          <span>Durée : {f.durationHours}h</span>
+                          <span>
+                            {f.downloadSpeedMbps}M / {f.uploadSpeedMbps}M
+                          </span>
+                        </div>
+                      </div>
                     );
-                  }}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                    fastSaleMode
-                      ? 'bg-[#E6F4F3] border-amber-500/50 text-[#005A5B]'
-                      : 'bg-white border-slate-200 text-slate-400 hover:text-slate-700'
-                  }`}
+                  })}
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Numéro WhatsApp / SMS du client (Optionnel) :
+                  </label>
+                  <input
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="+225 07 00 00 00"
+                    className="w-full px-3 py-2 rounded bg-[#F8FAFC] border border-slate-300 text-xs font-mono text-slate-800 focus:outline-none focus:border-[#008060]"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSellTicket}
+                  disabled={!selectedForfait}
+                  className="w-full py-3 px-4 rounded bg-[#008060] hover:bg-[#006B50] text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
                 >
-                  <Zap className="w-3.5 h-3.5 text-[#007A78]" />
-                  <span>Mode Vente Éclair</span>
-                  <span
-                    className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
-                      fastSaleMode ? 'bg-[#008060] text-white' : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {fastSaleMode ? 'ACTIF' : 'OFF'}
+                  <Ticket className="w-4 h-4" />
+                  <span>
+                    {selectedForfait
+                      ? `Encaisser & Générer le Ticket (${formatMoney(selectedForfait.price)})`
+                      : 'Sélectionnez un forfait'}
                   </span>
                 </button>
               </div>
-
-              {/* Grille des Forfaits Disponibles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {forfaits.map((forfait) => (
-                  <button
-                    key={forfait.id}
-                    onClick={() => handleSale(forfait)}
-                    className={`p-4 rounded-2xl border text-left transition-all active:scale-95 cursor-pointer flex flex-col justify-between min-h-[110px] relative group hover:border-amber-500/60 ${
-                      nightMode
-                        ? 'bg-white border-slate-200 hover:bg-white'
-                        : 'bg-white border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {/* Badge 1-CLIC quand mode éclair actif */}
-                    {fastSaleMode && (
-                      <span className="absolute top-3.5 right-3.5 text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#2a1708] text-[#007A78] border border-[#99D5D3] flex items-center gap-1">
-                        <Zap className="w-2.5 h-2.5 text-[#007A78]" />
-                        1-CLIC
-                      </span>
-                    )}
-
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-800 capitalize">{forfait.name}</h4>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {forfait.durationHours >= 24
-                          ? `${forfait.durationHours / 24 * 24} h`
-                          : `${forfait.durationHours} h`}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 mt-2">
-                      <span className="text-xl font-mono font-black text-orange-500">
-                        {forfait.price} <span className="text-xs text-slate-400">FCFA</span>
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
             </div>
 
-            {/* ENCART RÉSULTAT DE VENTE (CODE TICKET GÉNÉRÉ) */}
-            {lastSoldTicket && (
-              <div
-                className={`p-5 sm:p-7 rounded-3xl border relative transition-all ${
-                  nightMode
-                    ? 'bg-white border-slate-200 shadow-2xl shadow-black/60'
-                    : 'bg-white border-slate-200 shadow-xl'
-                }`}
-              >
-                {/* Badge vert en haut à droite : VENDU AVEC SUCCÈS */}
-                <div className="absolute top-4 right-4">
-                  <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-[#E6F4F3] text-[#008060] border border-[#99D5D3] uppercase tracking-wider">
-                    VENDU AVEC SUCCÈS
-                  </span>
-                </div>
-
-                <div className="text-center space-y-4">
-                  <div className="text-[11px] uppercase tracking-wider font-bold text-slate-400">
-                    CODE TICKET GÉNÉRÉ
-                  </div>
-
-                  {/* Grand QR Code stylisé en orange */}
-                  <div className="flex justify-center">
-                    <div className="p-3 rounded-2xl bg-black/60 border border-orange-500/40 shadow-inner inline-block">
-                      {qrCodeDataUrl ? (
-                        <img
-                          src={qrCodeDataUrl}
-                          alt={`QR Code ${lastSoldTicket.code}`}
-                          className="w-40 h-40 sm:w-44 sm:h-44 object-contain"
-                        />
-                      ) : (
-                        <div className="w-40 h-40 flex items-center justify-center text-orange-500">
-                          Génération QR...
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Code voucher en très gros caractères avec bouton copie rapide */}
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="px-6 py-2.5 rounded-2xl bg-white border border-slate-300 flex items-center gap-3 shadow-inner">
-                      <span className="font-mono text-3xl sm:text-4xl font-black text-slate-800 tracking-wider">
-                        {lastSoldTicket.code}
-                      </span>
-                      <button
-                        onClick={() => handleCopyCode(lastSoldTicket.code)}
-                        title="Copier le code"
-                        className="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
-                      >
-                        {copiedCode ? (
-                          <Check className="w-5 h-5 text-[#008060]" />
-                        ) : (
-                          <Copy className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Sous-titre Forfait */}
-                  <div className="text-xs text-slate-400">
-                    Forfait :{' '}
-                    <strong className="text-slate-700">
-                      {lastSoldTicket.forfaitName} ({formatMoney(lastSoldTicket.price)})
-                    </strong>
-                  </div>
-
-                  {/* Bouton large pleine largeur : Montrer au client (Plein Écran) */}
-                  <button
-                    onClick={() => setFullScreenClientModal(true)}
-                    className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-[0.99] text-slate-950 font-black text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer"
-                  >
-                    <Eye className="w-5 h-5 text-slate-950 stroke-[2.5]" />
-                    <span>Montrer au client (Plein Écran)</span>
-                  </button>
-
-                  {/* Ligne 2 boutons : Partager Image + Télécharger PNG */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => handleShareWhatsApp(lastSoldTicket)}
-                      className="py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 active:scale-95 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md shadow-orange-600/20"
-                    >
-                      <Share2 className="w-4 h-4" />
-                      <span>Partager Image</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleDownloadPng(lastSoldTicket)}
-                      className="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 border border-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Télécharger PNG</span>
-                    </button>
-                  </div>
-
-                  {/* Séparateur AUTRES OPTIONS */}
-                  <div className="pt-2 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-slate-100" />
-                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                      AUTRES OPTIONS
-                    </span>
-                    <div className="h-px flex-1 bg-slate-100" />
-                  </div>
-
-                  {/* Stack de boutons supplémentaires */}
-                  <div className="space-y-2 pt-1">
-                    {/* Copier le code */}
-                    <button
-                      onClick={() => handleCopyCode(lastSoldTicket.code)}
-                      className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-100 active:scale-[0.99] border border-slate-300 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
-                    >
-                      <Copy className="w-4 h-4 text-slate-400" />
-                      <span>Copier le code ({lastSoldTicket.code})</span>
-                    </button>
-
-                    {/* Partager sur WhatsApp */}
-                    <button
-                      onClick={() => handleShareWhatsApp(lastSoldTicket)}
-                      className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition shadow-md shadow-emerald-700/25 cursor-pointer"
-                    >
-                      <Phone className="w-4 h-4" />
-                      <span>Partager sur WhatsApp</span>
-                    </button>
-
-                    {/* Imprimer ticket thermique Bluetooth (Sélecteur 58mm / 80mm) */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handlePrintSlip}
-                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-100 active:scale-[0.99] border border-slate-300 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
-                      >
-                        <Printer className="w-4 h-4 text-[#007A78]" />
-                        <span>
-                          {btPrinterName
-                            ? `Imprimer BT (${btPrinterName} • ${paperFormat})`
-                            : `Imprimer Ticket Bluetooth (${paperFormat})`}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = paperFormat === '58mm' ? '80mm' : '58mm';
-                          setPaperFormat(next);
-                          showToast(`Format d'imprimante thermique réglé sur ${next}`);
-                        }}
-                        className="px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-[#007A78] hover:bg-slate-100 font-mono text-xs font-extrabold transition cursor-pointer"
-                        title="Basculer entre 58mm et 80mm"
-                      >
-                        {paperFormat}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 4. VUE "PERFORMANCES" */}
-        {activeTab === 'performances' && (
-          <div className="space-y-6 pb-16">
-            {/* 3 Cartes KPI Vendeur */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              {/* VENTES JOUR */}
-              <div
-                className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 relative ${
-                  nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    VENTES JOUR
-                  </span>
-                  <Calendar className="w-4 h-4 text-orange-500" />
-                </div>
-                <div className="text-2xl font-black font-mono text-slate-800">
-                  {formatMoney(todaySales)}
-                </div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  CIBLE : {formatMoney(dailyGoal)}
-                </div>
-              </div>
-
-              {/* VENTES MOIS */}
-              <div
-                className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 relative ${
-                  nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    VENTES MOIS
-                  </span>
-                  <Wallet className="w-4 h-4 text-[#008060]" />
-                </div>
-                <div className="text-2xl font-black font-mono text-slate-800">
-                  {formatMoney(todaySales)}
-                </div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  MOIS EN COURS
-                </div>
-              </div>
-
-              {/* COMMISSIONS */}
-              <div
-                className={`p-4 sm:p-5 rounded-2xl border space-y-1.5 relative ${
-                  nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    COMMISSIONS
-                  </span>
-                  <DollarSign className="w-4 h-4 text-orange-500" />
-                </div>
-                <div className="text-2xl font-black font-mono text-slate-800">
-                  {formatMoney(commissionsAmount)}
-                </div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  TAUX : {commissionRate.toFixed(2)}%
-                </div>
-              </div>
-            </div>
-
-            {/* GRAPHIQUE "ÉVOLUTION DES VENTES (7 JOURS)" */}
-            <div
-              className={`p-5 sm:p-6 rounded-2xl border space-y-4 ${
-                nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-              }`}
-            >
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                ÉVOLUTION DES VENTES (7 JOURS)
-              </h3>
-
-              {/* SVG Area Chart */}
-              <div className="relative pt-4">
-                <div className="h-64 w-full">
-                  <svg className="w-full h-full overflow-visible" viewBox="0 0 700 240">
-                    <defs>
-                      <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ea580c" stopOpacity="0.45" />
-                        <stop offset="100%" stopColor="#ea580c" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Horizontal grid lines */}
-                    {[0, 15000, 30000, 45000, 60000].map((val, idx) => {
-                      const y = 200 - (val / 60000) * 180;
-                      return (
-                        <g key={val}>
-                          <line
-                            x1="50"
-                            y1={y}
-                            x2="690"
-                            y2={y}
-                            stroke="#1e293b"
-                            strokeWidth="1"
-                            strokeDasharray="4 4"
-                          />
-                          <text
-                            x="40"
-                            y={y + 4}
-                            textAnchor="end"
-                            fontSize="10"
-                            fill="#64748b"
-                            fontFamily="monospace"
-                          >
-                            {val}
-                          </text>
-                        </g>
-                      );
-                    })}
-
-                    {/* Area under curve */}
-                    <path
-                      d="M 60,200 L 160,200 L 260,200 L 360,200 L 460,200 L 560,185 Q 610,140 660,50 L 660,200 Z"
-                      fill="url(#salesGradient)"
-                    />
-
-                    {/* Smooth curve line */}
-                    <path
-                      d="M 60,200 L 160,200 L 260,200 L 360,200 L 460,200 L 560,185 Q 610,140 660,50"
-                      fill="none"
-                      stroke="#ea580c"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                    />
-
-                    {/* Dots on points */}
-                    {salesHistory7Days.map((item, idx) => {
-                      const x = 60 + idx * 100;
-                      const y = 200 - (item.amount / 60000) * 180;
-                      return (
-                        <g key={item.day} className="cursor-pointer group">
-                          <circle
-                            cx={x}
-                            cy={y}
-                            r={item.amount > 0 ? 5 : 3}
-                            fill={item.amount > 0 ? '#ea580c' : '#334155'}
-                            stroke="#0B0F19"
-                            strokeWidth="2"
-                          />
-                          {item.amount > 0 && (
-                            <text
-                              x={x}
-                              y={y - 10}
-                              textAnchor="middle"
-                              fontSize="11"
-                              fill="#f97316"
-                              fontWeight="bold"
-                              fontFamily="monospace"
-                            >
-                              {formatMoney(item.amount)}
-                            </text>
-                          )}
-                        </g>
-                      );
-                    })}
-
-                    {/* Bottom axis line */}
-                    <line x1="50" y1="200" x2="690" y2="200" stroke="#334155" strokeWidth="1.5" />
-
-                    {/* X labels */}
-                    {salesHistory7Days.map((item, idx) => {
-                      const x = 60 + idx * 100;
-                      return (
-                        <text
-                          key={item.day}
-                          x={x}
-                          y="222"
-                          textAnchor="middle"
-                          fontSize="11"
-                          fill="#94a3b8"
-                        >
-                          {item.day}
-                        </text>
-                      );
-                    })}
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 5. VUE "HISTORIQUE" */}
-        {activeTab === 'historique' && (
-          <div className="space-y-4 pb-16">
-            {/* Barre de recherche & Filtres d'état */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div
-                className={`flex-1 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border ${
-                  nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                }`}
-              >
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Rechercher un ticket (code ou forfait)..."
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-500 focus:outline-none"
-                />
-                {historySearch && (
-                  <button onClick={() => setHistorySearch('')} className="text-slate-400 hover:text-slate-800">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Filtres rapides : Tous, En ligne, Hors-ligne */}
-              <div
-                className={`flex items-center p-1 rounded-xl border ${
-                  nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                }`}
-              >
-                {(['tous', 'en_ligne', 'hors_ligne'] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setHistoryFilter(mode)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition cursor-pointer ${
-                      historyFilter === mode
-                        ? 'bg-slate-100 text-slate-800 border border-slate-300 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-800'
-                    }`}
-                  >
-                    {mode === 'tous' ? 'Tous' : mode === 'en_ligne' ? 'En ligne' : 'Hors-ligne'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Liste des Tickets Vendus */}
-            {filteredTickets.length === 0 ? (
-              <div
-                className={`p-10 rounded-2xl border text-center text-slate-400 text-xs ${
-                  nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                }`}
-              >
-                Aucun ticket trouvé dans cette vue.
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {filteredTickets.map((t) => (
-                  <div
-                    key={t.id}
-                    className={`p-3.5 rounded-2xl border flex items-center justify-between transition hover:border-slate-300 ${
-                      nightMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {/* Initiale en pastille marron / ambrée */}
-                      <div className="w-10 h-10 rounded-xl bg-[#2a1708] border border-amber-600/30 flex items-center justify-center text-[#007A78] font-extrabold text-sm uppercase">
-                        {t.code.slice(0, 2)}
-                      </div>
-
-                      <div>
-                        <div className="font-mono font-bold text-sm text-slate-800">{t.code}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          {t.forfaitName} • {new Date(t.createdAt).toLocaleDateString('fr-FR')} {new Date(t.createdAt).toLocaleTimeString('fr-FR')}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Prix + Actions rapides œil & partage */}
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="font-mono font-bold text-sm text-orange-500">
-                          {t.price} <span className="text-[10px] text-slate-400">FCFA</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setLastSoldTicket(t);
-                            setFullScreenClientModal(true);
-                          }}
-                          title="Aperçu client plein écran"
-                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#007A78] border border-slate-300 transition cursor-pointer"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          onClick={() => handleShareWhatsApp(t)}
-                          title="Partager par WhatsApp"
-                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 border border-slate-300 transition cursor-pointer"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 6. MODALE DEMANDE DE RECHARGE SOS (Capture 1) */}
-      {sosModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl text-slate-800 space-y-5">
-            {/* En-tête Modale */}
-            <div className="flex items-start justify-between pb-1">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#2a1708] border border-amber-600/30 flex items-center justify-center text-[#007A78] shadow-inner">
-                  <LifeBuoy className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-800">Demande de Recharge SOS</h3>
-                  <p className="text-xs text-slate-400">
-                    Transmettre une alerte de recharge à votre superviseur.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSosModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Encadré Solde Actuel */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-semibold">Votre solde actuel :</span>
-              <span className="text-base font-mono font-black text-[#10b981]">
-                {formatMoney(vendorBalance)}
-              </span>
-            </div>
-
-            {/* Montant de recharge souhaité */}
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                MONTANT DE RECHARGE SOUHAITÉ
-              </label>
-
-              {/* 4 Boutons de montants rapides */}
-              <div className="grid grid-cols-4 gap-2">
-                {[5000, 10000, 25000, 50000].map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setSosAmount(amt)}
-                    className={`py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                      sosAmount === amt
-                        ? 'bg-[#2a1708] border-amber-500 text-slate-800 shadow-sm'
-                        : 'bg-white border-slate-200 text-slate-600 hover:text-slate-800'
-                    }`}
-                  >
-                    {amt}
-                  </button>
-                ))}
-              </div>
-
-              {/* Champ numérique de saisie */}
-              <input
-                type="number"
-                value={sosAmount}
-                onChange={(e) => setSosAmount(Number(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-mono font-bold text-slate-800 focus:outline-none focus:border-amber-500"
-              />
-            </div>
-
-            {/* Numéro WhatsApp du superviseur */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                NUMÉRO WHATSAPP DU SUPERVISEUR
-              </label>
-              <input
-                type="tel"
-                value={supervisorPhone}
-                onChange={(e) => setSupervisorPhone(e.target.value)}
-                placeholder="Ex. 0151664752"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-mono text-slate-800 focus:outline-none focus:border-amber-500"
-              />
-            </div>
-
-            {/* Boutons d'action */}
-            <div className="pt-2 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSosModalOpen(false)}
-                className="flex-1 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold transition cursor-pointer"
-              >
-                Annuler
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSendSosWhatsApp}
-                className="flex-1 py-3 rounded-xl bg-white hover:bg-white active:scale-95 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/40 cursor-pointer"
-              >
-                <Phone className="w-4 h-4" />
-                <span>Envoyer par WhatsApp</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 7. PLEIN ÉCRAN CLIENT : MONTRER AU CLIENT */}
-      {fullScreenClientModal && lastSoldTicket && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-black text-slate-800 p-6 sm:p-10 select-none animate-fade-in">
-          {/* Header modal */}
-          <div className="w-full max-w-md flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center font-black text-slate-800">
-                <Zap className="w-4 h-4" />
-              </div>
-              <span className="font-black text-sm tracking-wide text-orange-400">JOOWIFI HOTSPOT</span>
-            </div>
-            <button
-              onClick={() => setFullScreenClientModal(false)}
-              className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition cursor-pointer"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Corps plein écran : QR géant & Code */}
-          <div className="w-full max-w-sm text-center space-y-6 my-auto">
-            <div>
-              <span className="text-xs uppercase font-bold text-slate-400 tracking-widest block mb-2">
-                SCANNEZ POUR VOUS CONNECTER
-              </span>
-              <div className="p-4 rounded-3xl bg-[#F8FAFC] border-2 border-orange-500/80 shadow-2xl shadow-orange-500/10 inline-block">
-                {qrCodeDataUrl ? (
-                  <img
-                    src={qrCodeDataUrl}
-                    alt={`QR Code ${lastSoldTicket.code}`}
-                    className="w-56 h-56 sm:w-64 sm:h-64 object-contain"
-                  />
-                ) : (
-                  <div className="w-56 h-56 flex items-center justify-center text-orange-500">
-                    Génération QR...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-xs uppercase font-bold text-slate-400 tracking-wider block">
-                OU SAISISSEZ VOTRE CODE :
-              </span>
-              <div className="p-4 rounded-2xl bg-white border border-slate-300">
-                <span className="font-mono text-5xl font-black text-slate-800 tracking-widest">
-                  {lastSoldTicket.code}
+            {/* Aperçu du dernier ticket émis */}
+            <div className="lg:col-span-5 bg-white rounded-lg border border-slate-200 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-sm font-bold text-slate-800">
+                  2. Reçu Client & QR Code WiFi
                 </span>
+                <QrCode className="w-4 h-4 text-[#005A5B]" />
               </div>
-            </div>
 
-            <div className="p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-600">
-              Forfait : <strong className="text-orange-400">{lastSoldTicket.forfaitName}</strong> • {formatMoney(lastSoldTicket.price)}
-            </div>
-          </div>
+              {!lastSoldTicket ? (
+                <div className="p-8 text-center text-xs text-slate-400 bg-[#F8FAFC] rounded-lg border border-slate-200 space-y-2">
+                  <Ticket className="w-7 h-7 text-slate-300 mx-auto" />
+                  <p>Sélectionnez un forfait et cliquez sur Encaisser pour générer un ticket.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg bg-[#F8FAFC] border border-slate-200 text-center space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#008060] block">
+                      {lastSoldTicket.forfaitName} • {formatMoney(lastSoldTicket.price)}
+                    </span>
+                    <div className="py-2 px-4 rounded bg-white border border-slate-300 font-mono text-2xl font-black tracking-widest text-slate-900">
+                      {lastSoldTicket.code}
+                    </div>
+                    <span className="text-[11px] text-slate-500 block">
+                      Durée : {lastSoldTicket.duration} • Synchronisé MikroTik
+                    </span>
 
-          {/* Footer retour */}
-          <div className="w-full max-w-md pt-4">
-            <button
-              onClick={() => setFullScreenClientModal(false)}
-              className="w-full py-3.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-slate-800 font-bold text-sm shadow-lg shadow-orange-600/30 transition cursor-pointer"
-            >
-              Terminé (Retour Caisse)
-            </button>
-          </div>
-        </div>
-      )}
+                    {qrDataUrl && (
+                      <div className="pt-2 flex justify-center">
+                        <img
+                          src={qrDataUrl}
+                          alt="QR Code Ticket"
+                          className="w-32 h-32 rounded border border-slate-200 p-1 bg-white"
+                        />
+                      </div>
+                    )}
+                  </div>
 
-      {/* 8. MODALE QUITTER LA SESSION */}
-      {quitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-          <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl text-slate-800 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-                <Power className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-800">Quitter la Caisse POS</h3>
-                <p className="text-xs text-slate-400">Fermer la session actuelle de vente.</p>
-              </div>
-            </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastSoldTicket.code);
+                        setCopiedCode(true);
+                        setTimeout(() => setCopiedCode(false), 2000);
+                      }}
+                      className="py-2 px-2.5 rounded bg-[#F4F7FA] hover:bg-slate-200 border border-slate-300 text-slate-700 font-semibold text-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      {copiedCode ? <Check className="w-3.5 h-3.5 text-[#008060]" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCode ? 'Copié' : 'Copier'}</span>
+                    </button>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Voulez-vous retourner à la console d’administration ou quitter votre session de vente ?
-            </p>
+                    <button
+                      onClick={() => handlePrintThermal(lastSoldTicket)}
+                      className="py-2 px-2.5 rounded bg-[#005A5B] hover:bg-[#004748] text-white font-semibold text-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Imprimer</span>
+                    </button>
 
-            <div className="pt-2 flex items-center gap-2.5">
-              <button
-                onClick={() => setQuitModalOpen(false)}
-                className="flex-1 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold transition cursor-pointer"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => {
-                  setQuitModalOpen(false);
-                  setCurrentSpace('admin');
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-slate-800 text-xs font-bold transition cursor-pointer"
-              >
-                Quitter la caisse
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 9. TICKET THERMIQUE 58MM (IMPRESSION CACHÉE HORS ÉCRAN) */}
-      <div className="hidden print:block fixed inset-0 bg-white text-black p-2 font-mono text-xs" ref={printRef}>
-        {lastSoldTicket && (
-          <div className="w-[58mm] mx-auto text-center space-y-2 leading-tight">
-            <div className="font-black text-sm uppercase tracking-wider">JOOWIFI HOTSPOT</div>
-            <div className="text-[10px]">Accès Internet Wi-Fi Haut Débit</div>
-            <div className="border-t border-b border-dashed border-black py-2 my-2 space-y-1">
-              <div className="text-[10px] text-gray-700">CODE DE CONNEXION :</div>
-              <div className="text-2xl font-black tracking-widest">{lastSoldTicket.code}</div>
-              {lastSoldTicket.pin && (
-                <div className="text-xs">PIN : <strong>{lastSoldTicket.pin}</strong></div>
+                    <button
+                      onClick={() => handleShareWhatsApp(lastSoldTicket)}
+                      className="py-2 px-2.5 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>WhatsApp</span>
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
-            <div className="text-left text-[11px] space-y-1">
-              <div>Offre : <strong>{lastSoldTicket.forfaitName}</strong></div>
-              <div>Tarif : <strong>{formatMoney(lastSoldTicket.price)}</strong></div>
-              <div>Durée : <strong>{lastSoldTicket.duration}</strong></div>
-              <div>Date : {new Date(lastSoldTicket.createdAt).toLocaleString('fr-FR')}</div>
-              <div>Vendeur : {activeStaff?.name}</div>
-            </div>
-            <div className="border-t border-dashed border-black pt-2 text-[9px] text-gray-600">
-              1. Connectez-vous au Wi-Fi « Joowifi »<br />
-              2. Ouvrez votre navigateur et entrez votre code.<br />
-              Bonne connexion !
-            </div>
           </div>
         )}
-      </div>
+
+        {/* ONGLET 2 : HISTORIQUE DES VENTES DU VENDEUR */}
+        {posTab === 'history' && (
+          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-[#F8FAFC]">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Rechercher un code ticket..."
+                    className="pl-8 pr-3 py-1.5 rounded bg-white border border-slate-300 text-xs text-slate-800"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1 bg-white p-1 rounded border border-slate-200 text-xs">
+                  {(['tous', 'vendeur', 'actif'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setHistoryFilter(f)}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold capitalize cursor-pointer ${
+                        historyFilter === f
+                          ? 'bg-[#008060] text-white'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-slate-600">
+                Total affiché : {filteredTickets.length} ticket(s)
+              </span>
+            </div>
+
+            {filteredTickets.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-500">
+                Aucun ticket vendu dans cet historique.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-[11px] text-slate-500 bg-white">
+                      <th className="py-2.5 px-4 font-semibold">Code Ticket</th>
+                      <th className="py-2.5 px-4 font-semibold">Forfait</th>
+                      <th className="py-2.5 px-4 font-semibold">Durée</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Montant</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredTickets.map((t) => (
+                      <tr key={t.id} className="hover:bg-[#F8FAFC]">
+                        <td className="py-2.5 px-4 font-mono font-bold text-slate-900">{t.code}</td>
+                        <td className="py-2.5 px-4 text-slate-700">{t.forfaitName}</td>
+                        <td className="py-2.5 px-4 font-mono text-slate-500">{t.duration}</td>
+                        <td className="py-2.5 px-4 text-right font-mono font-bold text-[#008060]">
+                          {formatMoney(t.price)}
+                        </td>
+                        <td className="py-2.5 px-4 text-right space-x-1.5">
+                          <button
+                            onClick={() => handlePrintThermal(t)}
+                            className="px-2.5 py-1 rounded bg-[#F4F7FA] hover:bg-slate-200 border border-slate-300 text-slate-700 font-semibold text-[11px] cursor-pointer"
+                          >
+                            Imprimer
+                          </button>
+                          <button
+                            onClick={() => handleShareWhatsApp(t)}
+                            className="px-2.5 py-1 rounded bg-[#008060] text-white font-semibold text-[11px] cursor-pointer"
+                          >
+                            WhatsApp
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ONGLET 3 : DEMANDE SOS RECHARGE CRÉDIT */}
+        {posTab === 'sos' && (
+          <div className="max-w-lg mx-auto bg-white rounded-lg border border-slate-200 p-6 space-y-4">
+            <div className="border-b border-slate-100 pb-3">
+              <h2 className="text-sm font-bold text-slate-900">
+                Demander un Réapprovisionnement de Crédit POS
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Envoie une alerte en temps réel dans la Console de votre Administrateur et ouvre WhatsApp.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[5000, 15000, 25000, 50000].map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => setSosAmount(amt)}
+                  className={`py-2 px-3 rounded border font-mono text-xs font-bold cursor-pointer ${
+                    sosAmount === amt
+                      ? 'bg-[#E6F4F3] border-[#008060] text-[#005A5B]'
+                      : 'bg-[#F8FAFC] border-slate-200 text-slate-700'
+                  }`}
+                >
+                  {amt.toLocaleString('fr-FR')} F
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleSendSos}
+              className="w-full py-2.5 px-4 rounded bg-[#008060] hover:bg-[#006B50] text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Envoyer la Demande de Recharge ({formatMoney(sosAmount)})</span>
+            </button>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

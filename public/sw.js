@@ -4,7 +4,7 @@
 // tout en conservant le mode hors-ligne de secours en cas de coupure réseau.
 // ============================================================================
 
-const CACHE_NAME = 'joowifi-pwa-v12.0.0-mikrotik-sync';
+const CACHE_NAME = 'joowifi-pwa-v13.0.0-auth-pos-omada';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

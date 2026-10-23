@@ -8,6 +8,8 @@ import {
   getActiveTenantId,
   setActiveTenantId,
   DEFAULT_MAIN_TENANT_ID,
+  buildSignedSessionJwt,
+  supabaseAuthSignUp,
 } from '../lib/supabase';
 import {
   Currency,
@@ -303,7 +305,8 @@ interface AppContextType {
     name?: string,
     staffId?: string,
     tenantId?: string,
-    isNewAccount?: boolean
+    isNewAccount?: boolean,
+    accessToken?: string
   ) => void;
   logout: () => void;
 }
@@ -387,32 +390,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const syncOperatorToSupabase = () => {
     if (!isSupabaseConfigured() || !OP_ID || !user?.email) return;
-    void supabaseInsert(
+    void supabaseUpdate(
       'operators',
-      [
-        {
-          id: OP_ID,
-          tenant_id: OP_ID,
-          name: operatorProfile.name || user.name || 'Opérateur',
-          company: operatorProfile.company || 'Réseau WiFi',
-          email: user.email,
-          password_hash: 'authenticated',
-          phone: operatorProfile.phone || '+225',
-          city: operatorProfile.city || 'Abidjan',
-          country: operatorProfile.country || "Côte d'Ivoire",
-          currency: currency || 'XOF',
-          plan_id: currentPlanId || 'starter',
-          wallet_balance_xof: Math.max(0, Math.round(Number(walletBalance || 0))),
-          gains_balance_xof: Math.max(0, Math.round(Number(gainsBalance || 0))),
-          default_isp_monthly_cost: Math.round(Number(operatorProfile.defaultIspMonthlyCost || 0)),
-          two_factor_enabled: Boolean(operatorProfile.twoFactorEnabled),
-          telegram_bot_token: telegramConfig.botToken || null,
-          telegram_chat_id: telegramConfig.chatId || null,
-          telegram_enabled: Boolean(telegramConfig.enabled),
-          telegram_triggers: telegramConfig.triggers || {},
-        },
-      ],
-      'email',
+      `tenant_id=eq.${encodeURIComponent(OP_ID)}`,
+      {
+        name: operatorProfile.name || user.name || 'Opérateur',
+        company: operatorProfile.company || 'Réseau WiFi',
+        phone: operatorProfile.phone || '+225',
+        city: operatorProfile.city || 'Abidjan',
+        country: operatorProfile.country || "Côte d'Ivoire",
+        currency: currency || 'XOF',
+        plan_id: currentPlanId || 'starter',
+        wallet_balance_xof: Math.max(0, Math.round(Number(walletBalance || 0))),
+        gains_balance_xof: Math.max(0, Math.round(Number(gainsBalance || 0))),
+        default_isp_monthly_cost: Math.round(Number(operatorProfile.defaultIspMonthlyCost || 0)),
+        two_factor_enabled: Boolean(operatorProfile.twoFactorEnabled),
+        telegram_bot_token: telegramConfig.botToken || null,
+        telegram_chat_id: telegramConfig.chatId || null,
+        telegram_enabled: Boolean(telegramConfig.enabled),
+        telegram_triggers: telegramConfig.triggers || {},
+      },
       OP_ID
     );
   };
@@ -525,24 +522,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const syncStaffToSupabase = (items: StaffItem[]) => {
-    if (!isSupabaseConfigured() || items.length === 0) return;
+    if (!isSupabaseConfigured() || items.length === 0 || !OP_ID) return;
     const rows = items.map((s) => ({
       tenant_id: OP_ID,
       operator_id: OP_ID,
-      zone_id: s.zoneName || s.zoneId || 'Kiosque Principal Joowifi',
+      zone_id: s.zoneName || s.zoneId || 'Zone Principale',
       name: s.name,
-      email: s.email || null,
+      email: s.email ? s.email.trim().toLowerCase() : null,
       phone: s.phone,
-      pin_hash: '1234',
+      pin_hash: s.password && s.password.trim() !== '' ? s.password.trim() : '1234',
       commission_rate: Number(s.commissionRate || 10),
       balance_credit_xof: Math.max(0, Math.round(Number(s.balanceCredit || 0))),
-      daily_goal_xof: Math.round(Number(s.dailyGoal || 10000)),
+      daily_goal_xof: Math.round(Number(s.dailyGoal || 15000)),
       today_sales_xof: Math.round(Number(s.todaySales || 0)),
       total_sales_xof: Math.round(Number(s.totalSales || 0)),
       paid_commissions_xof: Math.round(Number(s.paidCommissions || 0)),
       active: Boolean(s.active),
+      permissions: s.permissions || {
+        fastSale: true,
+        printThermal: true,
+        shareWhatsapp: true,
+        sosRequest: true,
+      },
     }));
-    void supabaseInsert('staff_vendors', rows, 'operator_id,name');
+    void supabaseInsert('staff_vendors', rows, 'operator_id,name', OP_ID);
   };
 
   const syncMacBypassesToSupabase = (items: MacBypassItem[]) => {
@@ -653,7 +656,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Auth State (Persisted in localStorage with RBAC + Multi-Tenant ID)
   const [user, setUser] = useState<UserSession | null>(() => {
     const saved = safeGetStorage<UserSession | null>('joowifi_auth_user', null);
-    if (saved && saved.email && saved.tenantId) {
+    if (saved && saved.email && saved.tenantId && saved.accessToken) {
       return saved;
     }
     return null;
@@ -680,7 +683,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadTenantWorkspace = async (targetTenant: string) => {
     if (!isSupabaseConfigured() || !targetTenant) return;
     try {
-      const [zRows, rRows, fRows, sRows, tRows, mRows, sesRows, txRows] = await Promise.all([
+      const [opRows, zRows, rRows, fRows, sRows, tRows, mRows, sesRows, txRows] = await Promise.all([
+        supabaseSelect<Record<string, any>>(
+          'operators',
+          `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=1`,
+          targetTenant
+        ),
         supabaseSelect<Record<string, any>>(
           'zones',
           `select=*&tenant_id=eq.${encodeURIComponent(targetTenant)}&limit=100`,
@@ -722,6 +730,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           targetTenant
         ),
       ]);
+
+      if (Array.isArray(opRows) && opRows.length > 0) {
+        const op = opRows[0];
+        setOperatorProfile((prev) => ({
+          ...prev,
+          name: String(op.name || prev.name || ''),
+          company: String(op.company || prev.company || ''),
+          email: String(op.email || prev.email || ''),
+          phone: String(op.phone || prev.phone || ''),
+          city: String(op.city || prev.city || 'Abidjan'),
+          country: String(op.country || prev.country || "Côte d'Ivoire"),
+          defaultIspMonthlyCost: Number(op.default_isp_monthly_cost ?? prev.defaultIspMonthlyCost ?? 0),
+          twoFactorEnabled: Boolean(op.two_factor_enabled ?? prev.twoFactorEnabled),
+        }));
+      }
 
       setZones(
         Array.isArray(zRows)
@@ -811,6 +834,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 totalSales: Number(s.total_sales_xof || 0),
                 active: Boolean(s.active ?? true),
                 lastActive: 'En ligne',
+                permissions: s.permissions || { fastSale: true, printThermal: true, shareWhatsapp: true, sosRequest: true },
               }))
           : []
       );
@@ -1496,22 +1520,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addStaff = (memberData: Omit<StaffItem, 'id' | 'totalSales' | 'todaySales'>) => {
+    const cleanEmail = (memberData.email || '').trim().toLowerCase();
+    const cleanPass = (memberData.password || '1234').trim();
     const newStaff: StaffItem = {
       ...memberData,
+      email: cleanEmail,
+      password: cleanPass,
       id: `staff-${Date.now()}`,
       todaySales: 0,
       totalSales: 0,
       paidCommissions: 0,
     };
-    setStaff((prev) => { const next = [...prev, newStaff]; syncStaffToSupabase(next); return next; });
-    addAuditLog('Ajout Vendeur', newStaff.name, `Zone: ${newStaff.zoneName} - Téléphone: ${newStaff.phone}`);
-    notify(`Vendeur POS "${newStaff.name}" ajouté à ${newStaff.zoneName}.`, 'success');
+    setStaff((prev) => {
+      const next = [...prev, newStaff];
+      syncStaffToSupabase(next);
+      return next;
+    });
+    if (cleanEmail && cleanPass) {
+      void supabaseAuthSignUp(cleanEmail, cleanPass, {
+        role: 'vendor',
+        tenant_id: OP_ID,
+        name: newStaff.name,
+        phone: newStaff.phone,
+      });
+    }
+    addAuditLog('Ajout Vendeur', newStaff.name, `Zone: ${newStaff.zoneName} - Identifiant: ${cleanEmail || newStaff.phone}`);
+    notify(`Compte Vendeur POS "${newStaff.name}" créé et activé dans Supabase Auth !`, 'success');
   };
 
   const updateStaff = (updated: StaffItem) => {
-    setStaff((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-    addAuditLog('Modification Vendeur', updated.name, `Zone: ${updated.zoneName} - Commission: ${updated.commissionRate}%`);
-    notify(`Profil vendeur "${updated.name}" mis à jour.`, 'success');
+    const cleanEmail = (updated.email || '').trim().toLowerCase();
+    const cleanPass = (updated.password || '1234').trim();
+    const normalized: StaffItem = {
+      ...updated,
+      email: cleanEmail,
+      password: cleanPass,
+    };
+    setStaff((prev) => {
+      const next = prev.map((s) => (s.id === normalized.id ? normalized : s));
+      syncStaffToSupabase(next);
+      return next;
+    });
+    if (OP_ID) {
+      void supabaseUpdate(
+        'staff_vendors',
+        `id=eq.${encodeURIComponent(normalized.id)}`,
+        {
+          name: normalized.name,
+          email: cleanEmail || null,
+          phone: normalized.phone,
+          pin_hash: cleanPass,
+          zone_id: normalized.zoneName || normalized.zoneId,
+          commission_rate: Number(normalized.commissionRate || 10),
+          balance_credit_xof: Math.max(0, Math.round(Number(normalized.balanceCredit || 0))),
+          daily_goal_xof: Math.round(Number(normalized.dailyGoal || 15000)),
+          active: Boolean(normalized.active),
+          permissions: normalized.permissions || {
+            fastSale: true,
+            printThermal: true,
+            shareWhatsapp: true,
+            sosRequest: true,
+          },
+        },
+        OP_ID
+      );
+    }
+    addAuditLog('Modification Vendeur', normalized.name, `Zone: ${normalized.zoneName} - Commission: ${normalized.commissionRate}%`);
+    notify(`Profil vendeur "${normalized.name}" mis à jour et synchronisé avec Supabase !`, 'success');
   };
 
   const toggleStaffStatus = (staffId: string) => {
@@ -1887,11 +1962,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     name: string = operatorProfile.name,
     staffId?: string,
     customTenantId?: string,
-    isNewAccount?: boolean
+    isNewAccount?: boolean,
+    customAccessToken?: string
   ) => {
     const resolvedTenant = (customTenantId || getActiveTenantId()).trim();
+    if (!resolvedTenant) return;
     setActiveTenantId(resolvedTenant);
     setActiveTenantIdState(resolvedTenant);
+
+    const tokenJwt =
+      customAccessToken ||
+      buildSignedSessionJwt({
+        sub: staffId || resolvedTenant,
+        email,
+        role: role === 'staff' ? 'vendor' : 'admin',
+        tenantId: resolvedTenant,
+      });
 
     const newSession: UserSession = {
       email,
@@ -1899,6 +1985,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       name,
       staffId,
       tenantId: resolvedTenant,
+      accessToken: tokenJwt,
     };
     setUser(newSession);
     safeSetStorage('joowifi_auth_user', newSession);

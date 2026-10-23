@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { User, Globe, ShieldCheck, Save, Lock } from 'lucide-react';
 
 export const ProfileSettings: React.FC = () => {
-  const { operatorProfile, updateOperatorProfile, currency, setCurrency } = useApp();
+  const { operatorProfile, updateOperatorProfile, currency, setCurrency, user } = useApp();
 
-  const [name, setName] = useState(operatorProfile.name);
-  const [company, setCompany] = useState(operatorProfile.company);
-  const [email, setEmail] = useState(operatorProfile.email);
-  const [phone, setPhone] = useState(operatorProfile.phone);
-  const [city, setCity] = useState(operatorProfile.city);
-  const [ispCost, setIspCost] = useState(operatorProfile.defaultIspMonthlyCost);
+  const [name, setName] = useState(operatorProfile.name || user?.name || '');
+  const [company, setCompany] = useState(operatorProfile.company || '');
+  const [email, setEmail] = useState(operatorProfile.email || user?.email || '');
+  const [phone, setPhone] = useState(operatorProfile.phone || '');
+  const [city, setCity] = useState(operatorProfile.city || 'Abidjan');
+  const [ispCost, setIspCost] = useState(operatorProfile.defaultIspMonthlyCost || 0);
   const [twoFactor, setTwoFactor] = useState(operatorProfile.twoFactorEnabled);
+
+  useEffect(() => {
+    setName(operatorProfile.name || user?.name || '');
+    setCompany(operatorProfile.company || '');
+    setEmail(operatorProfile.email || user?.email || '');
+    setPhone(operatorProfile.phone || '');
+    setCity(operatorProfile.city || 'Abidjan');
+    setIspCost(operatorProfile.defaultIspMonthlyCost || 0);
+    setTwoFactor(Boolean(operatorProfile.twoFactorEnabled));
+  }, [operatorProfile, user]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
