@@ -209,38 +209,6 @@ export interface PlanDetails {
   recommended?: boolean;
 }
 
-export interface CaptivePortalConfig {
-  scope: 'global' | 'zone' | 'router';
-  targetZoneId?: string;
-  targetRouterId?: string;
-  templateId: 'minimal-speed' | 'sunset-glass' | 'abidjan-vibrant' | 'neon-cyber';
-  brandName: string;
-  tagline: string;
-  welcomeMessage: string;
-  logoUrl?: string;
-  primaryColor: string;
-  backgroundColor: string;
-  surfaceColor: string;
-  textColor: string;
-  enableMobileMoney: boolean;
-  enableVoucherInput: boolean;
-  enableFreeTrial: boolean;
-  freeTrialDurationMinutes: number;
-  walledGardenDomains: string[];
-  supportPhone: string;
-}
-
-export interface SavedPortalTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  author: string;
-  isActive: boolean;
-  updatedAt: string;
-  config: CaptivePortalConfig;
-}
-
 export interface TelegramConfig {
   botToken: string;
   chatId: string;

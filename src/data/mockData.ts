@@ -10,7 +10,6 @@ import {
   MacBypassItem,
   WalletTransaction,
   PlanDetails,
-  CaptivePortalConfig,
   AuditLogItem,
 } from '../types';
 
@@ -107,20 +106,3 @@ export const SAAS_PLANS: PlanDetails[] = [
   },
 ];
 
-export const INITIAL_CAPTIVE_CONFIG: CaptivePortalConfig = {
-  scope: 'global',
-  templateId: 'abidjan-vibrant',
-  brandName: 'Mon Réseau WiFi',
-  tagline: 'Connexion WiFi Haut Débit',
-  welcomeMessage: 'Connectez-vous avec votre code ticket WiFi ou achetez un forfait en ligne.',
-  primaryColor: '#008060',
-  backgroundColor: '#F4F7FA',
-  surfaceColor: '#FFFFFF',
-  textColor: '#1E293B',
-  enableMobileMoney: true,
-  enableVoucherInput: true,
-  enableFreeTrial: false,
-  freeTrialDurationMinutes: 10,
-  walledGardenDomains: ['joowifi-cloud.vercel.app', '*.wave.com', '*.orange.ci', '*.mtn.ci'],
-  supportPhone: '',
-};

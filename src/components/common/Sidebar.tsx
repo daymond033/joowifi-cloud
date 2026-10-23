@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Bot,
   Ticket,
-  Boxes,
   Smartphone,
   Users,
   MapPin,
@@ -19,8 +18,6 @@ import {
   TrendingUp,
   DollarSign,
   CreditCard,
-  Palette,
-  ShoppingBag,
   Bell,
   FileText,
   User,
@@ -29,6 +26,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  LogOut,
 } from 'lucide-react';
 
 interface SidebarCategory {
@@ -52,6 +50,11 @@ export const Sidebar: React.FC = () => {
     tickets,
     macBypasses,
     forceHeartbeatSync,
+    currency,
+    setCurrency,
+    user,
+    operatorProfile,
+    logout,
   } = useApp();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -118,9 +121,6 @@ export const Sidebar: React.FC = () => {
     {
       title: 'CONFIGURATION',
       items: [
-        { id: 'personnalisation', label: 'Portail Captif', icon: Palette },
-        { id: 'marketplace', label: 'Modèles Portails', icon: ShoppingBag },
-        { id: 'marketplace-mes-templates', label: 'Mes Modèles', icon: Boxes },
         { id: 'notifications', label: 'Alertes Telegram', icon: Bell },
         { id: 'logs', label: 'Journal d’Audit', icon: FileText },
         { id: 'profil', label: 'Profil & Devise', icon: User },
@@ -142,24 +142,60 @@ export const Sidebar: React.FC = () => {
         collapsed ? 'w-16' : 'w-64'
       } shrink-0 h-full bg-white border-r border-slate-200 flex flex-col justify-between select-none overflow-y-auto transition-all duration-150`}
     >
-      {/* Top Collapse Bar */}
-      <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-[#F8FAFC]">
+      {/* 1. EN-TÊTE UNIFIÉ DE LA BARRE LATÉRALE (Remplace l'ancienne barre horizontale) */}
+      <div className="p-3.5 border-b border-slate-200 bg-[#005A5B] text-white space-y-2.5">
+        <div className="flex items-center justify-between">
+          {!collapsed ? (
+            <button
+              onClick={() => setAdminTab('dashboard')}
+              className="flex items-center gap-2 cursor-pointer text-left"
+            >
+              <div className="w-7 h-7 rounded bg-[#008060] flex items-center justify-center font-black text-xs text-white">
+                JW
+              </div>
+              <div>
+                <span className="text-sm font-bold tracking-tight text-white block leading-none">
+                  Joowifi Cloud
+                </span>
+                <span className="text-[10px] text-teal-200 block mt-0.5">
+                  Console Opérateur
+                </span>
+              </div>
+            </button>
+          ) : (
+            <div className="w-7 h-7 rounded bg-[#008060] flex items-center justify-center font-black text-xs text-white mx-auto">
+              JW
+            </div>
+          )}
+
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1 rounded hover:bg-white/15 text-teal-100 hover:text-white cursor-pointer"
+            title={collapsed ? 'Déplier le menu' : 'Réduire le menu'}
+          >
+            {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
+        </div>
+
         {!collapsed && (
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Menu Principal
-          </span>
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/15 text-[11px]">
+            <span className="text-teal-200 font-medium">Devise :</span>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="bg-[#004647] text-white text-[11px] font-semibold px-2 py-1 rounded border border-white/15 focus:outline-none cursor-pointer"
+            >
+              <option value="XOF" className="bg-[#26292E]">FCFA (XOF)</option>
+              <option value="GNF" className="bg-[#26292E]">GNF</option>
+              <option value="EUR" className="bg-[#26292E]">EUR (€)</option>
+              <option value="USD" className="bg-[#26292E]">USD ($)</option>
+            </select>
+          </div>
         )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 cursor-pointer"
-          title={collapsed ? 'Déplier le menu' : 'Réduire le menu'}
-        >
-          {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-        </button>
       </div>
 
-      {/* Navigation Categories */}
-      <div className="flex-1 px-2.5 py-3 space-y-5 overflow-y-auto">
+      {/* 2. CATÉGORIES DE NAVIGATION VERTICALE */}
+      <div className="flex-1 px-2.5 py-3 space-y-4 overflow-y-auto">
         {categories.map((cat) => (
           <div key={cat.title} className="space-y-1">
             {!collapsed && (
@@ -221,43 +257,76 @@ export const Sidebar: React.FC = () => {
         ))}
       </div>
 
-      {/* Bottom White-Label Cloud Status Box */}
-      <div className="p-3 border-t border-slate-200 bg-[#F8FAFC]">
+      {/* 3. PIED DE BARRE LATÉRALE : LIAISON CLOUD + PROFIL OPÉRATEUR + DÉCONNEXION */}
+      <div className="p-3 border-t border-slate-200 bg-[#F8FAFC] space-y-2.5">
         {!collapsed ? (
-          <div className="p-3 rounded bg-white border border-slate-200 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#005A5B]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#008060]" />
-                <span>Liaison Cloud</span>
+          <>
+            <div className="p-2.5 rounded bg-white border border-slate-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#005A5B]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#008060]" />
+                  <span>Liaison Cloud</span>
+                </div>
+                <button
+                  onClick={forceHeartbeatSync}
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#E6F4F3] hover:bg-[#d0ebe9] text-[#005A5B] transition cursor-pointer"
+                >
+                  Actualiser
+                </button>
               </div>
+
+              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#008060] transition-all duration-500"
+                  style={{ width: `${((45 - heartbeatSecondsRemaining) / 45) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1">
               <button
-                onClick={forceHeartbeatSync}
-                className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#E6F4F3] hover:bg-[#d0ebe9] text-[#005A5B] transition cursor-pointer"
+                onClick={() => setAdminTab('profil')}
+                className="flex items-center gap-2 truncate text-left hover:opacity-80 cursor-pointer"
               >
-                Synchroniser
+                <div className="w-7 h-7 rounded-full bg-[#E6F4F3] text-[#005A5B] font-bold text-xs flex items-center justify-center shrink-0">
+                  {(operatorProfile.name || user?.name || 'OP').slice(0, 2).toUpperCase()}
+                </div>
+                <div className="truncate">
+                  <div className="text-xs font-bold text-slate-800 truncate">
+                    {operatorProfile.name || user?.name || 'Opérateur'}
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate">
+                    {operatorProfile.company || user?.email || ''}
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={logout}
+                title="Se déconnecter"
+                className="p-1.5 rounded bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 transition cursor-pointer shrink-0"
+              >
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#008060] transition-all duration-500"
-                style={{ width: `${((45 - heartbeatSecondsRemaining) / 45) * 100}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
-              <span>Serveur Cloud</span>
-              <span className="text-[#008060] font-bold">Connecté</span>
-            </div>
-          </div>
+          </>
         ) : (
-          <button
-            onClick={forceHeartbeatSync}
-            title="Synchroniser le Cloud"
-            className="w-full py-2 rounded bg-[#E6F4F3] text-[#008060] flex items-center justify-center cursor-pointer"
-          >
-            <ShieldCheck className="w-4 h-4" />
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={forceHeartbeatSync}
+              title="Actualiser le Cloud"
+              className="w-full py-2 rounded bg-[#E6F4F3] text-[#008060] flex items-center justify-center cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+            </button>
+            <button
+              onClick={logout}
+              title="Se déconnecter"
+              className="w-full py-2 rounded bg-rose-50 text-rose-600 flex items-center justify-center cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
     </aside>

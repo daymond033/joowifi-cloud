@@ -308,7 +308,7 @@ export const Navbar: React.FC = () => {
                     </button>
                   </li>
                   <li>
-                    <button onClick={() => handleGoAdminTab('personnalisation')} className="hover:text-[#34D399] text-left cursor-pointer">
+                    <button onClick={() => handleGoAdminTab('dashboard')} className="hover:text-[#34D399] text-left cursor-pointer">
                       Studio Portail Captif & Paiements Wave, Orange, MTN, Moov
                     </button>
                   </li>

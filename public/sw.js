@@ -4,7 +4,7 @@
 // tout en conservant le mode hors-ligne de secours en cas de coupure réseau.
 // ============================================================================
 
-const CACHE_NAME = 'joowifi-pwa-v13.0.0-auth-pos-omada';
+const CACHE_NAME = 'joowifi-pwa-v14.0.0-b2b-stabilized';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

@@ -23,8 +23,6 @@ import {
   ConnectionLog,
   MacBypassItem,
   WalletTransaction,
-  CaptivePortalConfig,
-  SavedPortalTemplate,
   TelegramConfig,
   OperatorProfile,
   ToastNotification,
@@ -43,7 +41,6 @@ import {
   INITIAL_LOGS,
   INITIAL_MAC_BYPASS,
   INITIAL_TRANSACTIONS,
-  INITIAL_CAPTIVE_CONFIG,
   INITIAL_AUDIT_LOGS,
   SAAS_PLANS,
 } from '../data/mockData';
@@ -84,9 +81,6 @@ export type AdminTab =
   | 'gains'
   | 'abonnements'
   // RÉGLAGES
-  | 'personnalisation'
-  | 'marketplace'
-  | 'marketplace-mes-templates'
   | 'notifications'
   | 'logs'
   | 'profil';
@@ -97,73 +91,6 @@ interface UserSession {
   role: 'admin' | 'staff';
   zoneId?: string;
 }
-
-const DEFAULT_SAVED_TEMPLATES: SavedPortalTemplate[] = [
-  {
-    id: 'tmpl-active-1',
-    name: 'Abidjan Vibrant — Principal',
-    description: 'Portail principal haute visibilité optimisé pour paiements Mobile Money (Wave, Orange, MTN) dans les carrefours et maquis.',
-    category: 'Général & Populaire',
-    author: 'Joo studio',
-    isActive: true,
-    updatedAt: 'Aujourd’hui',
-    config: {
-      ...INITIAL_CAPTIVE_CONFIG,
-      templateId: 'abidjan-vibrant',
-      primaryColor: '#F59E0B',
-      backgroundColor: '#0B0F19',
-      surfaceColor: 'rgba(15, 23, 42, 0.85)',
-      textColor: '#F8FAFC',
-    },
-  },
-  {
-    id: 'tmpl-saved-2',
-    name: 'Sunset Lounge & Hôtel',
-    description: 'Design Glassmorphism chaleureux avec essai gratuit de 15 minutes activé pour résidences hôtelières et coworking.',
-    category: 'Hôtels & Lounges',
-    author: 'Joo studio',
-    isActive: false,
-    updatedAt: 'Il y a 2 jours',
-    config: {
-      ...INITIAL_CAPTIVE_CONFIG,
-      scope: 'zone',
-      targetZoneId: 'zone-1',
-      templateId: 'sunset-glass',
-      brandName: 'Joowifi Lounge & Suites',
-      tagline: 'WiFi Fibre Très Haut Débit — Espace VIP',
-      welcomeMessage: 'Bienvenue ! Profitez de 15 minutes offertes ou activez un pass illimité en 1 clic.',
-      primaryColor: '#EA580C',
-      backgroundColor: '#18181B',
-      surfaceColor: 'rgba(39, 39, 42, 0.75)',
-      textColor: '#FFFFFF',
-      enableFreeTrial: true,
-      freeTrialDurationMinutes: 15,
-    },
-  },
-  {
-    id: 'tmpl-saved-3',
-    name: 'Express Gare & Cyber (< 10 Ko)',
-    description: 'Portail ultra-léger en mode Émeraude pour connexion instantanée sur smartphones d’entrée de gamme.',
-    category: 'Cybercafés & Gares',
-    author: 'Joo studio',
-    isActive: false,
-    updatedAt: 'Il y a 5 jours',
-    config: {
-      ...INITIAL_CAPTIVE_CONFIG,
-      scope: 'router',
-      targetRouterId: 'rb-2',
-      templateId: 'minimal-speed',
-      brandName: 'Joowifi Express Gare',
-      tagline: 'Connexion Instantanée Zero-Attente',
-      welcomeMessage: 'Saisissez votre code ticket ou payez par Wave/Orange Money.',
-      primaryColor: '#10B981',
-      backgroundColor: '#020617',
-      surfaceColor: '#0F172A',
-      textColor: '#F8FAFC',
-      enableFreeTrial: false,
-    },
-  },
-];
 
 const DEFAULT_TELEGRAM_CONFIG: TelegramConfig = {
   botToken: '',
@@ -214,8 +141,6 @@ interface AppContextType {
   walletBalance: number;
   gainsBalance: number;
   currentPlanId: PlanDetails['id'];
-  captiveConfig: CaptivePortalConfig;
-  savedTemplates: SavedPortalTemplate[];
   telegramConfig: TelegramConfig;
   operatorProfile: OperatorProfile;
   toasts: ToastNotification[];
@@ -281,11 +206,6 @@ interface AppContextType {
   rechargeWallet: (amount: number, method: WalletTransaction['paymentMethod']) => void;
   withdrawGains: (amount: number, phone: string, provider: 'Orange' | 'MTN' | 'Wave' | 'Moov') => boolean;
   upgradePlan: (planId: PlanDetails['id']) => boolean;
-  updateCaptiveConfig: (config: Partial<CaptivePortalConfig>) => void;
-  savePortalTemplate: (name: string, description: string, category?: string, config?: CaptivePortalConfig) => SavedPortalTemplate;
-  activatePortalTemplate: (templateId: string) => void;
-  duplicatePortalTemplate: (templateId: string) => void;
-  deletePortalTemplate: (templateId: string) => void;
   updateTelegramConfig: (updates: Partial<TelegramConfig>) => void;
   updateOperatorProfile: (updates: Partial<OperatorProfile>) => void;
   addAuditLog: (action: string, target: string, details: string) => void;
@@ -378,8 +298,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [gainsBalance, setGainsBalance] = useState<number>(0);
   const [currentPlanId, setCurrentPlanId] = useState<PlanDetails['id']>('starter');
-  const [captiveConfig, setCaptiveConfig] = useState<CaptivePortalConfig>(INITIAL_CAPTIVE_CONFIG);
-  const [savedTemplates, setSavedTemplates] = useState<SavedPortalTemplate[]>(DEFAULT_SAVED_TEMPLATES);
   const [telegramConfig, setTelegramConfig] = useState<TelegramConfig>(DEFAULT_TELEGRAM_CONFIG);
   const [operatorProfile, setOperatorProfile] = useState<OperatorProfile>(DEFAULT_OPERATOR_PROFILE);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
@@ -1834,83 +1752,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
-  const updateCaptiveConfig = (config: Partial<CaptivePortalConfig>) => {
-    setCaptiveConfig((prev) => {
-      const next = { ...prev, ...config };
-      setSavedTemplates((tmpls) =>
-        tmpls.map((t) => (t.isActive ? { ...t, config: next, updatedAt: 'À l’instant' } : t))
-      );
-      return next;
-    });
-    addAuditLog('Personnalisation Portail', 'Mise à jour thème & paramètres', 'Sauvegarde Sandbox');
-    notify('Configuration du portail captif publiée sur le Cloud MikroTik.', 'success');
-  };
-
-  const savePortalTemplate = (
-    name: string,
-    description: string,
-    category: string = 'Personnalisé',
-    customConfig?: CaptivePortalConfig
-  ): SavedPortalTemplate => {
-    const cfg = customConfig || captiveConfig;
-    const newTmpl: SavedPortalTemplate = {
-      id: `tmpl-${Date.now()}`,
-      name,
-      description,
-      category,
-      author: operatorProfile.company || 'Opérateur Joowifi',
-      isActive: false,
-      updatedAt: 'À l’instant',
-      config: { ...cfg },
-    };
-    setSavedTemplates((prev) => [newTmpl, ...prev]);
-    addAuditLog('Sauvegarde Template Portail', name, `Catégorie: ${category}`);
-    notify(`Template "${name}" ajouté à Mes Templates.`, 'success');
-    return newTmpl;
-  };
-
-  const activatePortalTemplate = (templateId: string) => {
-    const target = savedTemplates.find((t) => t.id === templateId);
-    if (!target) return;
-    setSavedTemplates((prev) =>
-      prev.map((t) => ({
-        ...t,
-        isActive: t.id === templateId,
-      }))
-    );
-    setCaptiveConfig({ ...target.config });
-    addAuditLog('Activation Template Portail', target.name, `Périmètre: ${target.config.scope}`);
-    notify(`Template "${target.name}" activé en production !`, 'success');
-  };
-
-  const duplicatePortalTemplate = (templateId: string) => {
-    const source = savedTemplates.find((t) => t.id === templateId);
-    if (!source) return;
-    const copy: SavedPortalTemplate = {
-      ...source,
-      id: `tmpl-${Date.now()}`,
-      name: `${source.name} (Copie)`,
-      isActive: false,
-      updatedAt: 'À l’instant',
-      config: { ...source.config },
-    };
-    setSavedTemplates((prev) => [copy, ...prev]);
-    addAuditLog('Duplication Template Portail', copy.name, `Basé sur ${source.name}`);
-    notify(`Template dupliqué sous "${copy.name}".`, 'info');
-  };
-
-  const deletePortalTemplate = (templateId: string) => {
-    const target = savedTemplates.find((t) => t.id === templateId);
-    if (!target) return;
-    if (target.isActive) {
-      notify('Impossible de supprimer le template actuellement actif en production.', 'warning');
-      return;
-    }
-    setSavedTemplates((prev) => prev.filter((t) => t.id !== templateId));
-    addAuditLog('Suppression Template Portail', target.name, 'Template retiré');
-    notify(`Template "${target.name}" supprimé.`, 'info');
-  };
-
   const updateTelegramConfig = (updates: Partial<TelegramConfig>) => {
     setTelegramConfig((prev) => ({ ...prev, ...updates }));
     addAuditLog('Configuration Telegram', 'Bot & Déclencheurs', 'Paramètres de notification mis à jour');
@@ -2054,8 +1895,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         walletBalance,
         gainsBalance,
         currentPlanId,
-        captiveConfig,
-        savedTemplates,
         telegramConfig,
         operatorProfile,
         toasts,
@@ -2103,11 +1942,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rechargeWallet,
         withdrawGains,
         upgradePlan,
-        updateCaptiveConfig,
-        savePortalTemplate,
-        activatePortalTemplate,
-        duplicatePortalTemplate,
-        deletePortalTemplate,
         updateTelegramConfig,
         updateOperatorProfile,
         addAuditLog,
